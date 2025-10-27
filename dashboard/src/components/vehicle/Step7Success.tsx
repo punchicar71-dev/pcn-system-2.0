@@ -1,7 +1,8 @@
 'use client';
 
-import { CheckCircle, Plus, Printer, Package } from 'lucide-react';
+import { Plus, Printer, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface Step7SuccessProps {
   vehicleNumber: string;
@@ -31,32 +32,14 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
   return (
     <div className="bg-white  p-8 text-center">
       {/* Success Animation */}
-      <div className="mb-6 relative">
-        <div className="inline-block">
-          {/* Animated dots around checkmark */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 relative">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-3 h-3 bg-green-500 rounded-full animate-ping"
-                  style={{
-                    top: '50%',
-                    left: '50%',
-                    transform: `rotate(${i * 45}deg) translate(50px) rotate(-${i * 45}deg)`,
-                    animationDelay: `${i * 0.1}s`,
-                    animationDuration: '2s',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          
-          {/* Main checkmark */}
-          <div className="relative z-10 inline-flex items-center justify-center w-24 h-24 bg-green-500 rounded-full">
-            <CheckCircle className="w-16 h-16 text-white" />
-          </div>
-        </div>
+      <div className="mb-6 flex justify-center">
+        <Image 
+          src="/done_animation.png" 
+          alt="Success" 
+          width={200} 
+          height={200}
+          className="object-contain"
+        />
       </div>
 
       {/* Success Message */}
@@ -90,41 +73,6 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
           <Package className="w-5 h-5" />
           Go to Inventory
         </button>
-      </div>
-
-      {/* Additional Info */}
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Vehicle Added</h4>
-              <p className="text-sm text-gray-600">Successfully added to inventory</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Images Uploaded</h4>
-              <p className="text-sm text-gray-600">All images saved successfully</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Ready for Sale</h4>
-              <p className="text-sm text-gray-600">Vehicle is now visible in listings</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
