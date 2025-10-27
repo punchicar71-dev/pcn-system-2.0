@@ -64,38 +64,48 @@ pcn/
 - **Add Vehicle**: Complete 6-step vehicle addition wizard
   - **Step 1: Vehicle Information**
     - Brand and Model selection
-    - VIN/Chassis number
+    - Vehicle number (VIN/Chassis)
     - Manufacture and registered year
     - Country of origin
+    - Body type, fuel, and transmission
+    - Engine capacity and exterior color
+    - Multiple vehicle image uploads with drag & drop
+    - CR paper/document uploads
   - **Step 2: Seller Information**
-    - Personal details (Name, NIC, Address)
+    - Personal details (First Name, Last Name, NIC)
+    - Full address with city
     - Contact information (Mobile, Email, Landline)
-  - **Step 3: Technical Specifications**
-    - Body type (SUV, Sedan, Hatchback, etc.)
-    - Fuel type (Petrol, Diesel, Hybrid, EV)
-    - Transmission (Automatic, Manual)
-    - Engine capacity
-    - Exterior color
-    - Mileage
-  - **Step 4: Vehicle Options**
+  - **Step 3: Vehicle Options**
     - Standard options (A/C, Bluetooth, Alloy Wheels, etc.)
     - Special options (Full Option, Crystal Light, etc.)
     - Custom options (free text)
-  - **Step 5: Image Upload**
-    - Multiple image upload with drag & drop
-    - Image preview and management
-    - Gallery images and CR paper/documents
-    - Primary image selection
+  - **Step 4: Selling Details**
+    - Selling price with formatted input
+    - Mileage tracking
+    - Entry type (Auction, Direct Purchase, Consignment)
+    - Entry date and status
+  - **Step 5: Special Notes**
+    - Tag notes for internal use
+    - Special notes for printing
+    - Character count for both fields
   - **Step 6: Review & Publish**
     - Complete vehicle details preview
     - Edit any section before publishing
     - One-click publish to inventory
 - **Inventory Management**: 
-  - Search and filter vehicles
+  - Search and filter vehicles (by brand, model, number)
   - Status tracking (In Sale, Out of Sale, Sold, Reserved)
-  - Bulk actions
-  - Export functionality
-  - Vehicle detail view with all information
+  - Pagination with customizable rows per page (5, 10, 25, 50)
+  - Quick actions (View, Edit, Delete)
+  - **Vehicle Details Modal**:
+    - Image carousel with navigation arrows (shows 3 images at a time)
+    - Complete vehicle information display
+    - Selling information (price, mileage, entry date, status)
+    - Seller details with contact information
+    - Technical specifications
+    - Vehicle options with checkmark indicators
+    - Download CR paper button
+  - Export functionality (coming soon)
 
 #### 💰 Sales Management
 - **Sell Vehicle**: Sales transaction form
@@ -142,17 +152,33 @@ pcn/
 
 ## Recent Updates (v2.0)
 
+### 🎨 UI/UX Improvements (Latest)
+✅ Enhanced styling and layout consistency:
+- **Modal Improvements**: Optimized vehicle details modal with clean spacing
+- **Form Layout**: Improved button alignment in add vehicle form
+- **Spacing Updates**: Better padding and margins across dashboard pages
+- **Responsive Design**: Consistent styling across all screen sizes
+
 ### 🚗 Complete Vehicle Management System
 ✅ Full vehicle inventory management with:
 - **Add Vehicle Module**: 6-step wizard for adding vehicles
-  - Step 1: Vehicle Information (Brand, Model, Year, VIN)
+  - Step 1: Vehicle Information (Brand, Model, Year, Images)
   - Step 2: Seller Information (Contact details, documentation)
-  - Step 3: Technical Specifications (Engine, Transmission, Fuel type)
-  - Step 4: Standard & Special Options (Checkboxes for features)
-  - Step 5: Image Upload (Multiple images with drag & drop)
+  - Step 3: Vehicle Options (Standard, Special, Custom features)
+  - Step 4: Selling Details (Price, Mileage, Entry info)
+  - Step 5: Special Notes (Tag notes, Print notes)
   - Step 6: Review & Publish (Preview before submission)
+- **Inventory Page**: Complete vehicle listing with search and filters
+  - Real-time search across brands, models, vehicle numbers
+  - Pagination with customizable rows per page
+  - **Interactive Vehicle Details Modal**:
+    - Image carousel showing 3 images at a time with navigation
+    - Complete vehicle specifications
+    - Seller information with icons
+    - Vehicle options with checkmarks
+    - Download CR paper functionality
 - **Database Integration**: Complete Supabase setup with 9 tables
-- **Image Storage**: Supabase Storage for vehicle images
+- **Image Storage**: Supabase Storage for vehicle and document images
 - **Form Validation**: Comprehensive validation with React Hook Form & Zod
 
 ### 📊 Database Schema
@@ -182,10 +208,17 @@ pcn/
 ### 🎨 UI/UX Improvements
 - Modern 6-step wizard interface for vehicle addition
 - Real-time form validation with helpful error messages
-- Image preview and management
+- Image preview and management with drag & drop
 - Progress indicator showing completion status
+- **Interactive Vehicle Details Modal**:
+  - Image carousel with left/right navigation
+  - Clean card-based layout for information sections
+  - Icon-based seller details presentation
+  - Organized data display with proper spacing
 - Responsive design for all screen sizes
 - Toast notifications for user feedback
+- Consistent spacing and padding across all pages
+- Streamlined button layouts for better UX
 
 ### Performance Improvements
 - Reduced database queries by fetching all data in parallel
