@@ -284,19 +284,21 @@ export default function InventoryPage() {
       })
   }
 
-  // Real-time search filter
+  // Real-time search filter - Search by Vehicle Number, Brand, and Model
   const filteredVehicles = useMemo(() => {
     if (!searchQuery.trim()) return vehicles
 
-    const query = searchQuery.toLowerCase()
-    return vehicles.filter(vehicle => 
-      vehicle.vehicle_number?.toLowerCase().includes(query) ||
-      vehicle.brand_name?.toLowerCase().includes(query) ||
-      vehicle.model_name?.toLowerCase().includes(query) ||
-      vehicle.country_name?.toLowerCase().includes(query) ||
-      vehicle.fuel_type?.toLowerCase().includes(query) ||
-      vehicle.transmission?.toLowerCase().includes(query)
-    )
+    const query = searchQuery.toLowerCase().trim()
+    return vehicles.filter(vehicle => {
+      const vehicleNumber = vehicle.vehicle_number?.toLowerCase() || ''
+      const brandName = vehicle.brand_name?.toLowerCase() || ''
+      const modelName = vehicle.model_name?.toLowerCase() || ''
+      
+      // Search in vehicle number, brand name, or model name
+      return vehicleNumber.includes(query) ||
+             brandName.includes(query) ||
+             modelName.includes(query)
+    })
   }, [vehicles, searchQuery])
 
   // Pagination
@@ -386,10 +388,10 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Package className="w-8 h-8 text-blue-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Available Vehicle</h1>
-            <p className="text-gray-600">
+        
+          <div className=''>
+            <h1 className="text-2xl font-bold text-gray-900 pb-2">Available Vehicle</h1>
+            <p className="text-gray-600 text-sm">
               {loading ? 'Loading...' : `${filteredVehicles.length} vehicle${filteredVehicles.length !== 1 ? 's' : ''} found`}
             </p>
           </div>
@@ -397,7 +399,7 @@ export default function InventoryPage() {
         
         <button 
           onClick={() => router.push('/add-vehicle')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-600 transition-colors"
         >
           <Plus className="w-5 h-5" />
           Add New Vehicle
@@ -405,21 +407,34 @@ export default function InventoryPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white w-[500px]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Brand, Number, Model"
+            placeholder="Search by Vehicle Number, Brand, or Model..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
+        {searchQuery && (
+          <p className="mt-2 text-sm text-gray-600">
+            Found {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? 's' : ''} matching "{searchQuery}"
+          </p>
+        )}
       </div>
 
       {/* Vehicle Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
@@ -508,7 +523,7 @@ export default function InventoryPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => fetchVehicleDetails(vehicle.id)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          className="p-1 text-gray-800 hover:bg-blue-50 rounded"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
@@ -544,7 +559,7 @@ export default function InventoryPage() {
               <select
                 value={rowsPerPage}
                 onChange={(e) => setRowsPerPage(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 text-sm"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -587,7 +602,7 @@ export default function InventoryPage() {
                         onClick={() => setCurrentPage(pageNum)}
                         className={`px-3 py-1 rounded text-sm ${
                           currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-gray-900 text-white'
                             : 'text-gray-700 hover:bg-gray-100'
                         }`}
                       >
