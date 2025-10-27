@@ -99,7 +99,32 @@ pcn/
   - Pagination with customizable rows per page (5, 10, 25, 50)
   - Quick actions (View, Edit, Delete)
   - **Modern Black Theme**: Clean black buttons and consistent gray focus states
-  - **Vehicle Details Modal**:
+  - **Edit Vehicle Modal** (Full functionality):
+    - **4-Tab Interface**: Vehicle Details, Seller Details, Options, Notes
+    - **Vehicle Details Tab**:
+      - Edit all vehicle information (number, brand, model, year)
+      - Change body type, country, fuel type, transmission
+      - Update engine capacity, color, mileage, price
+      - Modify entry type, entry date, and status
+      - Upload new vehicle images with preview
+      - Upload CR Paper/documents
+      - Delete existing images with one click
+    - **Seller Details Tab**:
+      - Edit seller personal information (name, NIC, address)
+      - Update contact details (mobile, landline, email)
+      - Create new seller if doesn't exist
+    - **Options Tab**:
+      - Toggle standard options (A/C, Bluetooth, etc.)
+      - Toggle special options (Full Option, Crystal Light)
+      - Add custom options dynamically
+      - Remove custom options
+    - **Notes Tab**:
+      - Edit tag notes for internal use
+      - Edit special notes for print
+    - Real-time updates with instant feedback
+    - Comprehensive error handling
+    - Success notifications
+  - **Vehicle Details Modal** (View-only):
     - Image carousel with navigation arrows (shows 3 images at a time)
     - Complete vehicle information display
     - Selling information (price, mileage, entry date, status)
@@ -153,6 +178,35 @@ pcn/
 - **Contact Page**: Contact form
 
 ## Recent Updates (v2.0)
+
+### 🚀 Comprehensive Edit Vehicle Modal (Latest - October 2025)
+✅ **Full-Featured Edit Functionality in Inventory**:
+- **4-Tab Modal Interface**:
+  - Vehicle Details: Complete vehicle info editing with image management
+  - Seller Details: Full seller information updates
+  - Options: Dynamic option selection and custom options
+  - Notes: Tag notes and print notes editing
+- **Advanced Features**:
+  - Real-time form validation and updates
+  - Image upload with preview and delete
+  - CR Paper/Document management
+  - Brand-Model cascading dropdowns
+  - All dropdowns populated from database
+  - Existing data pre-filled for easy editing
+- **Database Integration**:
+  - Updates vehicles table with all changes
+  - Updates/creates seller records
+  - Manages vehicle options (add/remove)
+  - Handles custom options
+  - Image upload to Supabase Storage
+  - Transactional updates for data integrity
+- **User Experience**:
+  - Opens directly from Edit button in inventory table
+  - Loading states for all operations
+  - Success/error notifications
+  - Auto-refresh inventory after update
+  - Cancel functionality with state reset
+  - Consistent black theme UI
 
 ### 🎨 UI/UX Improvements (Latest - October 2025)
 ✅ **Inventory Page Black Theme & Enhanced Search**:
