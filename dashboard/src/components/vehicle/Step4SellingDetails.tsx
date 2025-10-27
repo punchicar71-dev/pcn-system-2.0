@@ -1,9 +1,12 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { SellingDetailsData, ENTRY_TYPES, VEHICLE_STATUS } from '@/types/vehicle-form.types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { createClient } from '@/lib/supabase-client';
+import { PriceCategory } from '@/lib/database.types';
 
 interface Step4SellingDetailsProps {
   data: SellingDetailsData;
@@ -13,6 +16,25 @@ interface Step4SellingDetailsProps {
 }
 
 export default function Step4SellingDetails({ data, onChange, onNext, onBack }: Step4SellingDetailsProps) {
+  const [priceCategories, setPriceCategories] = useState<PriceCategory[]>([]);
+  const supabase = createClient();
+
+  useEffect(() => {
+    fetchPriceCategories();
+  }, []);
+
+  const fetchPriceCategories = async () => {
+    try {
+      const { data: categoriesData } = await supabase
+        .from('price_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('min_price');
+      if (categoriesData) setPriceCategories(categoriesData);
+    } catch (error) {
+      console.error('Error fetching price categories:', error);
+    }
+  };
   const formatCurrency = (value: string) => {
     // Remove all non-digit characters
     const numbers = value.replace(/\D/g, '');
@@ -91,23 +113,41 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
           </div>
         </div>
 
-        {/* Row 2: Entry Type */}
-        <div>
-          <Label htmlFor="entryType">
-            Entry Type <span className="text-red-500">*</span>
-          </Label>
-          <Select value={data.entryType} onValueChange={(value) => onChange({ entryType: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select entry type" />
-            </SelectTrigger>
-            <SelectContent>
-              {ENTRY_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Row 2: Entry Type & Price Category */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="entryType">
+              Entry Type <span className="text-red-500">*</span>
+            </Label>
+            <Select value={data.entryType} onValueChange={(value) => onChange({ entryType: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select entry type" />
+              </SelectTrigger>
+              <SelectContent>
+                {ENTRY_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="priceCategory">Price Category</Label>
+            <Select value={data.priceCategoryId} onValueChange={(value) => onChange({ priceCategoryId: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select price category" />
+              </SelectTrigger>
+              <SelectContent>
+                {priceCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Row 3: Entry Date & Status */}
@@ -141,55 +181,6 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        {/* Preview Summary */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Selling Details Summary</h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-gray-600">Selling Amount:</span>
-              <p className="font-semibold text-gray-900">
-                Rs. {data.sellingAmount || '0'}
-              </p>
-            </div>
-            <div>
-              <span className="text-gray-600">Mileage:</span>
-              <p className="font-semibold text-gray-900">
-                Km. {data.mileage || '0'}
-              </p>
-            </div>
-            <div>
-              <span className="text-gray-600">Entry Type:</span>
-              <p className="font-semibold text-gray-900">{data.entryType}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Status:</span>
-              <p className="font-semibold text-gray-900">
-                <span
-                  className={`inline-block px-2 py-1 rounded text-xs ${
-                    data.status === 'In Sale'
-                      ? 'bg-green-100 text-green-800'
-                      : data.status === 'Out of Sale'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}
-                >
-                  {data.status}
-                </span>
-              </p>
-            </div>
-            <div className="col-span-2">
-              <span className="text-gray-600">Entry Date:</span>
-              <p className="font-semibold text-gray-900">
-                {data.entryDate ? new Date(data.entryDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                }) : '-'}
-              </p>
-            </div>
           </div>
         </div>
 

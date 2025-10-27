@@ -54,6 +54,7 @@ export interface VehicleOptionsData {
 export interface SellingDetailsData {
   sellingAmount: string;
   mileage: string;
+  priceCategoryId: string;
   entryType: string;
   entryDate: string;
   status: string;
@@ -207,6 +208,7 @@ export const initialVehicleOptions: VehicleOptionsData = {
 export const initialSellingDetails: SellingDetailsData = {
   sellingAmount: '',
   mileage: '',
+  priceCategoryId: '',
   entryType: 'PVC Pvt Ltd.',
   entryDate: new Date().toISOString().split('T')[0],
   status: 'In Sale',
