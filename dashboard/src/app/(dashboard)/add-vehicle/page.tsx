@@ -372,14 +372,14 @@ export default function AddVehiclePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto ">
+      <div className="max-w-7xl mx-auto">
         {/* Step Indicator */}
         {formState.currentStep < 7 && (
           <StepIndicator currentStep={formState.currentStep} completedSteps={completedSteps} />
         )}
 
         {/* Step Content */}
-        <div className="mt-6">
+        <div className="">
         {formState.currentStep === 1 && (
           <Step1VehicleDetails
             data={formState.vehicleDetails}

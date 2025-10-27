@@ -372,7 +372,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6">
+        <div className="flex justify-start gap-4 pt-6">
           <button
             type="button"
             onClick={onBack}

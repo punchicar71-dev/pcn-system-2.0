@@ -1,9 +1,16 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface Vehicle {
   id: string
@@ -18,16 +25,48 @@ interface Vehicle {
   fuel_type: string
   status: string
   created_at: string
+  body_type?: string
+  engine_capacity?: string
+  exterior_color?: string
+  registered_year?: number
+  entry_type?: string
+  entry_date?: string
+  seller_name?: string
+  seller_mobile?: string
+  seller_email?: string
+}
+
+interface VehicleImage {
+  id: string
+  image_url: string
+  is_primary: boolean
+  display_order: number
+  image_type?: string
+}
+
+interface VehicleOption {
+  option_name: string
 }
 
 export default function InventoryPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(5)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
+  const [vehicleImages, setVehicleImages] = useState<VehicleImage[]>([])
+  const [documentImages, setDocumentImages] = useState<VehicleImage[]>([])
+  const [vehicleOptions, setVehicleOptions] = useState<VehicleOption[]>([])
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalLoading, setModalLoading] = useState(false)
+  const [sellerDetails, setSellerDetails] = useState<any>(null)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
   // Fetch vehicles from database
   useEffect(() => {
@@ -59,6 +98,192 @@ export default function InventoryPage() {
     }
   }
 
+  // Fetch vehicle details for modal
+  const fetchVehicleDetails = async (vehicleId: string) => {
+    try {
+      setModalLoading(true)
+      setIsModalOpen(true)
+      
+      // Fetch vehicle details from the view first (which already has all the data)
+      const vehicleFromList = vehicles.find(v => v.id === vehicleId)
+      
+      // Fetch complete vehicle record
+      const { data: vehicleData, error: vehicleError } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('id', vehicleId)
+        .single()
+
+      if (vehicleError) {
+        console.error('Vehicle fetch error:', vehicleError)
+        throw vehicleError
+      }
+
+      // Fetch brand
+      const { data: brandData } = await supabase
+        .from('vehicle_brands')
+        .select('name')
+        .eq('id', vehicleData.brand_id)
+        .single()
+
+      // Fetch model
+      const { data: modelData } = await supabase
+        .from('vehicle_models')
+        .select('name')
+        .eq('id', vehicleData.model_id)
+        .single()
+
+      // Fetch country
+      const { data: countryData } = await supabase
+        .from('countries')
+        .select('name')
+        .eq('id', vehicleData.country_id)
+        .single()
+
+      // Fetch seller details - sellers table has vehicle_id foreign key
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .maybeSingle()
+
+      if (sellerError) {
+        console.error('Seller fetch error:', sellerError)
+      }
+      if (sellerData) {
+        console.log('Seller data fetched:', sellerData)
+      } else {
+        console.log('No seller found for vehicle:', vehicleId)
+      }
+
+      // Fetch vehicle images
+      const { data: imagesData } = await supabase
+        .from('vehicle_images')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('display_order', { ascending: true })
+
+      // Separate vehicle images from document images
+      // Only show 'gallery' images in slideshow
+      const vehiclePhotos = imagesData?.filter(img => 
+        img.image_type === 'gallery'
+      ) || []
+      
+      // CR Paper and Documents for download
+      const documentPhotos = imagesData?.filter(img => 
+        img.image_type === 'cr_paper' || img.image_type === 'document'
+      ) || []
+
+      console.log('All images:', imagesData)
+      console.log('Vehicle photos (gallery):', vehiclePhotos)
+      console.log('Document photos:', documentPhotos)
+
+      // Fetch vehicle options
+      const { data: optionsData } = await supabase
+        .from('vehicle_options')
+        .select('option_id')
+        .eq('vehicle_id', vehicleId)
+
+      // Fetch option names
+      let optionNames: VehicleOption[] = []
+      if (optionsData && optionsData.length > 0) {
+        const optionIds = optionsData.map(opt => opt.option_id)
+        const { data: masterOptions } = await supabase
+          .from('vehicle_options_master')
+          .select('id, option_name')
+          .in('id', optionIds)
+        
+        optionNames = masterOptions?.map(opt => ({ option_name: opt.option_name })) || []
+      }
+
+      // Transform the data
+      const transformedVehicle = {
+        ...vehicleData,
+        brand_name: brandData?.name || vehicleFromList?.brand_name || '',
+        model_name: modelData?.name || vehicleFromList?.model_name || '',
+        country_name: countryData?.name || vehicleFromList?.country_name || '',
+      }
+
+      setSelectedVehicle(transformedVehicle)
+      setSellerDetails(sellerData)
+      setVehicleImages(vehiclePhotos)
+      setDocumentImages(documentPhotos)
+      setVehicleOptions(optionNames)
+      setCurrentImageIndex(0)
+      setIsAutoPlaying(true)
+      
+      console.log('Final state - Seller Details:', sellerData)
+      console.log('Final state - Selected Vehicle:', transformedVehicle)
+    } catch (error: any) {
+      console.error('Error fetching vehicle details:', error)
+      alert(`Failed to load vehicle details: ${error.message || 'Unknown error'}`)
+      setIsModalOpen(false)
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  // Autoplay effect for image carousel - disabled as we're using manual navigation
+  useEffect(() => {
+    // Autoplay disabled for manual navigation with arrows
+    return
+  }, [isModalOpen, isAutoPlaying, vehicleImages.length])
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedVehicle(null)
+    setVehicleImages([])
+    setDocumentImages([])
+    setVehicleOptions([])
+    setSellerDetails(null)
+    setCurrentImageIndex(0)
+    setIsAutoPlaying(false)
+  }
+
+  const nextImage = () => {
+    if (vehicleImages.length > 3) {
+      setCurrentImageIndex((prev) => {
+        if (prev >= vehicleImages.length - 3) {
+          return 0 // Loop back to start
+        }
+        return prev + 1
+      })
+    }
+  }
+
+  const prevImage = () => {
+    if (vehicleImages.length > 3) {
+      setCurrentImageIndex((prev) => {
+        if (prev === 0) {
+          return Math.max(0, vehicleImages.length - 3) // Go to last view
+        }
+        return prev - 1
+      })
+    }
+  }
+
+  const toggleAutoPlay = () => {
+    setIsAutoPlaying(!isAutoPlaying)
+  }
+
+  const downloadDocument = (url: string, filename: string) => {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(link.href)
+      })
+      .catch(error => {
+        console.error('Error downloading document:', error)
+        alert('Failed to download document')
+      })
+  }
+
   // Real-time search filter
   const filteredVehicles = useMemo(() => {
     if (!searchQuery.trim()) return vehicles
@@ -87,11 +312,15 @@ export default function InventoryPage() {
     setCurrentPage(1)
   }, [searchQuery, rowsPerPage])
 
-  // Handle delete
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
-      return
-    }
+  // Handle delete - show confirmation dialog
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  // Confirm delete
+  const confirmDelete = async () => {
+    if (!deleteId) return
 
     try {
       const supabase = createClient()
@@ -99,7 +328,7 @@ export default function InventoryPage() {
       const { error } = await supabase
         .from('vehicles')
         .delete()
-        .eq('id', id)
+        .eq('id', deleteId)
 
       if (error) {
         console.error('Error deleting vehicle:', error)
@@ -109,10 +338,18 @@ export default function InventoryPage() {
 
       alert('Vehicle deleted successfully!')
       fetchVehicles() // Refresh list
+      setIsDeleteDialogOpen(false)
+      setDeleteId(null)
     } catch (error) {
       console.error('Error deleting vehicle:', error)
       alert('An error occurred while deleting the vehicle.')
     }
+  }
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false)
+    setDeleteId(null)
   }
 
   // Format currency
@@ -145,7 +382,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -270,7 +507,7 @@ export default function InventoryPage() {
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => router.push(`/inventory/${vehicle.id}`)}
+                          onClick={() => fetchVehicleDetails(vehicle.id)}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                           title="View Details"
                         >
@@ -284,7 +521,7 @@ export default function InventoryPage() {
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(vehicle.id)}
+                          onClick={() => handleDeleteClick(vehicle.id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded"
                           title="Delete"
                         >
@@ -384,6 +621,276 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
+
+      {/* Vehicle Details Modal */}
+      <Dialog open={isModalOpen} onOpenChange={closeModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {modalLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : selectedVehicle && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold text-gray-900">Vehicle Details</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* Image Carousel with Navigation Arrows */}
+                {vehicleImages.length > 0 && (
+                  <div className="relative w-full">
+                    <div className="flex items-center p-3 border rounded-lg bg-gray-50  gap-2">
+                      {/* Left Arrow */}
+                      <button
+                        onClick={prevImage}
+                        className="flex-shrink-0 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center transition-colors border border-gray-300"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-700" />
+                      </button>
+                      
+                      {/* Images Container - Show 3 images */}
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex gap-3">
+                          {vehicleImages.slice(currentImageIndex, currentImageIndex + 3).map((image, index) => (
+                            <div
+                              key={image.id}
+                              className="flex-shrink-0 w-[240px] h-[140px] bg-gray-100 rounded-md overflow-hidden border border-gray-200"
+                            >
+                              <Image
+                                src={image.image_url || '/placeholder-car.jpg'}
+                                alt={`Vehicle image ${currentImageIndex + index + 1}`}
+                                width={240}
+                                height={140}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right Arrow */}
+                      <button
+                        onClick={nextImage}
+                        className="flex-shrink-0 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center transition-colors border border-gray-300"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-700" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Vehicle Title and Download Button */}
+                <div className="flex items-center py-4 justify-between">
+                  <h2 className="text-lg font-semibold text-gray-600">
+                    {selectedVehicle.brand_name} {selectedVehicle.model_name} {selectedVehicle.manufacture_year} <span className="text-gray-900">- {selectedVehicle.vehicle_number}</span>
+                  </h2>
+                  
+                  {/* Download CR Paper Button */}
+                  {documentImages.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const crPaper = documentImages.find(doc => doc.image_type === 'cr_paper')
+                        if (crPaper) {
+                          downloadDocument(crPaper.image_url, `${selectedVehicle.vehicle_number}_CR_Paper.jpg`)
+                        }
+                      }}
+                      className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm rounded transition-colors"
+                    >
+                      Download CR Paper
+                    </button>
+                  )}
+                </div>
+
+                {/* Selling Information */}
+                <div className='p-3 border rounded-lg bg-gray-50'>
+                  <h3 className="text-base font-semibold mb-3 text-gray-900">Selling Information</h3>
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-2">
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-28">Selling Price</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(selectedVehicle.selling_amount)}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-28">Entry Date</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {selectedVehicle.entry_date ? new Date(selectedVehicle.entry_date).toLocaleDateString('en-GB').replace(/\//g, '.') : '-'}
+                      </span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-28">Mileage</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.mileage ? `Km. ${selectedVehicle.mileage.toLocaleString()}` : '-'}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-28">Status</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.status}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-28">Entry Type</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.entry_type || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seller Details - Always show section */}
+                <div className='p-3 border rounded-lg bg-gray-50'>
+                  <h3 className="text-base font-semibold mb-3 text-gray-900">Seller Details</h3>
+                  {sellerDetails ? (
+                    <div className="space-y-2">
+                      <div className="flex items-start">
+                        <svg className="w-4 h-4 text-gray-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <div className="flex min-w-0">
+                          <span className="text-sm text-gray-600 w-20 flex-shrink-0">Name</span>
+                          <span className="text-sm font-medium text-gray-900 ml-2">{sellerDetails.full_name || '-'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <svg className="w-4 h-4 text-gray-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <div className="flex min-w-0">
+                          <span className="text-sm text-gray-600 w-20 flex-shrink-0">Address</span>
+                          <span className="text-sm font-medium text-gray-900 ml-2">{sellerDetails.address || '-'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <svg className="w-4 h-4 text-gray-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <div className="flex min-w-0">
+                          <span className="text-sm text-gray-600 w-20 flex-shrink-0">Mobile</span>
+                          <span className="text-sm font-medium text-gray-900 ml-2">{sellerDetails.mobile_number || '-'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <svg className="w-4 h-4 text-gray-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <div className="flex min-w-0">
+                          <span className="text-sm text-gray-600 w-20 flex-shrink-0">Telephone</span>
+                          <span className="text-sm font-medium text-gray-900 ml-2">{sellerDetails.land_phone_number || '-'}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <svg className="w-4 h-4 text-gray-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                        </svg>
+                        <div className="flex min-w-0">
+                          <span className="text-sm text-gray-600 w-20 flex-shrink-0">NIC</span>
+                          <span className="text-sm font-medium text-gray-900 ml-2">{sellerDetails.nic_number || '-'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No seller information available for this vehicle.</p>
+                  )}
+                </div>
+
+                {/* Vehicle Detail */}
+                <div className='p-3 border rounded-lg bg-gray-50'>
+                  <h3 className="text-base font-semibold mb-3 text-gray-900">Vehicle Detail</h3>
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-2">
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Manufacture Year</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.manufacture_year}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Engine Capacity</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.engine_capacity || '-'}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Country</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.country_name}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Exterior Color</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.exterior_color || '-'}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Fuel type</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.fuel_type}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Registered Year</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.registered_year || '-'}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Transmission</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.transmission}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-sm text-gray-600 w-36">Body Type</span>
+                      <span className="text-sm text-gray-600 mx-2">:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedVehicle.body_type || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle Options */}
+                {vehicleOptions.length > 0 && (
+                  <div className='p-3 border rounded-lg bg-gray-50'>
+                    <h3 className="text-base font-semibold mb-3 text-gray-900">Vehicle Options</h3>
+                    <div className="grid grid-cols-3 gap-x-6 gap-y-2">
+                      {vehicleOptions.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm text-gray-700">{option.option_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Delete Vehicle Details</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Are you sure delete this?</h3>
+            <p className="text-gray-600">
+              Are you sure you want to permanently delete this Vehicle Details? This action cannot be undone.
+            </p>
+            
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                onClick={cancelDelete}
+                className="flex-1 bg-white hover:bg-gray-50 text-gray-900 font-semibold py-3 px-6 rounded-lg border-2 border-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
