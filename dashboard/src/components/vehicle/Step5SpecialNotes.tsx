@@ -59,31 +59,6 @@ export default function Step5SpecialNotes({ data, onChange, onNext, onBack }: St
           </p>
         </div>
 
-        {/* Preview */}
-        {(data.tagNotes || data.specialNotePrint) && (
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Notes Preview</h3>
-            
-            {data.tagNotes && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-gray-600 mb-1">Tag Notes (Internal)</p>
-                <div className="bg-white p-3 rounded border text-sm text-gray-700">
-                  {data.tagNotes}
-                </div>
-              </div>
-            )}
-
-            {data.specialNotePrint && (
-              <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Special Note for Print (Customer-facing)</p>
-                <div className="bg-white p-3 rounded border text-sm text-gray-700">
-                  {data.specialNotePrint}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Navigation Buttons */}
         <div className="flex justify-between pt-6">
           <button
