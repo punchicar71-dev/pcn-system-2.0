@@ -1,133 +1,145 @@
-import { DollarSign } from 'lucide-react'
+'use client';
+
+import { DollarSign } from 'lucide-react';
+import { useState } from 'react';
+import SellVehicleStepIndicator from '@/components/sell-vehicle/SellVehicleStepIndicator';
+import CustomerDetails from '@/components/sell-vehicle/CustomerDetails';
+import SellingInfo from '@/components/sell-vehicle/SellingInfo';
+import Confirmation from '@/components/sell-vehicle/Confirmation';
+import { createClient } from '@/lib/supabase-client';
 
 export default function SellVehiclePage() {
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  
+  const [customerData, setCustomerData] = useState({
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    nicNumber: '',
+    mobileNumber: '',
+    landPhoneNumber: '',
+    emailAddress: '',
+  });
+
+  const [sellingData, setSellingData] = useState({
+    searchVehicle: '',
+    selectedVehicle: null as any,
+    sellingAmount: '',
+    advanceAmount: '',
+    paymentType: '',
+    inHouseSalesAgent: '',
+    thirdPartySalesAgent: '',
+  });
+
+  const handleCustomerDataChange = (field: string, value: string) => {
+    setCustomerData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSellingDataChange = (field: string, value: any) => {
+    setSellingData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleNextFromCustomerDetails = () => {
+    setCompletedSteps([1]);
+    setCurrentStep(2);
+  };
+
+  const handleBackFromSellingInfo = () => {
+    setCurrentStep(1);
+  };
+
+  const handleSubmitSale = async () => {
+    try {
+      const supabase = createClient();
+      
+      const saleData = {
+        vehicle_id: sellingData.selectedVehicle?.id,
+        customer_first_name: customerData.firstName,
+        customer_last_name: customerData.lastName,
+        customer_address: customerData.address || null,
+        customer_city: customerData.city || null,
+        customer_nic: customerData.nicNumber || null,
+        customer_mobile: customerData.mobileNumber,
+        customer_landphone: customerData.landPhoneNumber || null,
+        customer_email: customerData.emailAddress || null,
+        selling_amount: parseFloat(sellingData.sellingAmount),
+        advance_amount: sellingData.advanceAmount ? parseFloat(sellingData.advanceAmount) : 0,
+        payment_type: sellingData.paymentType,
+        sales_agent_id: sellingData.inHouseSalesAgent || null,
+        third_party_agent: sellingData.thirdPartySalesAgent || null,
+        status: 'pending',
+      };
+
+      // Insert into pending_vehicle_sales table
+      const { data, error } = await supabase
+        .from('pending_vehicle_sales')
+        .insert([saleData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating sale:', error);
+        alert('Failed to create sale: ' + error.message);
+        return;
+      }
+
+      // Update vehicle status to 'Pending Sale' so it disappears from inventory
+      const { error: updateError } = await supabase
+        .from('vehicles')
+        .update({ status: 'Pending Sale' })
+        .eq('id', sellingData.selectedVehicle?.id);
+
+      if (updateError) {
+        console.error('Error updating vehicle status:', updateError);
+        // Continue anyway - sale was recorded
+      }
+
+      // Success - move to confirmation step
+      setCompletedSteps([1, 2]);
+      setCurrentStep(3);
+    } catch (error) {
+      console.error('Error creating sale:', error);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <DollarSign className="w-8 h-8 text-green-600" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sell Vehicle</h1>
-          <p className="text-gray-600">Record a new vehicle sale</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <form className="space-y-6">
-          {/* Vehicle Selection */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Vehicle</h3>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>Select a vehicle from inventory</option>
-            </select>
-          </div>
+      <SellVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />
 
-          {/* Customer Information */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Customer name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="customer@email.com"
-                />
-              </div>
+      <div className="max-w-7xl mx-auto ">
+        {currentStep === 1 && (
+          <CustomerDetails
+            formData={customerData}
+            onChange={handleCustomerDataChange}
+            onNext={handleNextFromCustomerDetails}
+          />
+        )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
+        {currentStep === 2 && (
+          <SellingInfo
+            formData={sellingData}
+            onChange={handleSellingDataChange}
+            onBack={handleBackFromSellingInfo}
+            onSubmit={handleSubmitSale}
+          />
+        )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Customer address"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Sale Details */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sale Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sale Price
-                </label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="$0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Payment Method
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>Cash</option>
-                  <option>Finance</option>
-                  <option>Credit Card</option>
-                  <option>Bank Transfer</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Additional sale notes..."
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Complete Sale
-            </button>
-          </div>
-        </form>
+        {currentStep === 3 && sellingData.selectedVehicle && (
+          <Confirmation
+            vehicleData={{
+              brand: sellingData.selectedVehicle.brand_name,
+              model: sellingData.selectedVehicle.model_name,
+              year: sellingData.selectedVehicle.manufacture_year,
+              vehicleNumber: sellingData.selectedVehicle.vehicle_number,
+            }}
+          />
+        )}
       </div>
     </div>
-  )
+  );
 }

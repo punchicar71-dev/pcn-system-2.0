@@ -366,13 +366,12 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
       // 2. Update Seller Data
       if (sellerData) {
         if (sellerData.id) {
-          // Update existing seller
+          // Update existing seller (full_name is auto-generated, don't include it)
           const { error: sellerError } = await supabase
             .from('sellers')
             .update({
               first_name: sellerData.first_name,
               last_name: sellerData.last_name,
-              full_name: `${sellerData.first_name} ${sellerData.last_name}`,
               address: sellerData.address,
               city: sellerData.city,
               nic_number: sellerData.nic_number,
@@ -385,14 +384,13 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
 
           if (sellerError) throw sellerError
         } else {
-          // Insert new seller
+          // Insert new seller (full_name is auto-generated, don't include it)
           const { error: sellerError } = await supabase
             .from('sellers')
             .insert({
               vehicle_id: vehicleId!,
               first_name: sellerData.first_name,
               last_name: sellerData.last_name,
-              full_name: `${sellerData.first_name} ${sellerData.last_name}`,
               address: sellerData.address,
               city: sellerData.city,
               nic_number: sellerData.nic_number,
@@ -894,7 +892,13 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.first_name || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, first_name: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: e.target.value,
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: sellerData?.mobile_number || ''
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -904,7 +908,13 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.last_name || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, last_name: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: e.target.value,
+                      mobile_number: sellerData?.mobile_number || ''
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -914,7 +924,14 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.address || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, address: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: sellerData?.mobile_number || '',
+                      address: e.target.value
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -924,7 +941,14 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.city || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, city: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: sellerData?.mobile_number || '',
+                      city: e.target.value
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -934,7 +958,14 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.nic_number || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, nic_number: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: sellerData?.mobile_number || '',
+                      nic_number: e.target.value
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -944,7 +975,13 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.mobile_number || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, mobile_number: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: e.target.value
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -954,7 +991,14 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="text"
                     value={sellerData?.land_phone_number || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, land_phone_number: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: sellerData?.mobile_number || '',
+                      land_phone_number: e.target.value
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
@@ -964,7 +1008,14 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                   <input
                     type="email"
                     value={sellerData?.email_address || ''}
-                    onChange={(e) => setSellerData({ ...sellerData!, email_address: e.target.value })}
+                    onChange={(e) => setSellerData({ 
+                      ...sellerData,
+                      vehicle_id: vehicleId!,
+                      first_name: sellerData?.first_name || '',
+                      last_name: sellerData?.last_name || '',
+                      mobile_number: sellerData?.mobile_number || '',
+                      email_address: e.target.value
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>

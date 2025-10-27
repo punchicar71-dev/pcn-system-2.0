@@ -179,7 +179,34 @@ pcn/
 
 ## Recent Updates (v2.0)
 
-### 🚀 Comprehensive Edit Vehicle Modal (Latest - October 2025)
+### 🎯 Sell Vehicle & Sales Transactions Module (Latest - October 27, 2025)
+✅ **Complete Sales Management System**:
+- **3-Step Vehicle Selling Wizard**:
+  - **Step 1: Customer Details** - Capture buyer information (name, NIC, contact, address)
+  - **Step 2: Selling Information** - Vehicle search with autocomplete, pricing, payment type, sales agent
+  - **Step 3: Confirmation** - Success screen with sale summary
+- **Real-time Vehicle Search**: 
+  - Autocomplete from inventory (only "In Sale" vehicles)
+  - Display vehicle details card with images
+  - Show seller information
+- **Sales Transactions Page**:
+  - **Pending Vehicles Tab**: View all pending vehicle sales
+  - **Sold Out Vehicle Tab**: View completed sales history
+  - Search by vehicle number, brand, or model
+  - Pagination with customizable rows per page
+  - Action buttons: View Detail, Sold Out, Delete
+- **Automatic Inventory Management**:
+  - Vehicle status automatically changes to "Pending Sale" when sold
+  - Vehicles disappear from inventory after sale
+  - Vehicles reappear in inventory if sale is deleted
+  - Status changes to "Sold" when marked as sold out
+- **Database Integration**:
+  - New `pending_vehicle_sales` table with customer and sale data
+  - Foreign key relationships with vehicles and sales_agents
+  - Row Level Security (RLS) policies for data protection
+  - Real-time updates across all pages
+
+### 🚀 Comprehensive Edit Vehicle Modal (October 2025)
 ✅ **Full-Featured Edit Functionality in Inventory**:
 - **4-Tab Modal Interface**:
   - Vehicle Details: Complete vehicle info editing with image management

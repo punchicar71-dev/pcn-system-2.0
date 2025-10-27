@@ -207,3 +207,70 @@ export interface VehicleFormData {
   tag_notes: string
   special_note_print: string
 }
+
+// ==========================================
+// SALES TRANSACTIONS TYPES
+// ==========================================
+
+export interface PendingVehicleSale {
+  id: string
+  vehicle_id: string
+  customer_first_name: string
+  customer_last_name: string
+  customer_address?: string
+  customer_city?: string
+  customer_nic?: string
+  customer_mobile: string
+  customer_landphone?: string
+  customer_email?: string
+  selling_amount: number
+  advance_amount?: number
+  payment_type: 'Cash' | 'Leasing' | 'Bank Transfer' | 'Check'
+  sales_agent_id?: string
+  third_party_agent?: string
+  status: 'pending' | 'sold'
+  created_at: string
+  updated_at: string
+  created_by?: string
+}
+
+export interface SoldVehicle {
+  id: string
+  pending_sale_id: string
+  vehicle_id: string
+  customer_first_name: string
+  customer_last_name: string
+  customer_address?: string
+  customer_city?: string
+  customer_nic?: string
+  customer_mobile: string
+  customer_landphone?: string
+  customer_email?: string
+  selling_amount: number
+  advance_amount?: number
+  payment_type: 'Cash' | 'Leasing' | 'Bank Transfer' | 'Check'
+  sales_agent_id?: string
+  third_party_agent?: string
+  sold_date: string
+  created_at: string
+  updated_at: string
+  created_by?: string
+}
+
+export interface SalesTransactionView {
+  id: string
+  vehicle_number: string
+  brand_name: string
+  model_name: string
+  manufacture_year: number
+  customer_name: string
+  customer_mobile: string
+  selling_amount: number
+  advance_amount?: number
+  payment_type: string
+  sales_agent_name?: string
+  third_party_agent?: string
+  status: string
+  created_at: string
+}
+

@@ -32,7 +32,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-white">
       {/* Sidebar - 260px width */}
-      <aside className="fixed inset-y-0 left-0 w-[260px] bg-white border-r">
+      <aside className="fixed inset-y-0 left-0 w-[260px] pt-3 bg-white border-r">
         <div className="flex flex-col h-full">
           {/* Logo Section - 50px height */}
           <div className="h-[50px] flex items-center px-5 ">

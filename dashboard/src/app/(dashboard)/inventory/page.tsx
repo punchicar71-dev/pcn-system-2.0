@@ -86,6 +86,7 @@ export default function InventoryPage() {
       const { data, error } = await supabase
         .from('vehicle_inventory_view')
         .select('*')
+        .in('status', ['In Sale', 'In Transit'])  // Only show available vehicles
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -395,7 +396,7 @@ export default function InventoryPage() {
         <div className="flex items-center gap-3">
         
           <div className=''>
-            <h1 className="text-2xl font-bold text-gray-900 pb-2">Available Vehicle</h1>
+            <h1 className="text-[20px] font-bold text-gray-900 pb-2">Available Vehicle</h1>
             <p className="text-gray-600 text-sm">
               {loading ? 'Loading...' : `${filteredVehicles.length} vehicle${filteredVehicles.length !== 1 ? 's' : ''} found`}
             </p>
@@ -404,7 +405,7 @@ export default function InventoryPage() {
         
         <button 
           onClick={() => router.push('/add-vehicle')}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-[14px] rounded-lg hover:bg-gray-600 transition-colors"
         >
           <Plus className="w-5 h-5" />
           Add New Vehicle
