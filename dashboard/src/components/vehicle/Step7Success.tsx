@@ -29,7 +29,7 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+    <div className="bg-white  p-8 text-center">
       {/* Success Animation */}
       <div className="mb-6 relative">
         <div className="inline-block">

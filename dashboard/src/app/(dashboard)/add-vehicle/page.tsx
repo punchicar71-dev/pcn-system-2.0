@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase-client';
 import StepIndicator from '@/components/vehicle/StepIndicator';
 import Step1VehicleDetails from '@/components/vehicle/Step1VehicleDetails';
@@ -372,22 +371,15 @@ export default function AddVehiclePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4 py-6">
-      <div className="flex items-center gap-3">
-        <PlusCircle className="w-8 h-8 text-green-600" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Add New Vehicle</h1>
-          <p className="text-gray-600">Complete all steps to add vehicle to inventory</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto ">
+        {/* Step Indicator */}
+        {formState.currentStep < 7 && (
+          <StepIndicator currentStep={formState.currentStep} completedSteps={completedSteps} />
+        )}
 
-      {/* Step Indicator */}
-      {formState.currentStep < 7 && (
-        <StepIndicator currentStep={formState.currentStep} completedSteps={completedSteps} />
-      )}
-
-      {/* Step Content */}
-      <div className="mt-6">
+        {/* Step Content */}
+        <div className="mt-6">
         {formState.currentStep === 1 && (
           <Step1VehicleDetails
             data={formState.vehicleDetails}
@@ -455,6 +447,7 @@ export default function AddVehiclePage() {
             year={formState.vehicleDetails.manufactureYear || 0}
           />
         )}
+      </div>
       </div>
     </div>
   );

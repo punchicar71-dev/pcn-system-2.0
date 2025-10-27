@@ -30,12 +30,12 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-white">
       {/* Sidebar - 260px width */}
-      <aside className="fixed inset-y-0 left-0 w-[260px] bg-white shadow-lg">
+      <aside className="fixed inset-y-0 left-0 w-[260px] bg-white border-r">
         <div className="flex flex-col h-full">
           {/* Logo Section - 50px height */}
-          <div className="h-[50px] flex items-center px-5 border-b">
+          <div className="h-[50px] flex items-center px-5 ">
             <Image 
               src="/logo.png" 
               alt="Punchi Car Niwasa" 
@@ -79,9 +79,8 @@ export default function DashboardLayout({
       {/* Main content - offset by sidebar width */}
       <main className="ml-[260px]">
         {/* Header - 50px height */}
-        <header className="bg-white shadow-sm h-[50px] flex items-center justify-between px-6 sticky top-0 z-10">
+        <header className="bg-white border-b h-[50px] flex items-center justify-between px-6 sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-800">Dashboard</h2>
           </div>
           
           {/* Header Right Side */}
@@ -106,7 +105,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content - Full height body */}
-        <div className="min-h-[calc(100vh-50px)] p-6">
+        <div className="min-h-[calc(100vh-50px)] ">
           {children}
         </div>
       </main>

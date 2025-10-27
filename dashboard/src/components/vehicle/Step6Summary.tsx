@@ -47,7 +47,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white  p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">All Data Summary</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

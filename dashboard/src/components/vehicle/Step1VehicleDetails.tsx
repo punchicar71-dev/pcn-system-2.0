@@ -78,7 +78,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Vehicle Details</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
