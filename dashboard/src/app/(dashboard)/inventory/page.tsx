@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import EditVehicleModal from '@/components/inventory/EditVehicleModal'
 
 interface Vehicle {
   id: string
@@ -67,6 +68,10 @@ export default function InventoryPage() {
   const [modalLoading, setModalLoading] = useState(false)
   const [sellerDetails, setSellerDetails] = useState<any>(null)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  
+  // Edit Modal States
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
 
   // Fetch vehicles from database
   useEffect(() => {
@@ -529,7 +534,10 @@ export default function InventoryPage() {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => router.push(`/inventory/edit/${vehicle.id}`)}
+                          onClick={() => {
+                            setEditVehicleId(vehicle.id)
+                            setIsEditModalOpen(true)
+                          }}
                           className="p-1 text-gray-600 hover:bg-gray-50 rounded"
                           title="Edit"
                         >
@@ -906,6 +914,19 @@ export default function InventoryPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Vehicle Modal */}
+      <EditVehicleModal
+        vehicleId={editVehicleId}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditVehicleId(null)
+        }}
+        onSuccess={() => {
+          fetchVehicles() // Refresh the vehicle list
+        }}
+      />
     </div>
   )
 }
