@@ -25,7 +25,7 @@ export default function StepIndicator({ currentStep, completedSteps }: StepIndic
   };
 
   return (
-    <div className="w-full  bg-white">
+    <div className="w-full bg-white sticky top-[50px] z-20">
       <div className="flex items-center justify-start gap-2 px-6 border-b py-4">
         {/* Step Circles */}
         {steps.map((step, index) => {
@@ -55,7 +55,7 @@ export default function StepIndicator({ currentStep, completedSteps }: StepIndic
                 <span
                   className={`
                     text-sm font-medium whitespace-nowrap
-                    ${isCurrent ? 'text-gray-900' : 'text-gray-500'}
+                    ${isCurrent || isCompleted ? 'text-green-600' : 'text-gray-500'}
                   `}
                 >
                   {step.title}
