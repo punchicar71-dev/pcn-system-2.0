@@ -93,10 +93,12 @@ pcn/
     - Edit any section before publishing
     - One-click publish to inventory
 - **Inventory Management**: 
-  - Search and filter vehicles (by brand, model, number)
+  - **Smart Search**: Real-time search by Vehicle Number, Brand, and Model with clear button
+  - **Search Results Counter**: Shows number of matching vehicles
   - Status tracking (In Sale, Out of Sale, Sold, Reserved)
   - Pagination with customizable rows per page (5, 10, 25, 50)
   - Quick actions (View, Edit, Delete)
+  - **Modern Black Theme**: Clean black buttons and consistent gray focus states
   - **Vehicle Details Modal**:
     - Image carousel with navigation arrows (shows 3 images at a time)
     - Complete vehicle information display
@@ -152,7 +154,27 @@ pcn/
 
 ## Recent Updates (v2.0)
 
-### 🎨 UI/UX Improvements (Latest)
+### 🎨 UI/UX Improvements (Latest - October 2025)
+✅ **Inventory Page Black Theme & Enhanced Search**:
+- **Black Theme Implementation**:
+  - Primary buttons changed from blue to black for modern aesthetic
+  - Updated "Add New Vehicle" button with black background
+  - Pagination active state changed from blue to black/gray
+  - Consistent black theme across all primary actions
+  - Pure black (0 0% 0%) with white text for maximum contrast
+- **Enhanced Search Functionality**:
+  - Smart search filtering by Vehicle Number, Brand, and Model
+  - Clear search button (X icon) appears when typing
+  - Real-time search results counter showing matches
+  - Improved placeholder text for better user guidance
+  - Fixed search box width (500px) for optimal layout
+- **UI Polish**:
+  - Removed Package icon from header for cleaner look
+  - Changed table border from shadow to simple border
+  - Updated focus ring colors from blue to gray throughout
+  - Modified view icon color from blue to gray for consistency
+  - Better spacing and layout in header section
+
 ✅ Enhanced styling and layout consistency:
 - **Modal Improvements**: Optimized vehicle details modal with clean spacing
 - **Form Layout**: Improved button alignment in add vehicle form
