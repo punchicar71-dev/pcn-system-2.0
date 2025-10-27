@@ -9,7 +9,7 @@ import CountriesTab from '@/components/settings/CountriesTab'
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
       
 
       <Tabs defaultValue="brands" className="w-full">

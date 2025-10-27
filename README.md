@@ -61,16 +61,41 @@ pcn/
 - Quick action buttons for common tasks
 
 #### 🚗 Vehicle Management
-- **Add Vehicle**: Complete vehicle addition form
-  - Vehicle information (Brand, Model, Year, VIN)
-  - Pricing and mileage details
-  - Description and features
-  - Image uploads
+- **Add Vehicle**: Complete 6-step vehicle addition wizard
+  - **Step 1: Vehicle Information**
+    - Brand and Model selection
+    - VIN/Chassis number
+    - Manufacture and registered year
+    - Country of origin
+  - **Step 2: Seller Information**
+    - Personal details (Name, NIC, Address)
+    - Contact information (Mobile, Email, Landline)
+  - **Step 3: Technical Specifications**
+    - Body type (SUV, Sedan, Hatchback, etc.)
+    - Fuel type (Petrol, Diesel, Hybrid, EV)
+    - Transmission (Automatic, Manual)
+    - Engine capacity
+    - Exterior color
+    - Mileage
+  - **Step 4: Vehicle Options**
+    - Standard options (A/C, Bluetooth, Alloy Wheels, etc.)
+    - Special options (Full Option, Crystal Light, etc.)
+    - Custom options (free text)
+  - **Step 5: Image Upload**
+    - Multiple image upload with drag & drop
+    - Image preview and management
+    - Gallery images and CR paper/documents
+    - Primary image selection
+  - **Step 6: Review & Publish**
+    - Complete vehicle details preview
+    - Edit any section before publishing
+    - One-click publish to inventory
 - **Inventory Management**: 
   - Search and filter vehicles
-  - Status tracking (Available, Sold, Pending)
+  - Status tracking (In Sale, Out of Sale, Sold, Reserved)
   - Bulk actions
   - Export functionality
+  - Vehicle detail view with all information
 
 #### 💰 Sales Management
 - **Sell Vehicle**: Sales transaction form
@@ -117,7 +142,34 @@ pcn/
 
 ## Recent Updates (v2.0)
 
-### Settings Module Enhancements
+### 🚗 Complete Vehicle Management System
+✅ Full vehicle inventory management with:
+- **Add Vehicle Module**: 6-step wizard for adding vehicles
+  - Step 1: Vehicle Information (Brand, Model, Year, VIN)
+  - Step 2: Seller Information (Contact details, documentation)
+  - Step 3: Technical Specifications (Engine, Transmission, Fuel type)
+  - Step 4: Standard & Special Options (Checkboxes for features)
+  - Step 5: Image Upload (Multiple images with drag & drop)
+  - Step 6: Review & Publish (Preview before submission)
+- **Database Integration**: Complete Supabase setup with 9 tables
+- **Image Storage**: Supabase Storage for vehicle images
+- **Form Validation**: Comprehensive validation with React Hook Form & Zod
+
+### 📊 Database Schema
+✅ Complete database setup with:
+- `vehicles` - Main vehicle inventory
+- `sellers` - Seller information
+- `vehicle_brands` - Vehicle brands (Toyota, Honda, etc.)
+- `vehicle_models` - Models linked to brands
+- `vehicle_options` - Standard & special options
+- `vehicle_custom_options` - Custom features
+- `vehicle_images` - Image storage references
+- `vehicle_options_master` - Master list of available options
+- `countries` - Country data for vehicle origin
+- Row Level Security (RLS) enabled for all tables
+- Storage bucket for vehicle images with public access
+
+### ⚙️ Settings Module Enhancements
 ✅ Optimized Vehicle Brands tab with:
 - Fast data loading with parallel database queries
 - Optimistic UI updates for instant feedback
@@ -127,11 +179,20 @@ pcn/
 - Clean white background design
 - Improved performance with React memoization
 
+### 🎨 UI/UX Improvements
+- Modern 6-step wizard interface for vehicle addition
+- Real-time form validation with helpful error messages
+- Image preview and management
+- Progress indicator showing completion status
+- Responsive design for all screen sizes
+- Toast notifications for user feedback
+
 ### Performance Improvements
 - Reduced database queries by fetching all data in parallel
 - Implemented optimistic UI updates to avoid full page refreshes
 - Used React `useMemo` for efficient filtering and pagination
 - Eliminated N+1 query problems
+- Optimized image upload with Supabase Storage
 
 ## Getting Started
 
@@ -193,22 +254,42 @@ pcn/
 
 5. **Database Setup**
    
-   Run the migration SQL in Supabase SQL Editor:
-   ```bash
-   # The migration file is located at:
-   dashboard/supabase-migration.sql
-   ```
+   **IMPORTANT**: Run the complete database setup script first!
    
-   Or run it via Supabase CLI:
    ```bash
+   # Navigate to dashboard directory
    cd dashboard
-   npx supabase db execute --file supabase-migration.sql
    ```
    
-   This will create:
-   - `vehicle_brands` table
-   - `vehicle_models` table
-   - Proper relationships and indexes
+   **Method 1: Via Supabase Dashboard (Recommended)**
+   1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT_ID/sql/new
+   2. Open file `RUN_THIS_SCRIPT.sql` in VS Code
+   3. Copy all content (Ctrl+A, Ctrl+C)
+   4. Paste into Supabase SQL Editor (Ctrl+V)
+   5. Click **"Run"** button
+   6. Wait 10-15 seconds ⏳
+   7. Verify success message: ✅ DATABASE SETUP COMPLETE!
+   
+   **Method 2: Via Supabase CLI**
+   ```bash
+   npx supabase db execute --file RUN_THIS_SCRIPT.sql
+   ```
+   
+   **What this creates:**
+   - ✅ 9 essential tables (vehicles, sellers, brands, models, etc.)
+   - ✅ Sample data (brands, models, countries, vehicle options)
+   - ✅ Storage bucket for vehicle images
+   - ✅ Row Level Security policies
+   - ✅ Database indexes for performance
+   - ✅ Triggers for automatic timestamp updates
+   - ✅ Inventory view for easy querying
+   
+   **Verification:**
+   The script will show a success message with:
+   - Tables created count
+   - Sample data counts (Brands, Models, Countries, Options)
+   - Storage bucket status
+   - Ready to add vehicles confirmation
 
 6. **Run development servers**
    ```bash
@@ -281,12 +362,47 @@ npm run type-check # TypeScript type checking
 ### Database Schema
 
 Key tables:
+- `vehicles` - Vehicle inventory with complete specifications
+  - Vehicle information (VIN, brand, model, year)
+  - Technical specs (engine, transmission, fuel type)
+  - Pricing and mileage
+  - Entry details and status tracking
+- `sellers` - Seller contact and documentation
+  - Personal information (name, address, NIC)
+  - Contact details (mobile, email, landline)
+  - Linked to vehicles
 - `vehicle_brands` - Vehicle brand information
+  - Brand names (Toyota, Honda, Nissan, etc.)
+  - Active/inactive status
 - `vehicle_models` - Vehicle models linked to brands
-- `vehicles` - Vehicle inventory
-- `sales` - Sales transactions
-- `users` - System users
-- `customers` - Customer information
+  - Model names (Prius, Civic, Leaf, etc.)
+  - Brand relationships
+- `vehicle_options` - Standard and special vehicle features
+  - Linked to vehicle_options_master
+  - Tracks enabled/disabled options per vehicle
+- `vehicle_options_master` - Master list of available options
+  - Standard options (A/C, Bluetooth, Alloy Wheels, etc.)
+  - Special options (Full Option, Crystal Light, etc.)
+  - Custom option support
+- `vehicle_custom_options` - Custom features per vehicle
+  - Free-text custom options
+- `vehicle_images` - Vehicle image storage
+  - Gallery images
+  - CR paper/document images
+  - Primary image designation
+  - Display order management
+- `countries` - Country data for vehicle origin
+  - Japan, UK, Germany, USA, etc.
+- `sales` - Sales transactions (Coming soon)
+- `users` - System users with role-based access
+- `customers` - Customer information (Coming soon)
+
+**Database Features:**
+- Row Level Security (RLS) for data protection
+- Automatic timestamp updates (created_at, updated_at)
+- Foreign key relationships with cascading deletes
+- Optimized indexes for fast queries
+- Inventory view for simplified data access
 
 ## Features Documentation
 
@@ -333,6 +449,12 @@ Make sure to set all environment variables in your deployment platform:
 
 ### Common Issues
 
+**"Could not find the table 'public.vehicles' in the schema cache":**
+- This means the database setup hasn't been run yet
+- Solution: Run the `RUN_THIS_SCRIPT.sql` file in Supabase SQL Editor
+- Follow the steps in [Database Setup](#database-setup) section
+- Refresh your app after running the script
+
 **Port already in use:**
 ```bash
 # Kill process on port 3001
@@ -340,14 +462,27 @@ lsof -ti:3001 | xargs kill -9
 ```
 
 **Supabase connection issues:**
-- Verify your environment variables
+- Verify your environment variables in `.env.local`
 - Check if your Supabase project is active
 - Ensure RLS policies are configured correctly
+- Make sure you've run the database setup script
 
 **Slow data loading:**
 - Check your internet connection
-- Verify database indexes are created
+- Verify database indexes are created (they are in the setup script)
 - Consider implementing caching
+
+**Image upload failures:**
+- Check if the storage bucket `vehicle-images` exists
+- Verify storage policies allow uploads
+- Check file size limits (Supabase free tier has limits)
+- Ensure proper CORS settings in Supabase
+
+**Form validation errors:**
+- All required fields must be filled
+- VIN/Chassis number must be unique
+- Year values must be valid (1900-2100)
+- Check console for specific validation errors
 
 ## Contributing
 
