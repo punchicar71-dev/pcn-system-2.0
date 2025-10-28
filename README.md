@@ -179,8 +179,35 @@ pcn/
 
 ## Recent Updates (v2.0)
 
-### � Latest UI/UX Updates (October 28, 2025)
-✅ **Enhanced Sales Transactions Module - Two-Modal Implementation**:
+### 🎨 Latest Carousel Enhancement (October 28, 2025)
+✅ **Embla Carousel Integration for Vehicle Images**:
+- **Replaced Custom Arrow Navigation**:
+  - Integrated `embla-carousel-react` library for smoother carousel experience
+  - Replaced manual left/right arrows with Embla's built-in navigation
+  - Modern card-based image display with shadcn Card components
+- **Enhanced Modal Image Galleries**:
+  - **Inventory Vehicle Details Modal**: Embla carousel with 3 images visible at a time
+  - **Pending Vehicle Sales Modal**: Embla carousel for gallery images
+  - Navigation arrows positioned outside carousel for better UX
+  - Responsive design with proper spacing and padding
+- **New UI Components Added**:
+  - `carousel.tsx` - Complete Embla carousel wrapper with shadcn styling
+  - `card.tsx` - Card components for image containers
+  - Integrated with existing modal dialogs seamlessly
+- **Improved Sold Out Confirmation**:
+  - New `SoldOutConfirmModal` component replacing browser confirms
+  - Professional modal with clear messaging
+  - Loading states during processing
+  - Note about automatic image deletion after sale
+- **Benefits**:
+  - Smoother touch and swipe gestures on mobile
+  - Better keyboard navigation support
+  - Improved accessibility with ARIA labels
+  - Consistent carousel behavior across all modals
+  - Professional appearance matching shadcn design system
+
+### 🎯 Enhanced Sales Transactions Module - Two-Modal Implementation (October 28, 2025)
+✅ **Complete Sales Management System**:
 - **Separate Modals for Pending and Sold Vehicles**:
   - **PendingVehicleModal**: 
     - Displays full image carousel with 3 images at a time

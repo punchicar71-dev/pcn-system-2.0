@@ -7,6 +7,7 @@ import SoldOutVehiclesTable from '@/components/sales-transactions/SoldOutVehicle
 import PendingVehicleModal from '@/components/sales-transactions/PendingVehicleModal';
 import SoldOutVehicleModal from '@/components/sales-transactions/SoldOutVehicleModal';
 import DeleteConfirmModal from '@/components/sales-transactions/DeleteConfirmModal';
+import SoldOutConfirmModal from '@/components/sales-transactions/SoldOutConfirmModal';
 import { createClient } from '@/lib/supabase-client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -14,8 +15,10 @@ export default function SalesTransactionsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSoldOutModalOpen, setIsSoldOutModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSoldOutProcessing, setIsSoldOutProcessing] = useState(false);
   const [currentTab, setCurrentTab] = useState<'pending' | 'sold'>('pending');
 
   const handleViewDetail = (saleId: string) => {
@@ -27,54 +30,61 @@ export default function SalesTransactionsPage() {
     setCurrentTab(value as 'pending' | 'sold');
   };
 
-  const handleSoldOut = async (saleId: string) => {
-    if (confirm('Are you sure you want to mark this vehicle as sold?')) {
-      try {
-        const supabase = createClient();
-        
-        // First, get the vehicle_id from the pending sale
-        const { data: saleData, error: fetchError } = await supabase
-          .from('pending_vehicle_sales')
-          .select('vehicle_id')
-          .eq('id', saleId)
-          .single();
+  const handleSoldOut = (saleId: string) => {
+    setSelectedSaleId(saleId);
+    setIsSoldOutModalOpen(true);
+  };
 
-        if (fetchError || !saleData) {
-          console.error('Error fetching sale data:', fetchError);
-          alert('Failed to fetch sale data');
-          return;
-        }
+  const handleConfirmSoldOut = async () => {
+    try {
+      setIsSoldOutProcessing(true);
+      const supabase = createClient();
+      
+      // First, get the vehicle_id from the pending sale
+      const { data: saleData, error: fetchError } = await supabase
+        .from('pending_vehicle_sales')
+        .select('vehicle_id')
+        .eq('id', selectedSaleId)
+        .single();
 
-        // Update pending_vehicle_sales status to 'sold'
-        const { error: updateError } = await supabase
-          .from('pending_vehicle_sales')
-          .update({ status: 'sold' })
-          .eq('id', saleId);
-
-        if (updateError) {
-          console.error('Error marking vehicle as sold:', updateError);
-          alert('Failed to mark vehicle as sold: ' + updateError.message);
-          return;
-        }
-
-        // Update vehicle status to 'Sold' in vehicles table
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: 'Sold' })
-          .eq('id', saleData.vehicle_id);
-
-        if (vehicleError) {
-          console.error('Error updating vehicle status:', vehicleError);
-          // Continue anyway - sale status was updated
-        }
-
-        alert('Vehicle marked as sold successfully');
-        // Trigger refresh
-        setRefreshKey(prev => prev + 1);
-      } catch (error) {
-        console.error('Error marking vehicle as sold:', error);
-        alert('An error occurred');
+      if (fetchError || !saleData) {
+        console.error('Error fetching sale data:', fetchError);
+        alert('Failed to fetch sale data');
+        return;
       }
+
+      // Update pending_vehicle_sales status to 'sold'
+      const { error: updateError } = await supabase
+        .from('pending_vehicle_sales')
+        .update({ status: 'sold' })
+        .eq('id', selectedSaleId);
+
+      if (updateError) {
+        console.error('Error marking vehicle as sold:', updateError);
+        alert('Failed to mark vehicle as sold: ' + updateError.message);
+        return;
+      }
+
+      // Update vehicle status to 'Sold' in vehicles table
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({ status: 'Sold' })
+        .eq('id', saleData.vehicle_id);
+
+      if (vehicleError) {
+        console.error('Error updating vehicle status:', vehicleError);
+        // Continue anyway - sale status was updated
+      }
+
+      alert('Vehicle marked as sold successfully');
+      setIsSoldOutModalOpen(false);
+      // Trigger refresh
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error marking vehicle as sold:', error);
+      alert('An error occurred');
+    } finally {
+      setIsSoldOutProcessing(false);
     }
   };
 
@@ -276,6 +286,14 @@ export default function SalesTransactionsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
+      />
+
+      {/* Sold Out Confirmation Modal */}
+      <SoldOutConfirmModal
+        isOpen={isSoldOutModalOpen}
+        onClose={() => setIsSoldOutModalOpen(false)}
+        onConfirm={handleConfirmSoldOut}
+        isLoading={isSoldOutProcessing}
       />
     </div>
   );

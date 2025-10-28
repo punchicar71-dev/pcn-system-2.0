@@ -496,7 +496,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[70%] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Edit Vehicle</DialogTitle>
         </DialogHeader>

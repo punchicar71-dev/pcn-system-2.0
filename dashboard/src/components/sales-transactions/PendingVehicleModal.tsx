@@ -4,6 +4,14 @@ import { X, User, MapPin, Phone, Download, ChevronLeft, ChevronRight, FileDown }
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase-client';
 import { format } from 'date-fns';
 
@@ -247,7 +255,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[70%] max-h-[90vh] overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -293,48 +301,34 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
 
               {/* Vehicle Images Gallery - PENDING VEHICLES HAVE IMAGES */}
               {vehicleImages.length > 0 && (
-                <div className=" rounded-lg ">
+                <div className="rounded-lg border bg-gray-100 border-gray-200 p-4">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Vehicle Images</h3>
                   
                   {/* Image Carousel with Navigation Arrows */}
-                  <div className="relative ">
-                    <div className="flex items-center p-3 border rounded-lg bg-gray-50 gap-2">
-                      {/* Left Arrow */}
-                      <button
-                        onClick={prevImage}
-                        className="flex-shrink-0 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center transition-colors border border-gray-300"
-                      >
-                        <ChevronLeft className="w-5 h-5 text-gray-700" />
-                      </button>
-                      
-                      {/* Images Container - Show 3 images */}
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex gap-3">
-                          {vehicleImages.slice(currentImageIndex, currentImageIndex + 3).map((image, index) => (
-                            <div
-                              key={image.id}
-                              className="flex-shrink-0 w-[240px] h-[140px] bg-gray-100 rounded-md overflow-hidden border border-gray-200"
-                            >
-                              <Image
-                                src={image.image_url || '/placeholder-car.jpg'}
-                                alt={`Vehicle image ${currentImageIndex + index + 1}`}
-                                width={240}
-                                height={140}
-                                className="w-full h-full object-cover"
-                              />
+                  <div className="relative px-12">
+                    <Carousel className="w-full">
+                      <CarouselContent className="-ml-3">
+                        {vehicleImages.map((image, index) => (
+                          <CarouselItem key={image.id} className="pl-3 md:basis-1/2 lg:basis-1/3">
+                            <div className="p-1">
+                              <Card>
+                                <CardContent className="flex aspect-video items-center rounded-lg justify-center p-0 overflow-hidden">
+                                  <Image
+                                    src={image.image_url || '/placeholder-car.jpg'}
+                                    alt={`Vehicle image ${index + 1}`}
+                                    width={240}
+                                    height={140}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </CardContent>
+                              </Card>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Right Arrow */}
-                      <button
-                        onClick={nextImage}
-                        className="flex-shrink-0 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center transition-colors border border-gray-300"
-                      >
-                        <ChevronRight className="w-5 h-5 text-gray-700" />
-                      </button>
-                    </div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                    </Carousel>
                   </div>
                 </div>
               )}

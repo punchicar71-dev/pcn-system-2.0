@@ -169,7 +169,7 @@ export default function SoldOutVehicleModal({ isOpen, onClose, saleId }: SoldOut
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[70%] max-h-[90vh] overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
