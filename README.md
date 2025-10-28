@@ -179,7 +179,7 @@ pcn/
 
 ## Recent Updates (v2.0)
 
-### 🎯 Sell Vehicle & Sales Transactions Module (Latest - October 27, 2025)
+### 🎯 Sell Vehicle & Sales Transactions Module (Latest - October 28, 2025)
 ✅ **Complete Sales Management System**:
 - **3-Step Vehicle Selling Wizard**:
   - **Step 1: Customer Details** - Capture buyer information (name, NIC, contact, address)
@@ -189,12 +189,33 @@ pcn/
   - Autocomplete from inventory (only "In Sale" vehicles)
   - Display vehicle details card with images
   - Show seller information
-- **Sales Transactions Page**:
+- **Sales Transactions Page** (Enhanced):
+  - Modern **shadcn Tabs** component (consistent with Settings page)
   - **Pending Vehicles Tab**: View all pending vehicle sales
   - **Sold Out Vehicle Tab**: View completed sales history
   - Search by vehicle number, brand, or model
   - Pagination with customizable rows per page
-  - Action buttons: View Detail, Sold Out, Delete
+  - Action buttons: View Details, Sold Out, Delete
+- **View Detail Modal** (NEW):
+  - **Image Carousel**: Navigate through vehicle gallery images (3 at a time)
+  - **Download CR Paper**: One-click download of vehicle documents
+  - **Comprehensive Details Display**:
+    - Selling information (price, payment type, sales agent, down payment)
+    - Seller details (name, address, contact)
+    - Buyer details (name, address, contact)
+    - Vehicle specifications (year, country, fuel type, transmission, engine, color)
+    - Vehicle options with checkmark indicators
+  - **Data Integration**:
+    - Fetches seller from `sellers` table via vehicle_id
+    - Fetches country name from `countries` table
+    - Fetches vehicle options with master option names
+    - Gallery images separate from documents
+- **Delete Confirmation Modal** (NEW):
+  - Professional confirmation popup (replaces browser confirm)
+  - Clear warning message
+  - Red delete button with loading state
+  - Cancel option to prevent accidental deletions
+  - Automatically restores vehicle to "In Sale" status
 - **Automatic Inventory Management**:
   - Vehicle status automatically changes to "Pending Sale" when sold
   - Vehicles disappear from inventory after sale
