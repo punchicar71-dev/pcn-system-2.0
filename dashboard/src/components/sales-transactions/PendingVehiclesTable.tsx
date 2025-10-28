@@ -147,7 +147,7 @@ export default function PendingVehiclesTable({
   return (
     <div className="space-y-4">
       {/* Search Field */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="bg-white py-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -161,7 +161,7 @@ export default function PendingVehiclesTable({
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
@@ -221,13 +221,13 @@ export default function PendingVehiclesTable({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onViewDetail(sale.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-600 hover:border-blue-800 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm font-medium text-black hover:text-white border border-gray-300 hover:bg-black rounded-lg transition-colors"
                         >
-                          View Detail
+                          View Details
                         </button>
                         <button
                           onClick={() => onSoldOut(sale.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-green-600 hover:text-green-800 border border-green-600 hover:border-green-800 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm font-medium text-green-600 hover:text-white border border-green-600 hover:bg-green-600 rounded-lg transition-colors"
                         >
                           Sold out
                         </button>
