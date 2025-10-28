@@ -179,7 +179,41 @@ pcn/
 
 ## Recent Updates (v2.0)
 
-### 🎯 Sell Vehicle & Sales Transactions Module (Latest - October 28, 2025)
+### � Latest UI/UX Updates (October 28, 2025)
+✅ **Enhanced Sales Transactions Module - Two-Modal Implementation**:
+- **Separate Modals for Pending and Sold Vehicles**:
+  - **PendingVehicleModal**: 
+    - Displays full image carousel with 3 images at a time
+    - Left/Right navigation arrows for browsing images
+    - CR Paper download button for vehicle documents
+    - Complete vehicle, seller, and buyer details
+    - Export data to CSV functionality
+    - Modern horizontal carousel design
+  - **SoldOutVehicleModal**:
+    - Clean layout without image gallery (images auto-deleted)
+    - Information notice explaining image removal
+    - Complete sale details preserved
+    - Export data to CSV functionality
+    - Sold date display instead of creation date
+- **Automatic Image Management**:
+  - Database trigger automatically deletes vehicle images when marked as sold
+  - Images remain available during pending phase
+  - CR papers and documents handled separately
+  - Images filtered by type (gallery vs. documents)
+- **Improved Table Styling**:
+  - Updated Tailwind CSS classes for better visual consistency
+  - Enhanced responsive design for mobile devices
+  - Cleaner card-based layouts
+  - Improved spacing and padding throughout
+
+✅ **Tailwind CSS Refinements**:
+- Updated component styling across Sales Transactions tables
+- Improved button hover states and transitions
+- Enhanced modal layouts with better spacing
+- Fixed responsive design issues on smaller screens
+- Consistent color scheme throughout the application
+
+### 🎯 Sell Vehicle & Sales Transactions Module (October 28, 2025)
 ✅ **Complete Sales Management System**:
 - **3-Step Vehicle Selling Wizard**:
   - **Step 1: Customer Details** - Capture buyer information (name, NIC, contact, address)
