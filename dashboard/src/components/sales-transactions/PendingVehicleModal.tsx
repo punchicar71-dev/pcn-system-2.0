@@ -1,20 +1,24 @@
 'use client';
 
-import { X, User, MapPin, Phone, Download } from 'lucide-react';
+import { X, User, MapPin, Phone, Download, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { createClient } from '@/lib/supabase-client';
 import { format } from 'date-fns';
 
-interface ViewDetailModalProps {
+interface PendingVehicleModalProps {
   isOpen: boolean;
   onClose: () => void;
   saleId: string;
 }
 
-export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailModalProps) {
+export default function PendingVehicleModal({ isOpen, onClose, saleId }: PendingVehicleModalProps) {
   const [saleData, setSaleData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [vehicleImages, setVehicleImages] = useState<any[]>([]);
+  const [crImages, setCrImages] = useState<any[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     if (isOpen && saleId) {
@@ -91,12 +95,85 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
         }
       }
 
+      // Fetch vehicle images for pending vehicles
+      if (vehicle?.id) {
+        const { data: imagesData } = await supabase
+          .from('vehicle_images')
+          .select('*')
+          .eq('vehicle_id', vehicle.id)
+          .order('is_primary', { ascending: false })
+          .order('created_at', { ascending: true });
+
+        if (imagesData && imagesData.length > 0) {
+          // Separate gallery images from CR/document images
+          const galleryImages = imagesData.filter(img => img.image_type === 'gallery');
+          const crDocImages = imagesData.filter(img => img.image_type === 'cr_paper' || img.image_type === 'document');
+          
+          setVehicleImages(galleryImages);
+          setCrImages(crDocImages);
+          setCurrentImageIndex(0);
+        }
+      }
+
       setSaleData(sale);
     } catch (error) {
       console.error('Error fetching sale details:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePreviousImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? vehicleImages.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === vehicleImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => Math.max(prev - 3, 0));
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => {
+      const maxIndex = Math.max(0, vehicleImages.length - 3);
+      return Math.min(prev + 3, maxIndex);
+    });
+  };
+
+  const downloadCRImages = () => {
+    if (crImages.length === 0) {
+      alert('No CR or document images available');
+      return;
+    }
+
+    // If only one image, download directly
+    if (crImages.length === 1) {
+      const link = document.createElement('a');
+      link.href = crImages[0].image_url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.download = crImages[0].file_name || `cr-paper-${Date.now()}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    // Multiple images - open each in new tab
+    crImages.forEach((image, index) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = image.image_url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.download = image.file_name || `cr-paper-${index + 1}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, index * 300); // Stagger downloads to prevent browser blocking
+    });
   };
 
   const exportToCSV = () => {
@@ -124,7 +201,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
       ['Payment Type', saleData.payment_type || 'N/A'],
       ['Sales Agent', saleData.sales_agents?.name || saleData.third_party_agent || 'N/A'],
       ['Status', saleData.status || 'N/A'],
-      ['Sold Date', saleData.updated_at ? format(new Date(saleData.updated_at), 'yyyy-MM-dd') : 'N/A'],
+      ['Created Date', saleData.created_at ? format(new Date(saleData.created_at), 'yyyy-MM-dd') : 'N/A'],
       [''],
       ['Seller Information', ''],
       ['Seller Name', vehicle?.seller ? `${vehicle.seller.first_name} ${vehicle.seller.last_name}` : 'N/A'],
@@ -166,6 +243,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
   if (!saleData) return null;
 
   const vehicle = saleData.vehicles;
+  const currentImage = vehicleImages.length > 0 ? vehicleImages[currentImageIndex] : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -176,31 +254,90 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between border-b pb-4">
-              <h2 className="text-xl font-bold text-gray-900">Vehicle Details</h2>
+            <div className="flex items-center justify-between  pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Pending Vehicle Details</h2>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-600" />
+                
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-4 border-b">
+            <div className="w-full space-y-6">
+              <div className="flex bg-gray-100 items-center justify-between p-4  rounded-lg gap-3">
                 <h2 className="text-lg font-semibold text-gray-600">
                   {vehicle?.vehicle_brands?.name} {vehicle?.vehicle_models?.name} {vehicle?.manufacture_year}{' '}
                   <span className="text-gray-900">- {vehicle?.vehicle_number}</span>
                 </h2>
 
-                <button
-                  onClick={exportToCSV}
-                  className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export Data
-                </button>
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {crImages.length > 0 && (
+                    <button
+                      onClick={downloadCRImages}
+                      className="px-4 py-2 bg-white border hover:bg-black hover:text-white text-black text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      View CR Paper {crImages.length > 1 ? `(${crImages.length})` : ''}
+                    </button>
+                  )}
+                  <button
+                    onClick={exportToCSV}
+                    className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Data
+                  </button>
+                </div>
               </div>
+
+              {/* Vehicle Images Gallery - PENDING VEHICLES HAVE IMAGES */}
+              {vehicleImages.length > 0 && (
+                <div className=" rounded-lg ">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Vehicle Images</h3>
+                  
+                  {/* Image Carousel with Navigation Arrows */}
+                  <div className="relative ">
+                    <div className="flex items-center p-3 border rounded-lg bg-gray-50 gap-2">
+                      {/* Left Arrow */}
+                      <button
+                        onClick={prevImage}
+                        className="flex-shrink-0 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center transition-colors border border-gray-300"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-700" />
+                      </button>
+                      
+                      {/* Images Container - Show 3 images */}
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex gap-3">
+                          {vehicleImages.slice(currentImageIndex, currentImageIndex + 3).map((image, index) => (
+                            <div
+                              key={image.id}
+                              className="flex-shrink-0 w-[240px] h-[140px] bg-gray-100 rounded-md overflow-hidden border border-gray-200"
+                            >
+                              <Image
+                                src={image.image_url || '/placeholder-car.jpg'}
+                                alt={`Vehicle image ${currentImageIndex + index + 1}`}
+                                width={240}
+                                height={140}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right Arrow */}
+                      <button
+                        onClick={nextImage}
+                        className="flex-shrink-0 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center transition-colors border border-gray-300"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-700" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gray-50 rounded-lg p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Selling Information</h3>
@@ -238,10 +375,10 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                       <span className="font-semibold text-gray-900">Rs. {saleData.advance_amount?.toLocaleString()}</span>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-gray-600 min-w-[140px]">Sold Out Date</span>
+                      <span className="text-gray-600 min-w-[140px]">Status</span>
                       <span className="text-gray-900">:</span>
-                      <span className="font-semibold text-gray-900">
-                        {saleData.updated_at ? format(new Date(saleData.updated_at), 'MM/dd/yyyy') : 'N/A'}
+                      <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-md text-sm font-semibold">
+                        Pending
                       </span>
                     </div>
                   </div>
@@ -253,27 +390,30 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Seller Details</h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <User className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Name</p>
+                      
+                      <div className='flex gap-2'>
+                        <p className="text-gray-600 min-w-[75px]">Name</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {vehicle?.seller ? `${vehicle.seller.first_name} ${vehicle.seller.last_name}` : 'N/A'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Address</p>
+                     
+                      <div className='flex gap-2'>
+                        <p className="text-gray-600 min-w-[75px]">Address</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {vehicle?.seller?.address || 'N/A'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Mobile</p>
+                      
+                      <div className='flex gap-2'>
+                        <p className="text-gray-600 min-w-[75px]">Mobile</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {vehicle?.seller?.mobile_number || 'N/A'}
                         </p>
@@ -286,18 +426,20 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Buyer Details</h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <User className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Name</p>
+                     
+                      <div className='flex gap-2'>
+                        <p className="text-gray-600 min-w-[75px]">Name</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {saleData.customer_first_name} {saleData.customer_last_name}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Address</p>
+                      
+                      <div className='flex gap-2'>
+                        <p className="text-gray-600 min-w-[75px]">Address</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {saleData.customer_address && saleData.customer_city
                             ? `${saleData.customer_address}, ${saleData.customer_city}`
@@ -306,9 +448,10 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Mobile</p>
+                      
+                      <div className='flex gap-2'>
+                        <p className="text-gray-600 min-w-[75px]">Mobile</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {saleData.customer_mobile}
                         </p>
@@ -319,7 +462,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
               </div>
 
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Vehicle Detail</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Vehicle Details</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">

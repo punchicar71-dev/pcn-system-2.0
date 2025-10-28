@@ -199,20 +199,20 @@ export default function SoldOutVehiclesTable({
   return (
     <div className="space-y-6">
       {/* Search and Filter Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex pt-4 gap-4">
         {/* Search Vehicle */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Search Vehicle
           </label>
-          <div className="relative">
+          <div className="relative w-[400px] ">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Brand, Number, Model"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-10 pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -222,13 +222,13 @@ export default function SoldOutVehiclesTable({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Date Filter
           </label>
-          <div className="relative">
+          <div className="relative w-[400px]">
             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-10  pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -297,14 +297,14 @@ export default function SoldOutVehiclesTable({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onViewDetail(sale.id)}
-                          className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-xs font-medium flex items-center gap-1"
+                          className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-[13px] font-medium flex items-center gap-1"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          View Details
+                          View
                         </button>
                         <button
                           onClick={() => onPrintInvoice(sale.id)}
-                          className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-xs font-medium flex items-center gap-1"
+                          className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-[13px] font-medium flex items-center gap-1"
                         >
                           <Printer className="w-3.5 h-3.5" />
                           Print Invoice
@@ -349,7 +349,7 @@ export default function SoldOutVehiclesTable({
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-gray-500 focus:border-transparent"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -375,7 +375,7 @@ export default function SoldOutVehiclesTable({
                     disabled={page === '...'}
                     className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                       page === currentPage
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-gray-900 text-white'
                         : page === '...'
                         ? 'cursor-default text-gray-400'
                         : 'border border-gray-300 hover:bg-gray-50 text-gray-700'

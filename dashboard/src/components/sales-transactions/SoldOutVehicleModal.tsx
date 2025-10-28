@@ -6,13 +6,13 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { createClient } from '@/lib/supabase-client';
 import { format } from 'date-fns';
 
-interface ViewDetailModalProps {
+interface SoldOutVehicleModalProps {
   isOpen: boolean;
   onClose: () => void;
   saleId: string;
 }
 
-export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailModalProps) {
+export default function SoldOutVehicleModal({ isOpen, onClose, saleId }: SoldOutVehicleModalProps) {
   const [saleData, setSaleData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -176,18 +176,18 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between border-b pb-4">
-              <h2 className="text-xl font-bold text-gray-900">Vehicle Details</h2>
+            <div className="flex items-center justify-between  pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Sold Out Vehicle Details</h2>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-gray-600" />
+                
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-4 border-b">
+              <div className="flex bg-gray-100 rounded-lg items-center justify-between p-4 ">
                 <h2 className="text-lg font-semibold text-gray-600">
                   {vehicle?.vehicle_brands?.name} {vehicle?.vehicle_models?.name} {vehicle?.manufacture_year}{' '}
                   <span className="text-gray-900">- {vehicle?.vehicle_number}</span>
@@ -200,6 +200,13 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                   <Download className="w-4 h-4" />
                   Export Data
                 </button>
+              </div>
+
+              {/* Note: Images are NOT displayed for sold out vehicles as they are automatically deleted */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700">
+                  <strong>Note:</strong> Vehicle images have been automatically removed after sale completion.
+                </p>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-6">
@@ -253,27 +260,30 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Seller Details</h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <User className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Name</p>
+                      
+                      <div className="flex items-start gap-3">
+                        <p className="text-gray-600 min-w-[75px]">Name</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {vehicle?.seller ? `${vehicle.seller.first_name} ${vehicle.seller.last_name}` : 'N/A'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Address</p>
+                     
+                      <div className="flex items-start gap-3">
+                        <p className="text-gray-600 min-w-[75px]">Address</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {vehicle?.seller?.address || 'N/A'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Mobile</p>
+                      
+                      <div className="flex items-start gap-3">
+                        <p className="text-gray-600 min-w-[75px]">Mobile</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {vehicle?.seller?.mobile_number || 'N/A'}
                         </p>
@@ -286,18 +296,20 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Buyer Details</h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <User className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Name</p>
+                   
+                      <div className="flex items-start gap-3">
+                        <p className="text-gray-600 min-w-[75px]">Name</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {saleData.customer_first_name} {saleData.customer_last_name}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Address</p>
+                      
+                      <div className="flex items-start gap-3">
+                        <p className="text-gray-600 min-w-[75px]">Address</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {saleData.customer_address && saleData.customer_city
                             ? `${saleData.customer_address}, ${saleData.customer_city}`
@@ -306,9 +318,10 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Mobile</p>
+                     
+                      <div className="flex items-start gap-3">
+                        <p className="text-gray-600 min-w-[75px]">Mobile</p>
+                        <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
                           {saleData.customer_mobile}
                         </p>
@@ -319,7 +332,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
               </div>
 
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Vehicle Detail</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Vehicle Details</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">

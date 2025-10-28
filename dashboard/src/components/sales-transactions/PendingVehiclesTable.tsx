@@ -147,7 +147,11 @@ export default function PendingVehiclesTable({
   return (
     <div className="space-y-4">
       {/* Search Field */}
-      <div className="bg-white py-4">
+      
+      <div className="bg-white w-[400px] py-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+            Search Vehicle
+          </label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -221,13 +225,13 @@ export default function PendingVehiclesTable({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onViewDetail(sale.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-black hover:text-white border border-gray-300 hover:bg-black rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-[13px] font-medium text-black hover:text-white border border-gray-300 hover:bg-black rounded-lg transition-colors"
                         >
                           View Details
                         </button>
                         <button
                           onClick={() => onSoldOut(sale.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-green-600 hover:text-white border border-green-600 hover:bg-green-600 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-[13px] font-medium text-green-600 hover:text-white border border-green-600 hover:bg-green-600 rounded-lg transition-colors"
                         >
                           Sold out
                         </button>
@@ -263,7 +267,7 @@ export default function PendingVehiclesTable({
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -300,7 +304,7 @@ export default function PendingVehiclesTable({
                       onClick={() => goToPage(pageNum)}
                       className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === pageNum
-                          ? 'bg-green-600 text-white'
+                          ? 'bg-gray-900 text-white'
                           : 'hover:bg-gray-200 text-gray-700'
                       }`}
                     >

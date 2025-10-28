@@ -4,7 +4,8 @@ import { FileText } from 'lucide-react';
 import { useState } from 'react';
 import PendingVehiclesTable from '@/components/sales-transactions/PendingVehiclesTable';
 import SoldOutVehiclesTable from '@/components/sales-transactions/SoldOutVehiclesTable';
-import ViewDetailModal from '@/components/sales-transactions/ViewDetailModal';
+import PendingVehicleModal from '@/components/sales-transactions/PendingVehicleModal';
+import SoldOutVehicleModal from '@/components/sales-transactions/SoldOutVehicleModal';
 import DeleteConfirmModal from '@/components/sales-transactions/DeleteConfirmModal';
 import { createClient } from '@/lib/supabase-client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,10 +16,15 @@ export default function SalesTransactionsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'pending' | 'sold'>('pending');
 
   const handleViewDetail = (saleId: string) => {
     setSelectedSaleId(saleId);
     setIsViewModalOpen(true);
+  };
+
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value as 'pending' | 'sold');
   };
 
   const handleSoldOut = async (saleId: string) => {
@@ -225,8 +231,8 @@ export default function SalesTransactionsPage() {
 
       {/* Tabs using shadcn - same style as Settings page */}
       <div className="bg-white p-6 ">
-        <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <Tabs defaultValue="pending" className="w-full" onValueChange={handleTabChange}>
+          <TabsList className="grid w-[400px] grid-cols-2 max-w-md">
             <TabsTrigger value="pending">Pending Vehicles</TabsTrigger>
             <TabsTrigger value="sold">Sold out Vehicle</TabsTrigger>
           </TabsList>
@@ -250,9 +256,16 @@ export default function SalesTransactionsPage() {
         </Tabs>
       </div>
 
-      {/* View Detail Modal */}
-      <ViewDetailModal
-        isOpen={isViewModalOpen}
+      {/* Pending Vehicle Modal - shows images */}
+      <PendingVehicleModal
+        isOpen={isViewModalOpen && currentTab === 'pending'}
+        onClose={() => setIsViewModalOpen(false)}
+        saleId={selectedSaleId}
+      />
+
+      {/* Sold Out Vehicle Modal - no images (deleted) */}
+      <SoldOutVehicleModal
+        isOpen={isViewModalOpen && currentTab === 'sold'}
         onClose={() => setIsViewModalOpen(false)}
         saleId={selectedSaleId}
       />
