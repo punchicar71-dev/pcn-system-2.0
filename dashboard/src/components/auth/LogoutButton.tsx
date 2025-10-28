@@ -1,6 +1,6 @@
 'use client'
 
-import { LogOut } from 'lucide-react'
+import { LogOut, X } from 'lucide-react'
 import { useState } from 'react'
 
 interface LogoutButtonProps {
@@ -10,6 +10,7 @@ interface LogoutButtonProps {
 
 export default function LogoutButton({ variant = 'default', className = '' }: LogoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -47,7 +48,20 @@ export default function LogoutButton({ variant = 'default', className = '' }: Lo
       console.error('Error logging out:', error)
       alert(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsLoading(false)
+      setShowModal(false)
     }
+  }
+
+  const handleOpenModal = () => {
+    setShowModal(true)
+  }
+
+  const handleCancel = () => {
+    setShowModal(false)
+  }
+
+  const handleConfirmLogout = () => {
+    handleLogout()
   }
 
   const variants = {
@@ -57,13 +71,59 @@ export default function LogoutButton({ variant = 'default', className = '' }: Lo
   }
 
   return (
-    <button
-      onClick={handleLogout}
-      disabled={isLoading}
-      className={`${variants[variant]} ${className} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      <LogOut className="w-4 h-4" />
-      <span>{isLoading ? 'Logging out...' : 'Logout'}</span>
-    </button>
+    <>
+      <button
+        onClick={handleOpenModal}
+        disabled={isLoading}
+        className={`${variants[variant]} ${className} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <LogOut className="w-4 h-4" />
+        <span>{isLoading ? 'Logging out...' : 'Logout'}</span>
+      </button>
+
+      {/* Logout Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative animate-in fade-in zoom-in duration-200">
+            {/* Close Button */}
+            <button
+              onClick={handleCancel}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={isLoading}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Title */}
+            <h2 className="text-[20px] font-bold text-gray-900 mb-4">
+              Log Out
+            </h2>
+
+            {/* Message */}
+            <p className="text-gray-600 text-[14px] mb-8">
+              Are you sure you want to log out of your account?
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={handleCancel}
+                disabled={isLoading}
+                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLogout}
+                disabled={isLoading}
+                className="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg shadow-red-500/30"
+              >
+                {isLoading ? 'Logging out...' : 'Logout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

@@ -64,25 +64,32 @@ export default function LoginPage() {
       
       // Set session on server side
       console.log('Setting session on server...')
-      const sessionResponse = await fetch('/api/auth/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          accessToken: data.session.access_token,
-          refreshToken: data.session.refresh_token,
-        }),
-      })
+      try {
+        const sessionResponse = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            accessToken: data.session.access_token,
+            refreshToken: data.session.refresh_token,
+          }),
+        })
 
-      if (!sessionResponse.ok) {
-        console.error('Failed to set session on server')
-        setError('Failed to complete login. Please try again.')
+        if (!sessionResponse.ok) {
+          console.error('Failed to set session on server')
+          setError('Failed to complete login. Please try again.')
+          setLoading(false)
+          return
+        }
+
+        console.log('Session set on server successfully!')
+      } catch (fetchError) {
+        console.error('Fetch error when setting session:', fetchError)
+        setError('Network error. Please check your connection and try again.')
         setLoading(false)
         return
       }
-
-      console.log('Session set on server successfully!')
       
       // Short delay then redirect
       await new Promise(resolve => setTimeout(resolve, 500))
@@ -92,9 +99,18 @@ export default function LoginPage() {
       window.location.href = '/dashboard'
     } catch (err) {
       console.error('Login error:', err)
-      setError('An error occurred. Please try again.')
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      
+      // Provide user-friendly error messages
+      if (errorMessage.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.')
+      } else if (errorMessage.includes('Invalid login')) {
+        setError('Invalid email/username or password')
+      } else {
+        setError('An error occurred. Please try again.')
+      }
+      
       setLoading(false)
-      alert('Login failed: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
   }
 

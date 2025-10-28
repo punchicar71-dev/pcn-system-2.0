@@ -13,7 +13,8 @@ import {
   Users, 
   Settings,
   Bell,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react'
 
 const navigation = [
@@ -33,6 +34,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -70,11 +72,64 @@ export default function DashboardLayout({
       console.error('Error logging out:', error)
       alert(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsLoggingOut(false)
+      setShowLogoutModal(false)
     }
+  }
+
+  const handleOpenLogoutModal = () => {
+    setShowLogoutModal(true)
+  }
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false)
   }
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative animate-in fade-in zoom-in duration-200">
+            {/* Close Button */}
+            <button
+              onClick={handleCancelLogout}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={isLoggingOut}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Title */}
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Log Out
+            </h2>
+
+            {/* Message */}
+            <p className="text-gray-600 text-lg mb-8">
+              Are you sure you want to log out of your account?
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={handleCancelLogout}
+                disabled={isLoggingOut}
+                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg shadow-red-500/30"
+              >
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar - 260px width */}
       <aside className="fixed inset-y-0 left-0 w-[260px] pt-3 bg-white border-r">
         <div className="flex flex-col h-full">
@@ -142,7 +197,7 @@ export default function DashboardLayout({
               </div>
               <span className="text-sm font-medium text-gray-700">Rashmina</span>
               <button 
-                onClick={handleLogout}
+                onClick={handleOpenLogoutModal}
                 disabled={isLoggingOut}
                 className={`p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title={isLoggingOut ? 'Logging out...' : 'Logout'}

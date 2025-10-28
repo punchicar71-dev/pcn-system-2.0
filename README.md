@@ -197,10 +197,39 @@ pcn/
 - Custom report builder
 
 #### 👥 User Management
-- User creation and management
-- Role-based permissions (Admin, Manager, Sales, Viewer)
-- User status tracking
-- Activity logs
+- **Complete User Management System** (October 28, 2025)
+  - **User Creation**: Add new users with email-based authentication
+  - **Email Activation**: Automatic email sending with secure activation links
+  - **Role-Based Access Control**: 
+    - Admin: Full system access
+    - Manager: Manage vehicles, sales, and reports
+    - Sales: Create sales and manage customers
+    - Viewer: Read-only access
+  - **User Table Features**:
+    - Real-time search by name, email, or username
+    - Pagination with customizable rows per page (5, 10, 20, 50)
+    - Status indicators (Active/Inactive with colored badges)
+    - Quick action buttons (View, Edit, Delete)
+  - **User CRUD Operations**:
+    - Create users with automatic Supabase Auth integration
+    - Edit user details (name, username, email, role, status)
+    - Deactivate users (soft delete)
+    - View complete user information
+  - **Email Integration**:
+    - Branded email templates with PCN branding
+    - Secure activation links with token-based verification
+    - Automatic email sending via Supabase Auth
+    - Password setup flow for new users
+  - **Security Features**:
+    - Password encryption via Supabase Auth
+    - Secure token generation for activation
+    - Session management
+    - Protected API routes
+  - **Database Integration**:
+    - `users` table with complete user information
+    - Automatic sync with Supabase Auth users
+    - Row Level Security (RLS) policies
+    - Foreign key relationships
 
 #### ⚙️ Settings
 - **Vehicle Brands Management**
@@ -221,6 +250,50 @@ pcn/
 - **Contact Page**: Contact form
 
 ## Recent Updates (v2.0)
+
+### 🔐 User Management & Email Activation System (October 28, 2025)
+✅ **Complete User Management Module**:
+- **User Creation & Management**:
+  - Add new users with comprehensive form validation
+  - Edit existing users (name, username, email, role, status)
+  - Delete/deactivate users with confirmation
+  - Real-time user search and filtering
+  - Pagination with customizable rows per page
+- **Email-Based User Activation**:
+  - Automatic email sending when creating new users
+  - Branded email template with PCN logo and styling
+  - Secure activation link with token-based verification
+  - Users can set their own password upon first login
+  - Email template includes:
+    - Welcome message with user's name
+    - Secure activation button
+    - Username reminder
+    - Professional PCN branding
+- **Supabase Email Configuration**:
+  - Custom SMTP setup for reliable email delivery
+  - Email templates configured in Supabase dashboard
+  - Magic link authentication for password setup
+  - Automatic user account creation in Supabase Auth
+- **Role-Based Access Control**:
+  - Four user roles: Admin, Manager, Sales, Viewer
+  - Role-specific permissions throughout the system
+  - Role selection dropdown in user forms
+- **User Interface**:
+  - Modern table with search and pagination
+  - Status badges (Active/Inactive) with color coding
+  - Action buttons for View, Edit, Delete operations
+  - Loading states and error handling
+  - Success notifications for all operations
+- **Security Features**:
+  - Password encryption handled by Supabase Auth
+  - Secure token generation for activation links
+  - Row Level Security (RLS) on users table
+  - Protected API routes for user operations
+- **Database Integration**:
+  - `users` table synced with Supabase Auth
+  - Foreign key relationships maintained
+  - Automatic timestamp tracking
+  - Comprehensive error handling
 
 ### 🎨 Latest Carousel Enhancement (October 28, 2025)
 ✅ **Embla Carousel Integration for Vehicle Images**:
@@ -652,6 +725,13 @@ npm run type-check # TypeScript type checking
 ### Database Schema
 
 Key tables:
+- `users` - System users and authentication (NEW - October 28, 2025)
+  - Personal information (first_name, last_name, username)
+  - Contact details (email)
+  - Role-based permissions (admin, manager, sales, viewer)
+  - Account status (active/inactive)
+  - Synced with Supabase Auth users
+  - Created/Updated timestamps
 - `vehicles` - Vehicle inventory with complete specifications
   - Vehicle information (VIN, brand, model, year)
   - Technical specs (engine, transmission, fuel type)
@@ -683,9 +763,12 @@ Key tables:
   - Display order management
 - `countries` - Country data for vehicle origin
   - Japan, UK, Germany, USA, etc.
-- `sales` - Sales transactions (Coming soon)
-- `users` - System users with role-based access
-- `customers` - Customer information (Coming soon)
+- `pending_vehicle_sales` - Pending sales transactions
+  - Customer information (buyer details)
+  - Sale details (payment type, down payment, sales agent)
+  - Linked to vehicles table
+- `sales` - Completed sales transactions
+- `sales_agents` - Sales agent information
 
 **Database Features:**
 - Row Level Security (RLS) for data protection
