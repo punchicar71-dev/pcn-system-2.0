@@ -192,11 +192,40 @@ pcn/
 - **Sales Transactions Page** (Enhanced):
   - Modern **shadcn Tabs** component (consistent with Settings page)
   - **Pending Vehicles Tab**: View all pending vehicle sales
-  - **Sold Out Vehicle Tab**: View completed sales history
-  - Search by vehicle number, brand, or model
-  - Pagination with customizable rows per page
-  - Action buttons: View Details, Sold Out, Delete
-- **View Detail Modal** (NEW):
+    - Search by vehicle number, brand, or model
+    - Pagination with customizable rows per page
+    - Action buttons: View Details, Sold Out, Delete
+  - **Sold Out Vehicle Tab** (NEW - October 28, 2025):
+    - **Complete Sales History**: View all completed vehicle sales
+    - **Advanced Filtering**:
+      - Search by vehicle number, brand, or model
+      - Date filter to find sales by sold date
+      - Clear filters button for quick reset
+    - **Comprehensive Table Display**:
+      - Vehicle Number, Brand, Model, Year
+      - Payment Type (with colored badges: Cash, Leasing, Bank Transfer, Check)
+      - Sales Agent name
+      - Sold Out Date (formatted as YYYY.MM.DD)
+    - **Action Buttons**:
+      - **View Details**: Opens modal with complete sale information
+      - **Print Invoice**: Generates formatted invoice for printing/PDF
+    - **Smart Pagination**:
+      - Rows per page selector (5, 10, 20, 50)
+      - Page navigation with Previous/Next
+      - Smart page numbers with ellipsis
+    - **Automatic Data Sync**:
+      - Vehicles automatically move from Pending to Sold Out when marked as sold
+      - Real-time updates across both tabs
+      - Vehicle status updates to "Sold" in inventory
+- **Print Invoice Feature** (NEW):
+  - Professional invoice format with company header
+  - Complete vehicle details (number, brand, model, year)
+  - Customer information (name, NIC, contact, address)
+  - Payment breakdown (selling amount, advance, balance)
+  - Sales agent information
+  - Opens in new window with print dialog
+  - Can save as PDF
+- **View Detail Modal** (Enhanced):
   - **Image Carousel**: Navigate through vehicle gallery images (3 at a time)
   - **Download CR Paper**: One-click download of vehicle documents
   - **Comprehensive Details Display**:
