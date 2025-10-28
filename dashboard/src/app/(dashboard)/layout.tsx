@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState } from 'react'
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -29,6 +32,47 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Logout failed')
+      }
+
+      // Clear browser storage
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      // Clear any cookies (redundant but ensures complete cleanup)
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      // Wait briefly for cookies to be cleared
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      // Force full page reload and navigate to login page
+      // This ensures middleware re-evaluates the session
+      window.location.replace('/')
+    } catch (error) {
+      console.error('Error logging out:', error)
+      alert(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Sidebar - 260px width */}
@@ -97,7 +141,12 @@ export default function DashboardLayout({
                 R
               </div>
               <span className="text-sm font-medium text-gray-700">Rashmina</span>
-              <button className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <button 
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className={`p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={isLoggingOut ? 'Logging out...' : 'Logout'}
+              >
                 <LogOut className="w-4 h-4" />
               </button>
             </div>

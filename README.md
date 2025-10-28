@@ -2,6 +2,44 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ and npm 9+
+- PostgreSQL database (Supabase account)
+
+### Installation & Running
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/punchicar71-dev/pcn-system-2.0.git
+cd "PCN System . 2.0"
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Configure environment variables**
+   - Copy `.env.example` to `.env.local` in both `dashboard/` and `web/` directories
+   - Add your Supabase credentials
+
+4. **Run the development server**
+```bash
+npm run dev
+```
+
+This will start all three services:
+- **Web**: http://localhost:3000 (Public website)
+- **Dashboard**: http://localhost:3001 (Management system)
+- **API**: http://localhost:4000 (Backend API)
+
+5. **Access the dashboard**
+   - Navigate to http://localhost:3001/login
+   - Use your credentials to log in
+   - You'll be redirected to the dashboard automatically
+
 ## Project Structure
 
 ```
@@ -10,8 +48,10 @@ pcn/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── (auth)/           # Authentication pages
-│   │   │   └── (dashboard)/      # Dashboard pages
+│   │   │   ├── (dashboard)/      # Dashboard pages
+│   │   │   └── api/              # API routes
 │   │   ├── components/
+│   │   │   ├── auth/             # Auth components
 │   │   │   ├── settings/         # Settings components
 │   │   │   └── ui/               # UI components (shadcn/ui)
 │   │   └── lib/                  # Utilities and configurations
@@ -51,8 +91,11 @@ pcn/
 
 #### 🔐 Authentication
 - Secure login system with Supabase Auth
-- Role-based access control
-- Session management
+- Username or email-based login
+- Server-side session management
+- Protected routes with middleware
+- Automatic logout with session cleanup
+- Session synchronization between client and server
 
 #### 📊 Dashboard Overview
 - Real-time business metrics

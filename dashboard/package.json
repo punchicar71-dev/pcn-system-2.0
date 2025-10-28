@@ -8,7 +8,8 @@
     "start": "next start -p 3001",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "import-vehicles": "node scripts/import-vehicles.js"
+    "import-vehicles": "node scripts/import-vehicles.js",
+    "create-root-admin": "node scripts/create-root-admin.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
