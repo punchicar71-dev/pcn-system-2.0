@@ -19,6 +19,9 @@ export default function LoginPage() {
     setError('')
 
     try {
+      // Clear any existing session first to avoid refresh token conflicts
+      await supabase.auth.signOut()
+      
       console.log('Login attempt with:', emailOrUsername)
       
       // Determine if input is email or username
@@ -104,8 +107,10 @@ export default function LoginPage() {
       // Provide user-friendly error messages
       if (errorMessage.includes('fetch')) {
         setError('Network error. Please check your connection and try again.')
-      } else if (errorMessage.includes('Invalid login')) {
+      } else if (errorMessage.includes('Invalid login') || errorMessage.includes('Invalid password')) {
         setError('Invalid email/username or password')
+      } else if (errorMessage.includes('refresh_token') || errorMessage.includes('Already Used')) {
+        setError('Session expired. Please clear your browser cache and try again.')
       } else {
         setError('An error occurred. Please try again.')
       }

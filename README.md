@@ -197,38 +197,60 @@ pcn/
 - Custom report builder
 
 #### 👥 User Management
-- **Complete User Management System** (October 28, 2025)
+- **Complete User Management System** (Updated October 29, 2025)
   - **User Creation**: Add new users with email-based authentication
   - **Email Activation**: Automatic email sending with secure activation links
   - **Role-Based Access Control**: 
-    - Admin: Full system access
-    - Manager: Manage vehicles, sales, and reports
+    - Admin: Full system access including user management
+    - Editor: Limited access, cannot edit or delete users
     - Sales: Create sales and manage customers
     - Viewer: Read-only access
+  - **Real-Time User Status** (NEW):
+    - Live active/inactive status indicators
+    - Green dot for active users (currently logged in)
+    - Gray dot for inactive users
+    - Auto-refresh every 30 seconds
+    - Real-time subscriptions to database changes
+  - **Admin-Only User Editing** (NEW):
+    - Edit functionality restricted to administrators
+    - Editors can only view user details
+    - Multi-level security enforcement
+    - Access denied alerts for unauthorized attempts
   - **User Table Features**:
     - Real-time search by name, email, or username
-    - Pagination with customizable rows per page (5, 10, 20, 50)
+    - Pagination with customizable rows per page (5, 10, 25, 50, 100)
     - Status indicators (Active/Inactive with colored badges)
-    - Quick action buttons (View, Edit, Delete)
+    - Action buttons: View Detail (all users), Delete (admins only)
+    - Red delete icon for better visibility
   - **User CRUD Operations**:
     - Create users with automatic Supabase Auth integration
-    - Edit user details (name, username, email, role, status)
-    - Deactivate users (soft delete)
-    - View complete user information
+    - Edit user details (admins only)
+    - View user details (all users)
+    - Delete users with confirmation modal (admins only)
+    - Self-deletion prevention
+  - **User Details Modal**:
+    - View mode for all authenticated users
+    - Edit mode only available to administrators
+    - Profile picture upload support (Base64, 2MB limit)
+    - Complete user information display
+    - Form validation and error handling
+    - Success notifications
   - **Email Integration**:
     - Branded email templates with PCN branding
     - Secure activation links with token-based verification
     - Automatic email sending via Supabase Auth
     - Password setup flow for new users
   - **Security Features**:
+    - Admin-only edit and delete operations
     - Password encryption via Supabase Auth
     - Secure token generation for activation
-    - Session management
+    - Session management with heartbeat tracking
     - Protected API routes
+    - Row Level Security (RLS) policies
   - **Database Integration**:
     - `users` table with complete user information
     - Automatic sync with Supabase Auth users
-    - Row Level Security (RLS) policies
+    - Real-time status tracking
     - Foreign key relationships
 
 #### ⚙️ Settings
@@ -250,6 +272,59 @@ pcn/
 - **Contact Page**: Contact form
 
 ## Recent Updates (v2.0)
+
+### 🎨 Dashboard UI & User Management Enhancements (October 29, 2025)
+
+✅ **Enhanced Dashboard Header**:
+- **Dynamic Greeting System**:
+  - Time-based greetings (Good Morning, Good Afternoon, Good Evening)
+  - Displays current user's first name
+  - Updates automatically every minute
+- **User Profile Section**:
+  - User avatar with profile picture support
+  - Fallback to first letter avatar with blue background
+  - User's first name displayed next to avatar
+  - Dropdown menu with smooth animations
+- **Profile Dropdown Menu**:
+  - My Profile option with User icon
+  - Password Change option with Key icon
+  - Logout option with red text and icon
+  - Clean hover effects and transitions
+  - Click-outside-to-close functionality
+- **Professional UI Design**:
+  - Consistent 16px font sizing
+  - Smooth transitions and animations
+  - Modern dropdown with proper z-index layering
+  - Bell notification icon with red indicator dot
+
+✅ **User Management - Real-Time Status & Access Control**:
+- **Real-Time User Status Tracking**:
+  - Active/Inactive status indicators
+  - Green dot (🟢) for active users (logged in)
+  - Gray dot (⚫) for inactive users
+  - Auto-refresh every 30 seconds
+  - Current user always shows as active
+  - Real-time subscriptions to user table changes
+- **Admin-Only Edit Access**:
+  - Edit functionality restricted to administrators only
+  - Editors can only view user details (read-only)
+  - Edit icon removed from table for all users
+  - "Edit Details" button hidden for non-admins
+  - Access denied alerts for unauthorized edit attempts
+  - Multi-level security checks
+- **Enhanced User Actions**:
+  - Red delete icon (🔴) for better visibility
+  - Admin-only delete with confirmation modal
+  - View Detail button for all users
+  - Self-deletion prevention
+  - Clean action button layout
+- **User Details Modal**:
+  - View-only mode for all users
+  - Edit mode only for administrators
+  - Profile picture upload support
+  - Complete user information display
+  - Admin verification for updates
+  - Success/error notifications
 
 ### 🔐 User Management & Email Activation System (October 28, 2025)
 ✅ **Complete User Management Module**:

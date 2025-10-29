@@ -290,40 +290,46 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
   const uploadNewImages = async () => {
     const uploadedUrls: { url: string; type: string }[] = []
 
-    // Upload vehicle images
+    // Upload vehicle images to local storage
     for (const file of newVehicleImages) {
-      const fileName = `${Date.now()}-${file.name}`
-      const filePath = `vehicles/${vehicleId}/${fileName}`
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('vehicleId', vehicleId!)
+      formData.append('imageType', 'gallery')
 
-      const { data, error } = await supabase.storage
-        .from('vehicle-images')
-        .upload(filePath, file)
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
 
-      const { data: urlData } = supabase.storage
-        .from('vehicle-images')
-        .getPublicUrl(filePath)
-
-      uploadedUrls.push({ url: urlData.publicUrl, type: 'gallery' })
+      const result = await response.json()
+      uploadedUrls.push({ url: result.url, type: 'gallery' })
     }
 
-    // Upload CR images
+    // Upload CR images to local storage
     for (const file of newCrImages) {
-      const fileName = `${Date.now()}-${file.name}`
-      const filePath = `vehicles/${vehicleId}/documents/${fileName}`
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('vehicleId', vehicleId!)
+      formData.append('imageType', 'cr_paper')
 
-      const { data, error } = await supabase.storage
-        .from('vehicle-images')
-        .upload(filePath, file)
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
 
-      const { data: urlData } = supabase.storage
-        .from('vehicle-images')
-        .getPublicUrl(filePath)
-
-      uploadedUrls.push({ url: urlData.publicUrl, type: 'cr_paper' })
+      const result = await response.json()
+      uploadedUrls.push({ url: result.url, type: 'cr_paper' })
     }
 
     return uploadedUrls

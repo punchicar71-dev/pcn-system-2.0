@@ -40,10 +40,7 @@ export default function DashboardPage() {
     <div className="p-6 space-y-6">
       {/* Greeting */}
       <div>
-        <h2 className="text-xl text-gray-600 font-normal">
-          {getGreeting()} <span className="font-semibold text-gray-900">Rashmina</span>
-        </h2>
-        <h1 className="text-3xl font-bold text-gray-900 mt-1">Dashboard</h1>
+        <h1 className="text-[20px] font-bold text-gray-900 mt-1">Dashboard</h1>
       </div>
 
       {/* Stats Cards Row */}

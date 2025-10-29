@@ -136,70 +136,78 @@ export default function AddVehiclePage() {
     const { vehicleImages, crImages } = formState.vehicleDetails;
     const uploadPromises: Promise<any>[] = [];
 
-    // Upload vehicle images
+    // Upload vehicle images to local storage
     for (let i = 0; i < vehicleImages.length; i++) {
       const file = vehicleImages[i];
-      const fileName = `${vehicleId}/vehicle-${Date.now()}-${i}-${file.name}`;
       
-      const uploadPromise = supabase.storage
-        .from('vehicle-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-        .then(async (result) => {
-          if (result.error) throw result.error;
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('vehicle-images')
-            .getPublicUrl(fileName);
+      const uploadPromise = (async () => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('vehicleId', vehicleId);
+        formData.append('imageType', 'gallery');
 
-          // Insert image record
-          await supabase.from('vehicle_images').insert({
-            vehicle_id: vehicleId,
-            image_url: publicUrl,
-            image_type: 'gallery',
-            storage_path: fileName,
-            file_name: file.name,
-            file_size: file.size,
-            is_primary: i === 0,
-            display_order: i,
-          });
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+
+        // Insert image record in database
+        await supabase.from('vehicle_images').insert({
+          vehicle_id: vehicleId,
+          image_url: result.url,
+          image_type: 'gallery',
+          storage_path: result.storagePath,
+          file_name: result.fileName,
+          file_size: result.fileSize,
+          is_primary: i === 0,
+          display_order: i,
+        });
+      })();
 
       uploadPromises.push(uploadPromise);
     }
 
-    // Upload CR images
+    // Upload CR images to local storage
     for (let i = 0; i < crImages.length; i++) {
       const file = crImages[i];
-      const fileName = `${vehicleId}/cr-${Date.now()}-${i}-${file.name}`;
       
-      const uploadPromise = supabase.storage
-        .from('vehicle-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-        .then(async (result) => {
-          if (result.error) throw result.error;
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('vehicle-images')
-            .getPublicUrl(fileName);
+      const uploadPromise = (async () => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('vehicleId', vehicleId);
+        formData.append('imageType', 'cr_paper');
 
-          // Insert image record
-          await supabase.from('vehicle_images').insert({
-            vehicle_id: vehicleId,
-            image_url: publicUrl,
-            image_type: 'cr_paper',
-            storage_path: fileName,
-            file_name: file.name,
-            file_size: file.size,
-            is_primary: false,
-            display_order: i,
-          });
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+
+        // Insert image record in database
+        await supabase.from('vehicle_images').insert({
+          vehicle_id: vehicleId,
+          image_url: result.url,
+          image_type: 'cr_paper',
+          storage_path: result.storagePath,
+          file_name: result.fileName,
+          file_size: result.fileSize,
+          is_primary: false,
+          display_order: i,
+        });
+      })();
 
       uploadPromises.push(uploadPromise);
     }

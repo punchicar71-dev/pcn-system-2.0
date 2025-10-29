@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/carousel'
 import { Card, CardContent } from '@/components/ui/card'
 import EditVehicleModal from '@/components/inventory/EditVehicleModal'
+import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
 
 interface Vehicle {
   id: string
@@ -668,33 +669,12 @@ export default function InventoryPage() {
               </DialogHeader>
 
               <div className="space-y-4 ">
-                {/* Image Carousel with Navigation Arrows */}
+                {/* Vehicle Image Viewer with 360° capability */}
                 {vehicleImages.length > 0 && (
-                  <div className="relative w-full bg-gray-100 p-4 rounded-lg px-12">
-                    <Carousel className="w-full">
-                      <CarouselContent className="-ml-3">
-                        {vehicleImages.map((image, index) => (
-                          <CarouselItem key={image.id} className="pl-3 md:basis-1/2 lg:basis-1/3">
-                            <div className="p-1">
-                              <Card>
-                                <CardContent className="flex aspect-video rounded-lg items-center justify-center p-0 overflow-hidden">
-                                  <Image
-                                    src={image.image_url || '/placeholder-car.jpg'}
-                                    alt={`Vehicle image ${index + 1}`}
-                                    width={240}
-                                    height={140}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </CardContent>
-                              </Card>
-                            </div>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
-                  </div>
+                  <VehicleImageViewer
+                    images={vehicleImages}
+                    vehicleName={`${selectedVehicle.brand_name} ${selectedVehicle.model_name}`}
+                  />
                 )}
 
                 {/* Vehicle Title and Download Button */}

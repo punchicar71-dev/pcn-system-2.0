@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -14,8 +14,13 @@ import {
   Settings,
   Bell,
   LogOut,
-  X
+  X,
+  ChevronDown,
+  User,
+  Key
 } from 'lucide-react'
+import { useSessionHeartbeat } from '@/hooks/useSessionHeartbeat'
+import { createClient } from '@supabase/supabase-js'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -35,10 +40,76 @@ export default function DashboardLayout({
 }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [greeting, setGreeting] = useState('')
+
+  // Initialize session heartbeat to track user activity
+  useSessionHeartbeat()
+
+  // Fetch current user data and set greeting
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_id', session.user.id)
+            .single()
+          
+          if (userData) {
+            setCurrentUser(userData)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error)
+      }
+    }
+
+    // Set greeting based on time of day
+    const updateGreeting = () => {
+      const hour = new Date().getHours()
+      if (hour < 12) {
+        setGreeting('Good Morning')
+      } else if (hour < 18) {
+        setGreeting('Good Afternoon')
+      } else {
+        setGreeting('Good Evening')
+      }
+    }
+
+    fetchCurrentUser()
+    updateGreeting()
+    
+    // Update greeting every minute
+    const interval = setInterval(updateGreeting, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true)
+      
+      // End the session before logging out
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { endUserSession } = await import('@/lib/sessionManager')
+        await endUserSession(session.user.id)
+      }
+      
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
@@ -179,7 +250,14 @@ export default function DashboardLayout({
       <main className="ml-[260px]">
         {/* Header - 50px height */}
         <header className="bg-white border-b h-[50px] flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="flex items-center gap-4">
+          {/* Header Left Side - Greeting */}
+          <div className="flex items-center gap-2">
+            <span className="text-gray-600 text-[16px]">{greeting}!</span>
+            {currentUser && (
+              <span className="text-gray-900 text-[16px] font-semibold">
+                {currentUser.first_name}
+              </span>
+            )}
           </div>
           
           {/* Header Right Side */}
@@ -190,20 +268,86 @@ export default function DashboardLayout({
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             
-            {/* User Profile */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
-                R
-              </div>
-              <span className="text-sm font-medium text-gray-700">Rashmina</span>
+            {/* User Profile with Dropdown */}
+            <div className="relative">
               <button 
-                onClick={handleOpenLogoutModal}
-                disabled={isLoggingOut}
-                className={`p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title={isLoggingOut ? 'Logging out...' : 'Logout'}
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
               >
-                <LogOut className="w-4 h-4" />
+                {/* Avatar or Letter */}
+                {currentUser?.profile_picture_url ? (
+                  <Image
+                    src={currentUser.profile_picture_url}
+                    alt={currentUser.first_name}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                    {currentUser ? currentUser.first_name.charAt(0).toUpperCase() : ''}
+                  </div>
+                )}
+                
+                {/* User First Name */}
+                {currentUser && (
+                  <span className="text-sm font-medium text-gray-700">
+                    {currentUser.first_name}
+                  </span>
+                )}
+                
+                {/* Dropdown Arrow */}
+                <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showProfileDropdown ? 'rotate-180' : ''}`} />
               </button>
+
+              {/* Dropdown Menu */}
+              {showProfileDropdown && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowProfileDropdown(false)}
+                  />
+                  
+                  {/* Dropdown Content */}
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                    {/* My Profile */}
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowProfileDropdown(false)}
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="text-sm font-medium">My Profile</span>
+                    </Link>
+                    
+                    {/* Password Change */}
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowProfileDropdown(false)}
+                    >
+                      <Key className="w-4 h-4" />
+                      <span className="text-sm font-medium">Password Change</span>
+                    </Link>
+                    
+                    {/* Divider */}
+                    <div className="my-1 border-t border-gray-200"></div>
+                    
+                    {/* Logout */}
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false)
+                        handleOpenLogoutModal()
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm font-medium">Logout</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>

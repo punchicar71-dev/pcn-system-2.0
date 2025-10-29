@@ -1,55 +1,59 @@
 'use client'
 
-import { Plus, MoreVertical } from 'lucide-react'
-import { useState } from 'react'
+import { Plus, MoreVertical, Eye, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import AddUserModal from './components/AddUserModal'
 import SuccessModal from './components/SuccessModal'
+import DeleteUserModal from './components/DeleteUserModal'
+import UserDetailsModal from './components/UserDetailsModal'
+import { createClient } from '@supabase/supabase-js'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
-// Sample user data
-const usersData = [
-  {
-    id: '00471',
-    name: 'Rashmina Yapa',
-    email: 'rashmina.yapa.2000@gmail.com',
-    level: 'Admin',
-    status: 'Active',
-    levelColor: 'bg-green-100 text-green-700',
-    statusColor: 'bg-green-500'
-  },
-  {
-    id: '00453',
-    name: 'Ralph Edwards',
-    email: 'michelle.rivera@example.com',
-    level: 'Editor',
-    status: 'Inactive',
-    levelColor: 'bg-blue-100 text-blue-700',
-    statusColor: 'bg-yellow-500'
-  },
-  {
-    id: '00423',
-    name: 'Jenny Wilson',
-    email: 'debra.holt@example.com',
-    level: 'Editor',
-    status: 'Active',
-    levelColor: 'bg-blue-100 text-blue-700',
-    statusColor: 'bg-green-500'
-  },
-  {
-    id: '00413',
-    name: 'Kathryn Murphy',
-    email: 'debbie.baker@example.com',
-    level: 'Admin',
-    status: 'Active',
-    levelColor: 'bg-green-100 text-green-700',
-    statusColor: 'bg-green-500'
-  },
-]
+interface User {
+  id: string
+  auth_id: string
+  first_name: string
+  last_name: string
+  email: string
+  access_level: string
+  status: string
+  created_at: string
+  last_sign_in_at?: string
+  is_online?: boolean
+}
 
 export default function UserManagementPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [showUserDetailsModal, setShowUserDetailsModal] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -63,12 +67,213 @@ export default function UserManagementPage() {
     sendEmail: true,
     profilePicture: ''
   })
-  const [loading, setLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
   const [successUserName, setSuccessUserName] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Initialize Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // Fetch users on component mount and when page changes
+  useEffect(() => {
+    fetchUsers()
+    fetchCurrentUser()
+    
+    // Set up real-time subscription for user changes
+    const usersChannel = supabase
+      .channel('users-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'users' },
+        (payload) => {
+          console.log('User change detected:', payload)
+          fetchUsers()
+        }
+      )
+      .subscribe()
+
+    // Auto-refresh every 30 seconds to update status
+    const intervalId = setInterval(() => {
+      fetchUsers()
+    }, 30000) // 30 seconds
+
+    return () => {
+      supabase.removeChannel(usersChannel)
+      clearInterval(intervalId)
+    }
+  }, [currentPage])
+
+  const fetchCurrentUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_id', session.user.id)
+          .single()
+        
+        if (userData) {
+          setCurrentUser(userData)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      console.log('Fetching users from /api/users...')
+      const response = await fetch('/api/users')
+      console.log('Response status:', response.status)
+      const data = await response.json()
+      console.log('Response data:', data)
+      
+      if (response.ok && data.users) {
+        console.log('Users fetched successfully:', data.users.length, 'users')
+        
+        // Get current session to identify logged-in user
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        // Mark the current logged-in user as active
+        const usersWithCurrentStatus = data.users.map((user: User) => {
+          if (session && user.auth_id === session.user.id) {
+            return { ...user, is_online: true }
+          }
+          return user
+        })
+        
+        setUsers(usersWithCurrentStatus)
+        setTotalPages(Math.ceil(usersWithCurrentStatus.length / itemsPerPage))
+      } else {
+        console.error('Failed to fetch users:', data.error)
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getLevelColor = (level: string) => {
+    switch (level?.toLowerCase()) {
+      case 'admin':
+        return 'bg-green-100 text-green-700'
+      case 'editor':
+        return 'bg-blue-100 text-blue-700'
+      default:
+        return 'bg-gray-100 text-gray-700'
+    }
+  }
+
+  const getStatusColor = (isOnline?: boolean) => {
+    return isOnline ? 'bg-green-500' : 'bg-gray-400'
+  }
+
+  const getStatusText = (isOnline?: boolean) => {
+    return isOnline ? 'Active' : 'Inactive'
+  }
+
+  // Get paginated users
+  const getPaginatedUsers = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return users.slice(startIndex, endIndex)
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value)
+    setCurrentPage(1) // Reset to first page when changing items per page
+    setTotalPages(Math.ceil(users.length / value))
+  }
+
   const toggleMenu = (userId: string) => {
     setOpenMenuId(openMenuId === userId ? null : userId)
+  }
+
+  const handleViewDetail = (userId: string) => {
+    console.log('View detail for user:', userId)
+    setSelectedUserId(userId)
+    setShowUserDetailsModal(true)
+  }
+
+  const handleEditUser = (userId: string) => {
+    // Check if current user is admin
+    if (!currentUser || currentUser.access_level?.toLowerCase() !== 'admin') {
+      alert('Access Denied: Only administrators can edit user details.')
+      return
+    }
+    console.log('Edit user:', userId)
+    setSelectedUserId(userId)
+    setShowUserDetailsModal(true)
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    // Check if current user is admin
+    if (!currentUser || currentUser.access_level?.toLowerCase() !== 'admin') {
+      alert('Access Denied: Only administrators can delete users.')
+      return
+    }
+
+    // Prevent self-deletion
+    if (currentUser.id === userId) {
+      alert('Error: You cannot delete your own account.')
+      return
+    }
+
+    // Find the user to delete
+    const user = users.find(u => u.id === userId)
+    if (!user) {
+      alert('User not found')
+      return
+    }
+
+    // Show delete confirmation modal
+    setUserToDelete(user)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+
+    setDeleteLoading(true)
+    
+    try {
+      const response = await fetch(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Success
+        setShowDeleteModal(false)
+        setUserToDelete(null)
+        alert(`User ${userToDelete.first_name} ${userToDelete.last_name} has been permanently deleted.`)
+        fetchUsers() // Refresh the list
+      } else {
+        // Error
+        alert(`Failed to delete user: ${data.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      alert('An error occurred while deleting the user. Please try again.')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const cancelDeleteUser = () => {
+    setShowDeleteModal(false)
+    setUserToDelete(null)
   }
 
   const validateForm = () => {
@@ -136,7 +341,7 @@ export default function UserManagementPage() {
       return
     }
 
-    setLoading(true)
+    setFormLoading(true)
 
     try {
       const response = await fetch('/api/users', {
@@ -161,7 +366,7 @@ export default function UserManagementPage() {
       if (!response.ok) {
         const error = await response.json()
         setErrors({ submit: error.error || 'Failed to create user' })
-        setLoading(false)
+        setFormLoading(false)
         return
       }
 
@@ -187,17 +392,16 @@ export default function UserManagementPage() {
         profilePicture: ''
       })
 
-      // Close success modal after 3 seconds
+      // Close success modal after 3 seconds and refresh users list
       setTimeout(() => {
         setShowSuccessModal(false)
-        // Refresh users list
-        window.location.reload()
+        fetchUsers()
       }, 3000)
     } catch (error) {
       console.error('Error adding user:', error)
       setErrors({ submit: 'An error occurred. Please try again.' })
     } finally {
-      setLoading(false)
+      setFormLoading(false)
     }
   }
 
@@ -218,98 +422,180 @@ export default function UserManagementPage() {
 
       {/* Users Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
-                  User ID
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
-                  Name
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
-                  Email
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
-                  Level
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {usersData.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {user.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {user.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                User ID
+              </TableHead>
+              <TableHead className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                Name
+              </TableHead>
+              <TableHead className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                Email
+              </TableHead>
+              <TableHead className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                Level
+              </TableHead>
+              <TableHead className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                Status
+              </TableHead>
+              <TableHead className="px-6 py-4 text-left text-sm font-medium text-gray-600">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  Loading users...
+                </TableCell>
+              </TableRow>
+            ) : users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  No users found. Click "Add User" to create a new user.
+                </TableCell>
+              </TableRow>
+            ) : (
+              getPaginatedUsers().map((user) => (
+                <TableRow key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="px-6 py-4 text-sm text-gray-900">
+                    {user.id.substring(0, 8)}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-sm font-medium text-gray-900">
+                    {user.first_name} {user.last_name}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-sm text-gray-600">
                     {user.email}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${user.levelColor}`}>
-                      {user.level}
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(user.access_level)}`}>
+                      {user.access_level}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${user.statusColor}`}></div>
-                      <span className="text-sm text-gray-900">{user.status}</span>
+                      <div className={`w-2 h-2 rounded-full ${getStatusColor(user.is_online)}`}></div>
+                      <span className="text-sm text-gray-900 capitalize">{getStatusText(user.is_online)}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <button className="text-sm text-gray-700 hover:text-gray-900 font-medium">
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleViewDetail(user.id)}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
                         View Detail
                       </button>
-                      <div className="relative">
+                      {/* Only show delete button for admins and prevent self-deletion */}
+                      {currentUser?.access_level?.toLowerCase() === 'admin' && currentUser.id !== user.id && (
                         <button 
-                          onClick={() => toggleMenu(user.id)}
-                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete User"
                         >
-                          <MoreVertical className="w-4 h-4 text-gray-600" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                        
-                        {openMenuId === user.id && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-10" 
-                              onClick={() => setOpenMenuId(null)}
-                            ></div>
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                                Edit User
-                              </button>
-                              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                                Change Password
-                              </button>
-                              <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                                {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                              </button>
-                              <hr className="my-1 border-gray-200" />
-                              <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
-                                Delete User
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
+
+      {/* Pagination and Rows Per Page */}
+      {!loading && users.length > 0 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, users.length)} of {users.length} users
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+                Rows per page:
+              </label>
+              <select
+                id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (currentPage > 1) handlePageChange(currentPage - 1)
+                  }}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Show first page, last page, current page, and pages around current page
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handlePageChange(page)
+                        }}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )
+                }
+                return null
+              })}
+              
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1)
+                  }}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          )}
+        </div>
+      )}
 
       {/* Add User Modal Component */}
       <AddUserModal
@@ -320,7 +606,7 @@ export default function UserManagementPage() {
         onInputChange={handleInputChange}
         onProfilePictureUpload={handleProfilePictureUpload}
         errors={errors}
-        loading={loading}
+        loading={formLoading}
       />
 
       {/* Success Modal Component */}
@@ -328,6 +614,27 @@ export default function UserManagementPage() {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         userName={successUserName}
+      />
+
+      {/* Delete User Modal Component */}
+      <DeleteUserModal
+        isOpen={showDeleteModal}
+        onClose={cancelDeleteUser}
+        onConfirm={confirmDeleteUser}
+        userName={userToDelete ? `${userToDelete.first_name} ${userToDelete.last_name}` : ''}
+        loading={deleteLoading}
+      />
+
+      {/* User Details Modal Component */}
+      <UserDetailsModal
+        isOpen={showUserDetailsModal}
+        onClose={() => {
+          setShowUserDetailsModal(false)
+          setSelectedUserId(null)
+        }}
+        userId={selectedUserId}
+        onUserUpdated={fetchUsers}
+        currentUserAccessLevel={currentUser?.access_level || ''}
       />
     </div>
   )

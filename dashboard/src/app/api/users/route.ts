@@ -9,6 +9,18 @@ export async function GET(request: Request) {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
+    // Use service role client to access auth data
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
     const { data: users, error } = await supabase
       .from('users')
       .select('*')
@@ -19,7 +31,47 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ users }, { status: 200 })
+    // Enrich users with auth status (online/offline based on active session)
+    const usersWithStatus = await Promise.all(
+      users.map(async (user) => {
+        try {
+          // Get current session info from Supabase Auth
+          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(user.auth_id)
+          
+          if (authError) {
+            console.error('Error fetching auth data for user:', user.id, authError)
+            return {
+              ...user,
+              last_sign_in_at: null,
+              is_online: false
+            }
+          }
+          
+          const lastSignIn = authData?.user?.last_sign_in_at
+          
+          // Consider user online if they signed in within last 30 minutes
+          // This is more realistic for active browsing sessions
+          const isOnline = lastSignIn 
+            ? (new Date().getTime() - new Date(lastSignIn).getTime()) < 30 * 60 * 1000
+            : false
+          
+          return {
+            ...user,
+            last_sign_in_at: lastSignIn,
+            is_online: isOnline
+          }
+        } catch (error) {
+          console.error('Error fetching status for user:', user.id, error)
+          return {
+            ...user,
+            last_sign_in_at: null,
+            is_online: false
+          }
+        }
+      })
+    )
+
+    return NextResponse.json({ users: usersWithStatus }, { status: 200 })
   } catch (error) {
     console.error('Users API error:', error)
     return NextResponse.json(

@@ -7,6 +7,8 @@ const nextConfig = {
         hostname: '**.supabase.co',
       },
     ],
+    // Allow local images from uploads directory
+    unoptimized: false,
   },
   experimental: {
     serverActions: {
