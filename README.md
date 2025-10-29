@@ -98,6 +98,23 @@ pcn/
 - Session synchronization between client and server
 
 #### 📊 Dashboard Overview
+- **Real-time statistics** showing available, pending, and sold vehicles
+- **Interactive area chart** displaying sales trends over time
+- **Date range selector** (Past Week, Past Month, Past Year)
+- **Active users panel** showing currently logged-in team members
+- **Body type breakdown** for all vehicle categories (Sedan, Hatchback, SUV, Wagon, Coupe)
+- **Live data connections** to sales transaction tables
+- **Auto-refresh** every 30 seconds for real-time updates
+- **Sales performance metrics** with monthly sales count
+- **User avatars and online status** indicators
+- **Responsive layout** with two-column design
+
+**Data Sources:**
+- Available Vehicles: `vehicles` table (status: 'In Sale')
+- Pending Vehicles: `pending_vehicle_sales` table (status: 'pending')
+- Sold Vehicles: `pending_vehicle_sales` table (status: 'sold')
+- Sales Chart: Historical data from completed transactions
+- Active Users: Real-time session tracking
 - Real-time business metrics
 - Total vehicles, sales, and inventory stats
 - Recent sales activity
