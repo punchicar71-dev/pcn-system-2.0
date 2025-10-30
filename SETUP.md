@@ -310,8 +310,8 @@ All pages include:
    - Add real-time subscriptions
 
 3. **File Upload**
-   - Configure Supabase Storage
-   - Add image upload for vehicles
+   - Configure AWS S3 bucket
+   - Add image upload for vehicles using S3 presigned URLs
    - Implement image optimization
 
 4. **Data Validation**

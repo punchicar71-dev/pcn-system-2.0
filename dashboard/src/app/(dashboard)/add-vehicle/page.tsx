@@ -133,122 +133,309 @@ export default function AddVehiclePage() {
   };
 
   const uploadImages = async (vehicleId: string) => {
-    const { vehicleImages, crImages } = formState.vehicleDetails;
+    const { vehicleImages, image360Files, crImages } = formState.vehicleDetails;
     const uploadPromises: Promise<any>[] = [];
 
-    // Upload vehicle images to local storage
-    for (let i = 0; i < vehicleImages.length; i++) {
-      const file = vehicleImages[i];
-      
-      const uploadPromise = (async () => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('vehicleId', vehicleId);
-        formData.append('imageType', 'gallery');
+    try {
+      // Upload vehicle gallery images to S3
+      for (let i = 0; i < vehicleImages.length; i++) {
+        const file = vehicleImages[i];
+        
+        const uploadPromise = (async () => {
+          try {
+            // Step 1: Get presigned URL from API
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+              throw new Error('No authentication token available');
+            }
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
+            const presignedResponse = await fetch('/api/upload/presigned-url', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                vehicleId,
+                imageType: 'gallery',
+                fileName: file.name,
+                mimeType: file.type,
+              }),
+            });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Upload failed');
-        }
+            if (!presignedResponse.ok) {
+              const error = await presignedResponse.json();
+              throw new Error(error.error || 'Failed to get presigned URL');
+            }
 
-        const result = await response.json();
+            const { presignedUrl, publicUrl, key } = await presignedResponse.json();
 
-        // Insert image record in database
-        await supabase.from('vehicle_images').insert({
-          vehicle_id: vehicleId,
-          image_url: result.url,
-          image_type: 'gallery',
-          storage_path: result.storagePath,
-          file_name: result.fileName,
-          file_size: result.fileSize,
-          is_primary: i === 0,
-          display_order: i,
-        });
-      })();
+            // Step 2: Upload directly to S3 using presigned URL
+            const uploadResponse = await fetch(presignedUrl, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': file.type,
+              },
+              body: file,
+            });
 
-      uploadPromises.push(uploadPromise);
+            if (!uploadResponse.ok) {
+              throw new Error('Failed to upload image to S3');
+            }
+
+            // Step 3: Store image metadata in Supabase
+            const { error: dbError } = await supabase.from('vehicle_images').insert({
+              vehicle_id: vehicleId,
+              image_url: publicUrl,
+              image_type: 'gallery',
+              s3_key: key,
+              storage_path: key, // S3 key serves as storage path
+              file_name: file.name,
+              file_size: file.size,
+              is_primary: i === 0,
+              display_order: i,
+            });
+
+            if (dbError) {
+              console.error('Error saving image metadata:', dbError);
+              throw new Error(`Failed to save image metadata: ${dbError.message}`);
+            }
+          } catch (error) {
+            console.error('Error uploading gallery image:', error);
+            throw error;
+          }
+        })();
+
+        uploadPromises.push(uploadPromise);
+      }
+
+      // Upload 360 images to S3
+      for (let i = 0; i < image360Files.length; i++) {
+        const file = image360Files[i];
+        
+        const uploadPromise = (async () => {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+              throw new Error('No authentication token available');
+            }
+
+            const presignedResponse = await fetch('/api/upload/presigned-url', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                vehicleId,
+                imageType: 'image_360',
+                fileName: file.name,
+                mimeType: file.type,
+              }),
+            });
+
+            if (!presignedResponse.ok) {
+              const error = await presignedResponse.json();
+              throw new Error(error.error || 'Failed to get presigned URL');
+            }
+
+            const { presignedUrl, publicUrl, key } = await presignedResponse.json();
+
+            const uploadResponse = await fetch(presignedUrl, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': file.type,
+              },
+              body: file,
+            });
+
+            if (!uploadResponse.ok) {
+              throw new Error('Failed to upload 360 image to S3');
+            }
+
+            const { error: dbError } = await supabase.from('vehicle_images').insert({
+              vehicle_id: vehicleId,
+              image_url: publicUrl,
+              image_type: 'image_360',
+              s3_key: key,
+              storage_path: key, // S3 key serves as storage path
+              file_name: file.name,
+              file_size: file.size,
+              is_primary: false,
+              display_order: i,
+            });
+
+            if (dbError) {
+              console.error('Error saving 360 image metadata:', dbError);
+              throw new Error(`Failed to save 360 image metadata: ${dbError.message}`);
+            }
+          } catch (error) {
+            console.error('Error uploading 360 image:', error);
+            throw error;
+          }
+        })();
+
+        uploadPromises.push(uploadPromise);
+      }
+
+      // Upload CR images to S3
+      for (let i = 0; i < crImages.length; i++) {
+        const file = crImages[i];
+        
+        const uploadPromise = (async () => {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+              throw new Error('No authentication token available');
+            }
+
+            const presignedResponse = await fetch('/api/upload/presigned-url', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                vehicleId,
+                imageType: 'cr_paper',
+                fileName: file.name,
+                mimeType: file.type,
+              }),
+            });
+
+            if (!presignedResponse.ok) {
+              const error = await presignedResponse.json();
+              throw new Error(error.error || 'Failed to get presigned URL');
+            }
+
+            const { presignedUrl, publicUrl, key } = await presignedResponse.json();
+
+            const uploadResponse = await fetch(presignedUrl, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': file.type,
+              },
+              body: file,
+            });
+
+            if (!uploadResponse.ok) {
+              throw new Error('Failed to upload CR image to S3');
+            }
+
+            const { error: dbError } = await supabase.from('vehicle_images').insert({
+              vehicle_id: vehicleId,
+              image_url: publicUrl,
+              image_type: 'cr_paper',
+              s3_key: key,
+              storage_path: key, // S3 key serves as storage path
+              file_name: file.name,
+              file_size: file.size,
+              is_primary: false,
+              display_order: i,
+            });
+
+            if (dbError) {
+              console.error('Error saving CR image metadata:', dbError);
+              throw new Error(`Failed to save CR image metadata: ${dbError.message}`);
+            }
+          } catch (error) {
+            console.error('Error uploading CR image:', error);
+            throw error;
+          }
+        })();
+
+        uploadPromises.push(uploadPromise);
+      }
+
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises);
+      console.log('✅ All images uploaded successfully');
+    } catch (error) {
+      console.error('❌ Error during image uploads:', error);
+      throw error;
     }
-
-    // Upload CR images to local storage
-    for (let i = 0; i < crImages.length; i++) {
-      const file = crImages[i];
-      
-      const uploadPromise = (async () => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('vehicleId', vehicleId);
-        formData.append('imageType', 'cr_paper');
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Upload failed');
-        }
-
-        const result = await response.json();
-
-        // Insert image record in database
-        await supabase.from('vehicle_images').insert({
-          vehicle_id: vehicleId,
-          image_url: result.url,
-          image_type: 'cr_paper',
-          storage_path: result.storagePath,
-          file_name: result.fileName,
-          file_size: result.fileSize,
-          is_primary: false,
-          display_order: i,
-        });
-      })();
-
-      uploadPromises.push(uploadPromise);
-    }
-
-    await Promise.all(uploadPromises);
   };
 
   const handlePublish = async () => {
     try {
       const { vehicleDetails, sellerDetails, vehicleOptions, sellingDetails, specialNotes } = formState;
 
+      // Validation: Check if required fields are filled
+      if (!vehicleDetails.vehicleNumber.trim()) {
+        alert('Please enter a vehicle number');
+        return;
+      }
+
+      if (!vehicleDetails.brandId) {
+        alert('Please select a vehicle brand');
+        return;
+      }
+
+      if (!vehicleDetails.modelId) {
+        alert('Please select a vehicle model');
+        return;
+      }
+
+      if (!vehicleDetails.manufactureYear) {
+        alert('Please select manufacture year');
+        return;
+      }
+
+      if (!vehicleDetails.countryId) {
+        alert('Please select country');
+        return;
+      }
+
+      if (!sellerDetails.firstName.trim() || !sellerDetails.lastName.trim()) {
+        alert('Please enter seller name');
+        return;
+      }
+
+      if (!sellerDetails.mobileNumber.trim()) {
+        alert('Please enter seller mobile number');
+        return;
+      }
+
+      if (!sellingDetails.sellingAmount.trim()) {
+        alert('Please enter selling amount');
+        return;
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
 
-      console.log('Starting vehicle insertion...');
-      console.log('User:', user?.id);
+      if (!user) {
+        alert('You must be logged in to add a vehicle');
+        return;
+      }
 
-      // Insert vehicle
+      console.log('Starting vehicle insertion...');
+      console.log('User:', user.id);
+
+      // Insert vehicle (TEXT DATA - goes to Supabase)
       const { data: vehicle, error: vehicleError } = await supabase
         .from('vehicles')
         .insert({
-          vehicle_number: vehicleDetails.vehicleNumber,
+          vehicle_number: vehicleDetails.vehicleNumber.trim(),
           brand_id: vehicleDetails.brandId,
           model_id: vehicleDetails.modelId,
-          model_number_other: vehicleDetails.modelNumberOther || null,
-          manufacture_year: vehicleDetails.manufactureYear!,
+          model_number_other: vehicleDetails.modelNumberOther?.trim() || null,
+          manufacture_year: vehicleDetails.manufactureYear,
           country_id: vehicleDetails.countryId,
-          body_type: vehicleDetails.bodyType,
-          fuel_type: vehicleDetails.fuelType,
-          transmission: vehicleDetails.transmission,
-          engine_capacity: vehicleDetails.engineCapacity || null,
-          exterior_color: vehicleDetails.exteriorColor || null,
+          body_type: vehicleDetails.bodyType || null,
+          fuel_type: vehicleDetails.fuelType || null,
+          transmission: vehicleDetails.transmission || null,
+          engine_capacity: vehicleDetails.engineCapacity?.trim() || null,
+          exterior_color: vehicleDetails.exteriorColor?.trim() || null,
           registered_year: vehicleDetails.registeredYear || null,
-          selling_amount: parseFloat(sellingDetails.sellingAmount.replace(/,/g, '')),
+          selling_amount: parseFloat(sellingDetails.sellingAmount.replace(/,/g, '')) || 0,
           mileage: sellingDetails.mileage ? parseFloat(sellingDetails.mileage.replace(/,/g, '')) : null,
-          entry_type: sellingDetails.entryType,
-          entry_date: sellingDetails.entryDate,
-          status: sellingDetails.status,
-          tag_notes: specialNotes.tagNotes || null,
-          special_note_print: specialNotes.specialNotePrint || null,
-          created_by: user?.id || null,
+          entry_type: sellingDetails.entryType || null,
+          entry_date: sellingDetails.entryDate || new Date().toISOString().split('T')[0],
+          status: sellingDetails.status || 'active',
+          tag_notes: specialNotes.tagNotes?.trim() || null,
+          special_note_print: specialNotes.specialNotePrint?.trim() || null,
+          created_by: user.id,
         })
         .select()
         .single();
@@ -258,40 +445,46 @@ export default function AddVehiclePage() {
         
         // Provide helpful error messages
         if (vehicleError.code === '42P01') {
-          alert('Database Error: The "vehicles" table does not exist.\n\nPlease run the database migration first:\n1. Open Supabase SQL Editor\n2. Run vehicle-inventory-migration.sql\n3. Try again');
-          throw new Error('Database table "vehicles" not found. Please run migration first.');
+          alert('❌ Database Error: The "vehicles" table does not exist.\n\nPlease run the database migration:\n1. Open Supabase SQL Editor\n2. Run vehicle-inventory-migration.sql\n3. Try again');
+          throw new Error('Database table "vehicles" not found');
         } else if (vehicleError.code === '23503') {
-          alert('Database Error: Referenced table (brands, models, or countries) does not exist or has no data.\n\nPlease:\n1. Run the complete migration\n2. Add sample brands, models, and countries\n3. Try again');
-          throw new Error('Foreign key constraint failed. Master data may be missing.');
+          alert('❌ Database Error: Invalid brand, model, or country.\n\nPlease ensure:\n1. Master data is properly set up\n2. Selected IDs exist in the database\n3. Try again');
+          throw new Error('Foreign key constraint failed');
+        } else if (vehicleError.code === '23505') {
+          alert('❌ Vehicle number already exists. Please use a different number.');
+          throw new Error('Duplicate vehicle number');
         }
         
         throw vehicleError;
       }
       
-      if (!vehicle) throw new Error('Failed to create vehicle');
+      if (!vehicle) {
+        throw new Error('Failed to create vehicle');
+      }
 
-      console.log('Vehicle created successfully:', vehicle.id);
+      console.log('✅ Vehicle created successfully:', vehicle.id);
 
-      // Insert seller
+      // Insert seller (TEXT DATA - goes to Supabase)
       const { error: sellerError } = await supabase.from('sellers').insert({
         vehicle_id: vehicle.id,
-        first_name: sellerDetails.firstName,
-        last_name: sellerDetails.lastName,
-        address: sellerDetails.address || null,
-        city: sellerDetails.city || null,
-        nic_number: sellerDetails.nicNumber || null,
-        mobile_number: sellerDetails.mobileNumber,
-        land_phone_number: sellerDetails.landPhoneNumber || null,
-        email_address: sellerDetails.emailAddress || null,
+        first_name: sellerDetails.firstName.trim(),
+        last_name: sellerDetails.lastName.trim(),
+        address: sellerDetails.address?.trim() || null,
+        city: sellerDetails.city?.trim() || null,
+        nic_number: sellerDetails.nicNumber?.trim() || null,
+        mobile_number: sellerDetails.mobileNumber.trim(),
+        land_phone_number: sellerDetails.landPhoneNumber?.trim() || null,
+        email_address: sellerDetails.emailAddress?.trim() || null,
       });
 
       if (sellerError) {
         console.error('Seller insertion error:', sellerError);
+        alert('Warning: Seller information could not be saved.');
+      } else {
+        console.log('✅ Seller created successfully');
       }
 
-      console.log('Seller created successfully');
-
-      // Insert vehicle options
+      // Insert vehicle options (TEXT DATA - goes to Supabase)
       const standardOptions = Object.entries(vehicleOptions.standardOptions)
         .filter(([_, enabled]) => enabled)
         .map(([name]) => name);
@@ -337,34 +530,38 @@ export default function AddVehiclePage() {
         }
       }
 
-      console.log('Options inserted successfully');
+      console.log('✅ Options inserted successfully');
 
-      // Insert custom options
+      // Insert custom options (TEXT DATA - goes to Supabase)
       if (vehicleOptions.customOptions.length > 0) {
         for (const customOption of vehicleOptions.customOptions) {
           await supabase.from('vehicle_custom_options').insert({
             vehicle_id: vehicle.id,
-            option_name: customOption,
+            option_name: customOption.trim(),
           });
         }
-        console.log('Custom options inserted successfully');
+        console.log('✅ Custom options inserted successfully');
       }
 
-      // Upload images
-      if (vehicleDetails.vehicleImages.length > 0 || vehicleDetails.crImages.length > 0) {
+      // Upload images to S3 (IMAGE DATA - goes to AWS S3)
+      if (vehicleDetails.vehicleImages.length > 0 || vehicleDetails.image360Files.length > 0 || vehicleDetails.crImages.length > 0) {
+        console.log('🖼️  Starting image uploads to AWS S3...');
         await uploadImages(vehicle.id);
-        console.log('Images uploaded successfully');
+        console.log('✅ All images uploaded to AWS S3 successfully');
+      } else {
+        console.log('ℹ️  No images to upload');
       }
 
-      console.log('✅ Vehicle published successfully!');
+      console.log('✅✅ Vehicle published successfully!');
       setPublishedVehicleId(vehicle.id);
       nextStep(); // Go to success screen
     } catch (error: any) {
       console.error('❌ Error publishing vehicle:', error);
       
-      // Show user-friendly error message
-      const errorMessage = error?.message || 'Unknown error occurred';
-      alert(`Failed to publish vehicle:\n\n${errorMessage}\n\nCheck the browser console for more details.`);
+      if (error.message !== 'Upload failed') {
+        const errorMessage = error?.message || 'Unknown error occurred';
+        alert(`Failed to publish vehicle:\n\n${errorMessage}\n\nCheck the browser console for more details.`);
+      }
       
       throw error;
     }

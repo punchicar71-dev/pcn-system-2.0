@@ -1,64 +1,122 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
-import { existsSync } from 'fs'
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
+/**
+ * Proxy endpoint for uploading files to S3 through the backend API
+ * This endpoint forwards requests to the backend API server with authentication
+ */
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const vehicleId = formData.get('vehicleId') as string
-    const imageType = formData.get('imageType') as string // 'gallery' or 'cr_paper'
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // Get the API server URL from environment variables
+    const apiServerUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
-    }
-
-    if (!vehicleId) {
-      return NextResponse.json({ error: 'Vehicle ID is required' }, { status: 400 })
-    }
-
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    // Create uploads directory structure
-    const uploadBaseDir = path.join(process.cwd(), 'public', 'uploads', 'vehicles', vehicleId)
-    const uploadDir = imageType === 'cr_paper' 
-      ? path.join(uploadBaseDir, 'documents')
-      : uploadBaseDir
-
-    // Create directory if it doesn't exist
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
-
-    // Generate unique filename with timestamp
-    const timestamp = Date.now()
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-    const filename = `${timestamp}-${sanitizedFileName}`
-    const filepath = path.join(uploadDir, filename)
-
-    // Save file to local storage
-    await writeFile(filepath, buffer)
-
-    // Generate public URL (relative to public directory)
-    const publicPath = imageType === 'cr_paper'
-      ? `/uploads/vehicles/${vehicleId}/documents/${filename}`
-      : `/uploads/vehicles/${vehicleId}/${filename}`
+    // Get auth token from request header
+    let authToken = request.headers.get('authorization');
     
-    return NextResponse.json({ 
-      success: true, 
-      url: publicPath,
-      fileName: file.name,
-      fileSize: file.size,
-      storagePath: publicPath
-    })
+    // If no auth header, try to get the token from Supabase session cookie
+    if (!authToken) {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (supabaseUrl && supabaseAnonKey) {
+          const cookies = request.headers.get('cookie') || '';
+          if (cookies) {
+            authToken = `Bearer ${cookies}`;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not extract auth token:', e);
+      }
+    }
+
+    // Determine which endpoint to call based on content-type
+    const contentType = request.headers.get('content-type') || '';
+    let backendEndpoint = '/api/upload/upload';
+
+    if (contentType.includes('application/json')) {
+      // JSON request - likely presigned URL request
+      backendEndpoint = '/api/upload/presigned-url';
+    }
+    
+    // Prepare request body
+    let forwardBody: any;
+    if (contentType.includes('multipart/form-data')) {
+      forwardBody = await request.blob();
+    } else if (contentType.includes('application/json')) {
+      forwardBody = await request.text();
+    } else {
+      forwardBody = await request.blob();
+    }
+
+    // Forward the request to the backend API
+    const response = await fetch(`${apiServerUrl}${backendEndpoint}`, {
+      method: 'POST',
+      body: forwardBody,
+      headers: {
+        // Forward the authorization header if present
+        ...(authToken && {
+          'authorization': authToken,
+        }),
+        // Forward content-type
+        ...(contentType && {
+          'content-type': contentType,
+        }),
+      },
+    });
+
+    // Check if response is JSON
+    const responseContentType = response.headers.get('content-type');
+    
+    if (!response.ok) {
+      // If backend returns an error, relay it
+      let errorBody: any = {};
+      if (responseContentType?.includes('application/json')) {
+        try {
+          errorBody = await response.json();
+        } catch {
+          errorBody = { error: 'Upload failed', status: response.status };
+        }
+      } else {
+        errorBody = { error: 'Upload failed', status: response.status };
+      }
+      return NextResponse.json(errorBody, { status: response.status });
+    }
+
+    // Forward successful response
+    if (responseContentType?.includes('application/json')) {
+      const data = await response.json();
+      return NextResponse.json(data);
+    }
+
+    // Fallback if response is not JSON
+    return NextResponse.json(
+      { error: 'Invalid response format from server' },
+      { status: 500 }
+    );
   } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json({ 
-      error: 'Upload failed', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
-    }, { status: 500 })
+    console.error('Error in upload proxy:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Check if it's a connection error to the backend
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch')) {
+      return NextResponse.json(
+        {
+          error: 'Cannot connect to backend API server',
+          details: 'Make sure the API server is running on http://localhost:4000',
+          originalError: errorMessage,
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Upload failed', details: errorMessage },
+      { status: 500 }
+    );
   }
 }

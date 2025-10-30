@@ -2,6 +2,42 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
+---
+
+## 📢 LATEST UPDATE - October 30, 2025
+
+### ✅ Vehicle Add Function - Complete S3 Integration
+
+**Major improvements to vehicle add functionality with full AWS S3 integration!**
+
+→ **Read:** [VEHICLE_ADD_DOCUMENTATION_INDEX.md](VEHICLE_ADD_DOCUMENTATION_INDEX.md)
+
+#### Key Features:
+- ✅ **Text data** → Supabase (vehicle details, seller info, options)
+- ✅ **Image files** → AWS S3 (direct upload with presigned URLs)
+- ✅ **360° image support** with dedicated viewer
+- ✅ **CR Paper/Document upload** to S3
+- ✅ **Comprehensive validation** before publishing
+- ✅ **Error handling** with helpful messages
+- ✅ **Production ready** with full documentation
+
+#### Bug Fixes:
+- Fixed image upload routing to S3
+- Added presigned URL support for direct browser-to-S3 uploads
+- Added `s3_key` column to database for proper tracking
+- Fixed 360° image handling
+- Updated database constraints for image types
+- Enhanced error messages and validation
+
+#### Documentation:
+- [VEHICLE_ADD_COMPLETE_REPORT.md](VEHICLE_ADD_COMPLETE_REPORT.md) - Overview
+- [VEHICLE_ADD_FIX_DOCUMENTATION.md](VEHICLE_ADD_FIX_DOCUMENTATION.md) - Technical details
+- [VEHICLE_ADD_TESTING_GUIDE.md](VEHICLE_ADD_TESTING_GUIDE.md) - Testing instructions
+- [VEHICLE_ADD_QUICK_REFERENCE.md](VEHICLE_ADD_QUICK_REFERENCE.md) - Quick reference
+- [AWS_S3_SETUP_GUIDE.md](AWS_S3_SETUP_GUIDE.md) - S3 configuration guide
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -78,12 +114,66 @@ pcn/
 - **Node.js** - Runtime environment
 - **Express.js** - Web framework
 - **Supabase** - PostgreSQL database with real-time capabilities
+- **AWS S3** - Cloud storage for vehicle images
 - **TypeScript** - Type safety
 
-### Database
+### Database & Storage
 - **PostgreSQL** (via Supabase) - Relational database
 - **Row Level Security** - Data protection
 - **Real-time subscriptions** - Live updates
+- **AWS S3** - Secure cloud storage for images
+  - Gallery images: `vehicle_images/`
+  - 360° images: `vehicle_360_image/`
+  - CR/Documents: `cr_pepar_image/`
+
+## Environment Setup
+
+### Required Environment Variables
+
+#### Dashboard (.env.local)
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+#### Backend API (.env)
+```bash
+# Supabase
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_service_key
+
+# AWS S3
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_S3_BUCKET_NAME=your_bucket_name
+AWS_CLOUDFRONT_URL=your_cdn_url  # Optional
+
+# API
+PORT=4000
+CORS_ORIGIN=http://localhost:3000
+```
+
+### AWS S3 Configuration
+
+For vehicle image storage, you need to configure AWS S3:
+
+1. **Create S3 Bucket**
+   - Create a new S3 bucket in AWS Console
+   - Enable public access for image viewing
+   - Configure CORS for cross-origin uploads
+
+2. **Create IAM User**
+   - Create an IAM user with S3 full access
+   - Generate access keys (Access Key ID and Secret Access Key)
+   - Save credentials securely
+
+3. **Configure Environment**
+   - Add AWS credentials to API `.env` file
+   - Test connection: `cd api && node test-s3-connection.js`
+
+→ **Full Guide:** [AWS_S3_SETUP_GUIDE.md](AWS_S3_SETUP_GUIDE.md)
 
 ## Features
 
@@ -544,7 +634,7 @@ pcn/
   - Updates/creates seller records
   - Manages vehicle options (add/remove)
   - Handles custom options
-  - Image upload to Supabase Storage
+  - Image upload to AWS S3
   - Transactional updates for data integrity
 - **User Experience**:
   - Opens directly from Edit button in inventory table
@@ -600,7 +690,7 @@ pcn/
     - Vehicle options with checkmarks
     - Download CR paper functionality
 - **Database Integration**: Complete Supabase setup with 9 tables
-- **Image Storage**: Supabase Storage for vehicle and document images
+- **Image Storage**: AWS S3 for vehicle and document images
 - **Form Validation**: Comprehensive validation with React Hook Form & Zod
 
 ### 📊 Database Schema
@@ -647,7 +737,7 @@ pcn/
 - Implemented optimistic UI updates to avoid full page refreshes
 - Used React `useMemo` for efficient filtering and pagination
 - Eliminated N+1 query problems
-- Optimized image upload with Supabase Storage
+- Optimized image upload with AWS S3 direct upload
 
 ## Getting Started
 

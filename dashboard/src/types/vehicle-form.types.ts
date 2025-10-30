@@ -26,6 +26,8 @@ export interface VehicleDetailsData {
   registeredYear: number | null;
   vehicleImages: File[];
   vehicleImagePreviews: string[];
+  image360Files: File[];
+  image360Previews: string[];
   crImages: File[];
   crImagePreviews: string[];
 }
@@ -184,6 +186,8 @@ export const initialVehicleDetails: VehicleDetailsData = {
   registeredYear: null,
   vehicleImages: [],
   vehicleImagePreviews: [],
+  image360Files: [],
+  image360Previews: [],
   crImages: [],
   crImagePreviews: [],
 };

@@ -233,6 +233,17 @@ export default function LoginPage() {
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
+            
+            {/* Clear Cache Button - shown when there's a session error */}
+            {error.includes('Session') || error.includes('refresh_token') || error.includes('cache') ? (
+              <button
+                type="button"
+                onClick={() => window.location.href = '/clear-cookies'}
+                className="w-full py-3 px-4 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition-colors"
+              >
+                Clear Cache & Retry
+              </button>
+            ) : null}
           </form>
 
           {/* Register Information Box */}

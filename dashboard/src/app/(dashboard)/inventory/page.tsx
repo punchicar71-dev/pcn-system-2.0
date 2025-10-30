@@ -21,6 +21,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import EditVehicleModal from '@/components/inventory/EditVehicleModal'
 import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
+import VehicleDetailModal from '@/components/inventory/VehicleDetailModal'
 
 interface Vehicle {
   id: string
@@ -81,6 +82,10 @@ export default function InventoryPage() {
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
+  
+  // Detail Modal States
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [detailVehicleData, setDetailVehicleData] = useState<any>(null)
 
   // Fetch vehicles from database
   useEffect(() => {
@@ -110,6 +115,49 @@ export default function InventoryPage() {
       alert('An error occurred while loading vehicles.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Open detail modal with vehicle data
+  const openDetailModal = async (vehicleId: string) => {
+    try {
+      // Fetch complete vehicle data including images
+      const { data: vehicleData, error: vehicleError } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('id', vehicleId)
+        .single()
+
+      if (vehicleError) throw vehicleError
+
+      // Fetch images
+      const { data: imagesData } = await supabase
+        .from('vehicle_images')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('display_order', { ascending: true })
+
+      // Separate images by type
+      const galleryImages = imagesData?.filter(img => img.image_type === 'gallery').map(img => img.image_url) || []
+      const image360 = imagesData?.filter(img => img.image_type === 'image_360').map(img => img.image_url) || []
+      const crImages = imagesData?.filter(img => img.image_type === 'cr_paper').map(img => img.image_url) || []
+
+      // Get vehicle from list for additional data
+      const vehicleFromList = vehicles.find(v => v.id === vehicleId)
+
+      setDetailVehicleData({
+        ...vehicleData,
+        brand_name: vehicleFromList?.brand_name || '',
+        model_name: vehicleFromList?.model_name || '',
+        country_name: vehicleFromList?.country_name || '',
+        images: galleryImages,
+        image_360: image360,
+        cr_images: crImages,
+      })
+      setIsDetailModalOpen(true)
+    } catch (error) {
+      console.error('Error loading vehicle details:', error)
+      alert('Failed to load vehicle details')
     }
   }
 
@@ -340,6 +388,26 @@ export default function InventoryPage() {
     if (!deleteId) return
 
     try {
+      // First, delete all images from S3
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+      const token = localStorage.getItem('access_token')
+      
+      const s3Response = await fetch(`${API_URL}/api/upload/delete-vehicle/${deleteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!s3Response.ok) {
+        console.warn('Failed to delete S3 images:', await s3Response.text())
+        // Continue with database deletion even if S3 deletion fails
+      } else {
+        console.log('S3 images deleted successfully')
+      }
+
+      // Then delete from database (this will cascade to vehicle_images table)
       const supabase = createClient()
       
       const { error } = await supabase
@@ -349,11 +417,11 @@ export default function InventoryPage() {
 
       if (error) {
         console.error('Error deleting vehicle:', error)
-        alert('Failed to delete vehicle. Please try again.')
+        alert('Failed to delete vehicle from database. Please try again.')
         return
       }
 
-      alert('Vehicle deleted successfully!')
+      alert('Vehicle and all images deleted successfully!')
       fetchVehicles() // Refresh list
       setIsDeleteDialogOpen(false)
       setDeleteId(null)
@@ -537,7 +605,7 @@ export default function InventoryPage() {
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => fetchVehicleDetails(vehicle.id)}
+                          onClick={() => openDetailModal(vehicle.id)}
                           className="p-1 text-gray-800 hover:bg-blue-50 rounded"
                           title="View Details"
                         >
@@ -902,6 +970,18 @@ export default function InventoryPage() {
           fetchVehicles() // Refresh the vehicle list
         }}
       />
+
+      {/* Vehicle Detail Modal with 360 View */}
+      {detailVehicleData && (
+        <VehicleDetailModal
+          open={isDetailModalOpen}
+          onClose={() => {
+            setIsDetailModalOpen(false)
+            setDetailVehicleData(null)
+          }}
+          vehicle={detailVehicleData}
+        />
+      )}
     </div>
   )
 }

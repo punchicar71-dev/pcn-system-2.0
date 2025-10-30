@@ -37,6 +37,18 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     }
   };
 
+  const handle360ImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const newImages = [...data.image360Files, ...files];
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      onChange({
+        image360Files: newImages,
+        image360Previews: [...data.image360Previews, ...newPreviews],
+      });
+    }
+  };
+
   const handleCRImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -55,6 +67,15 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     onChange({
       vehicleImages: newImages,
       vehicleImagePreviews: newPreviews,
+    });
+  };
+
+  const remove360Image = (index: number) => {
+    const newImages = data.image360Files.filter((_, i) => i !== index);
+    const newPreviews = data.image360Previews.filter((_, i) => i !== index);
+    onChange({
+      image360Files: newImages,
+      image360Previews: newPreviews,
     });
   };
 
@@ -273,7 +294,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         </div>
 
         {/* Image Uploads */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Vehicle Images */}
           <div>
             <Label>Upload Vehicle Images</Label>
@@ -316,7 +337,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
                     {data.vehicleImages[index] && (
                       <div className="mt-1">
                         <div className="h-1 bg-green-500 rounded" style={{ width: '100%' }} />
-                        <p className="text-xs text-gray-500 mt-1">{data.vehicleImages[index].name}</p>
+                        <p className="text-xs text-gray-500 mt-1 truncate">{data.vehicleImages[index].name}</p>
                       </div>
                     )}
                   </div>
@@ -325,9 +346,60 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             )}
           </div>
 
+          {/* 360 Images */}
+          <div>
+            <Label>Upload 360° Images</Label>
+            <div className="mt-2 border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors bg-blue-50/30">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handle360ImageUpload}
+                className="hidden"
+                id="image-360"
+              />
+              <label htmlFor="image-360" className="cursor-pointer">
+                <Upload className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600">Drop 360° images here</p>
+                <p className="text-xs text-gray-500 mt-1">Or</p>
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  onClick={() => document.getElementById('image-360')?.click()}
+                >
+                  Choose files
+                </button>
+              </label>
+            </div>
+
+            {/* 360 Image Previews */}
+            {data.image360Previews.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-blue-600 font-medium">{data.image360Previews.length} images for 360° view</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {data.image360Previews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img src={preview} alt={`360 ${index + 1}`} className="w-full h-20 object-cover rounded border-2 border-blue-200" />
+                      <button
+                        type="button"
+                        onClick={() => remove360Image(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                      <div className="absolute bottom-1 left-1 bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded">
+                        #{index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* CR Images / Vehicle Papers */}
           <div>
-            <Label>CR Image / Vehicle Pepars</Label>
+            <Label>CR Image / Vehicle Papers</Label>
             <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
               <input
                 type="file"

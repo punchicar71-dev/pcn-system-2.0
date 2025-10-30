@@ -9,12 +9,13 @@ import vehicleRoutes from './routes/vehicle.routes';
 import salesRoutes from './routes/sales.routes';
 import userRoutes from './routes/user.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import uploadRoutes from './routes/upload.routes';
 
 // Load environment variables
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 4000;
+const PORT = Number(process.env.PORT) || 4000;
 
 // Middleware
 app.use(helmet());
@@ -31,6 +32,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
@@ -52,9 +54,28 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 PCN API Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Handle server-level errors (e.g., port already in use)
+server.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Free it or set PORT to a different value.`);
+  } else {
+    console.error('❌ Server error:', err);
+  }
+  process.exit(1);
+});
+
+// Global process error handlers for better diagnostics in dev
+process.on('unhandledRejection', (reason) => {
+  console.error('🔴 Unhandled Promise Rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('🔴 Uncaught Exception:', err);
 });
 
 export default app;

@@ -178,23 +178,6 @@ export default function DatabaseTestPage() {
       })
     }
 
-    // Test 10: Check storage bucket
-    try {
-      const { data, error } = await supabase.storage.getBucket('vehicle-images')
-      if (error) throw error
-      testResults.push({
-        test: 'Storage Bucket',
-        status: 'success',
-        message: 'vehicle-images bucket exists'
-      })
-    } catch (error: any) {
-      testResults.push({
-        test: 'Storage Bucket',
-        status: 'error',
-        message: error.message
-      })
-    }
-
     setResults(testResults)
     setTesting(false)
   }
