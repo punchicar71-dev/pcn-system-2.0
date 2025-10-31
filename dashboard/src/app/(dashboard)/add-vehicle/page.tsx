@@ -650,6 +650,14 @@ export default function AddVehiclePage() {
             brandName={getBrandName()}
             modelName={getModelName()}
             year={formState.vehicleDetails.manufactureYear || 0}
+            sellerDetails={{
+              firstName: formState.sellerDetails.firstName,
+              lastName: formState.sellerDetails.lastName,
+              address: formState.sellerDetails.address,
+              city: formState.sellerDetails.city,
+              nicNumber: formState.sellerDetails.nicNumber,
+              mobileNumber: formState.sellerDetails.mobileNumber,
+            }}
           />
         )}
       </div>
