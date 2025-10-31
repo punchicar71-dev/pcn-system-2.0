@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause } from 'lucide-react'
+import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause, ImageIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/carousel'
 import { Card, CardContent } from '@/components/ui/card'
 import EditVehicleModal from '@/components/inventory/EditVehicleModal'
+import VehicleImageUploadModal from '@/components/inventory/VehicleImageUploadModal'
 import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
 import VehicleDetailModal from '@/components/inventory/VehicleDetailModal'
 import SuccessPopup from '@/components/ui/SuccessPopup'
@@ -83,6 +84,16 @@ export default function InventoryPage() {
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
+  
+  // Image Upload Modal States
+  const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false)
+  const [imageUploadVehicleId, setImageUploadVehicleId] = useState<string | null>(null)
+  const [imageUploadVehicleInfo, setImageUploadVehicleInfo] = useState<{
+    brand: string
+    model: string
+    year: number
+    vehicleNumber: string
+  } | null>(null)
   
   // Detail Modal States
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -618,6 +629,22 @@ export default function InventoryPage() {
                         </button>
                         <button
                           onClick={() => {
+                            setImageUploadVehicleId(vehicle.id)
+                            setImageUploadVehicleInfo({
+                              brand: vehicle.brand_name,
+                              model: vehicle.model_name,
+                              year: vehicle.manufacture_year,
+                              vehicleNumber: vehicle.vehicle_number,
+                            })
+                            setIsImageUploadModalOpen(true)
+                          }}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Edit Images"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
                             setEditVehicleId(vehicle.id)
                             setIsEditModalOpen(true)
                           }}
@@ -984,6 +1011,21 @@ export default function InventoryPage() {
           }
           fetchVehicles() // Refresh the vehicle list
           setIsSuccessPopupOpen(true) // Show success popup
+        }}
+      />
+
+      {/* Vehicle Image Upload Modal */}
+      <VehicleImageUploadModal
+        vehicleId={imageUploadVehicleId}
+        vehicleInfo={imageUploadVehicleInfo}
+        isOpen={isImageUploadModalOpen}
+        onClose={() => {
+          setIsImageUploadModalOpen(false)
+          setImageUploadVehicleId(null)
+          setImageUploadVehicleInfo(null)
+        }}
+        onSuccess={() => {
+          fetchVehicles() // Refresh the vehicle list
         }}
       />
 

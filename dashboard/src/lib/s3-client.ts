@@ -73,13 +73,18 @@ export const uploadToS3WithPresignedUrl = async (
   imageType: 'gallery' | 'image_360' | 'cr_paper'
 ): Promise<S3UploadResult> => {
   try {
+    console.log('🔑 Getting auth token...');
     const token = await getAuthToken();
     if (!token) {
+      console.error('❌ No auth token available');
       return {
         success: false,
-        error: 'Authentication required',
+        error: 'Authentication required - Please log in again',
       };
     }
+
+    console.log('✅ Auth token obtained');
+    console.log('📡 Requesting presigned URL from:', `${API_URL}/api/upload/presigned-url`);
 
     // Step 1: Get presigned URL from server
     const presignedResponse = await fetch(`${API_URL}/api/upload/presigned-url`, {
@@ -96,11 +101,34 @@ export const uploadToS3WithPresignedUrl = async (
       }),
     });
 
+    console.log('📥 Presigned URL response status:', presignedResponse.status);
+
     if (!presignedResponse.ok) {
-      throw new Error('Failed to get presigned URL');
+      const errorText = await presignedResponse.text();
+      console.error('❌ Failed to get presigned URL:', errorText);
+      throw new Error(`Failed to get presigned URL: ${presignedResponse.status} - ${errorText}`);
     }
 
-    const { presignedUrl, publicUrl, key } = await presignedResponse.json();
+    const presignedData = await presignedResponse.json();
+    console.log('✅ Presigned URL obtained:', {
+      hasUrl: !!presignedData.presignedUrl,
+      hasPublicUrl: !!presignedData.publicUrl,
+      hasKey: !!presignedData.key,
+    });
+
+    const { presignedUrl, publicUrl, key } = presignedData;
+
+    if (!presignedUrl) {
+      console.error('❌ No presigned URL in response');
+      throw new Error('No presigned URL received from server');
+    }
+
+    console.log('📤 Uploading file to S3...');
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    });
 
     // Step 2: Upload directly to S3
     const uploadResponse = await fetch(presignedUrl, {
@@ -111,9 +139,15 @@ export const uploadToS3WithPresignedUrl = async (
       body: file,
     });
 
+    console.log('📥 S3 upload response status:', uploadResponse.status);
+
     if (!uploadResponse.ok) {
-      throw new Error('Failed to upload to S3');
+      const errorText = await uploadResponse.text();
+      console.error('❌ S3 upload failed:', errorText);
+      throw new Error(`Failed to upload to S3: ${uploadResponse.status} - ${errorText}`);
     }
+
+    console.log('✅ File uploaded to S3 successfully');
 
     return {
       success: true,
@@ -121,10 +155,10 @@ export const uploadToS3WithPresignedUrl = async (
       key,
     };
   } catch (error) {
-    console.error('Error uploading to S3:', error);
+    console.error('❌ Error in uploadToS3WithPresignedUrl:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Upload failed',
+      error: error instanceof Error ? error.message : 'Upload failed - Unknown error',
     };
   }
 };

@@ -58,20 +58,45 @@ export const saveImage = async (
   isPrimary: boolean = false
 ): Promise<StorageImage | null> => {
   try {
+    console.log('🔍 Checking S3 status...');
     const s3Enabled = await isS3Enabled();
     
     if (!s3Enabled) {
-      throw new Error('S3 is not configured. Please configure AWS S3 to upload images.');
+      const errorMsg = 'S3 is not configured. Please configure AWS S3 to upload images.';
+      console.error('❌', errorMsg);
+      throw new Error(errorMsg);
     }
 
+    console.log('✅ S3 is enabled, proceeding with upload');
+
     const imageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    console.log('📤 Uploading to S3:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      vehicleId,
+      imageType,
+    });
 
     // Upload to S3
     const result = await uploadToS3WithPresignedUrl(file, vehicleId, imageType);
     
-    if (!result.success || !result.url || !result.key) {
-      throw new Error('Failed to upload image to S3');
+    console.log('📥 S3 Upload result:', result);
+    
+    if (!result.success) {
+      const errorMsg = result.error || 'Failed to upload image to S3';
+      console.error('❌ Upload failed:', errorMsg);
+      throw new Error(errorMsg);
     }
+    
+    if (!result.url || !result.key) {
+      const errorMsg = 'S3 upload succeeded but missing URL or key in response';
+      console.error('❌', errorMsg, result);
+      throw new Error(errorMsg);
+    }
+
+    console.log('✅ Image uploaded successfully to S3:', result.url);
 
     const image: StorageImage = {
       id: imageId,
@@ -90,7 +115,7 @@ export const saveImage = async (
 
     return image;
   } catch (error) {
-    console.error('Error saving image to S3:', error);
+    console.error('❌ Error in saveImage:', error);
     throw error;
   }
 };
