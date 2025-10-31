@@ -493,54 +493,96 @@ export default function AddVehiclePage() {
         .filter(([_, enabled]) => enabled)
         .map(([name]) => name);
 
+      console.log('📝 Inserting vehicle options...');
+      console.log('Standard options:', standardOptions);
+      console.log('Special options:', specialOptions);
+
       // Get option IDs from master and insert
+      let standardInsertCount = 0;
       for (const optionName of standardOptions) {
-        const { data: optionData } = await supabase
+        const { data: optionData, error: lookupError } = await supabase
           .from('vehicle_options_master')
           .select('id')
           .eq('option_name', optionName)
           .eq('option_type', 'standard')
           .single();
 
+        if (lookupError) {
+          console.warn(`⚠️  Standard option "${optionName}" not found in master table:`, lookupError);
+          continue;
+        }
+
         if (optionData) {
-          await supabase.from('vehicle_options').insert({
+          const { error: insertError } = await supabase.from('vehicle_options').insert({
             vehicle_id: vehicle.id,
             option_id: optionData.id,
             option_type: 'standard',
             is_enabled: true,
           });
+
+          if (insertError) {
+            console.error(`❌ Failed to insert standard option "${optionName}":`, insertError);
+          } else {
+            standardInsertCount++;
+            console.log(`✅ Inserted standard option: ${optionName}`);
+          }
         }
       }
 
+      let specialInsertCount = 0;
       for (const optionName of specialOptions) {
-        const { data: optionData } = await supabase
+        const { data: optionData, error: lookupError } = await supabase
           .from('vehicle_options_master')
           .select('id')
           .eq('option_name', optionName)
           .eq('option_type', 'special')
           .single();
 
+        if (lookupError) {
+          console.warn(`⚠️  Special option "${optionName}" not found in master table:`, lookupError);
+          continue;
+        }
+
         if (optionData) {
-          await supabase.from('vehicle_options').insert({
+          const { error: insertError } = await supabase.from('vehicle_options').insert({
             vehicle_id: vehicle.id,
             option_id: optionData.id,
             option_type: 'special',
             is_enabled: true,
           });
+
+          if (insertError) {
+            console.error(`❌ Failed to insert special option "${optionName}":`, insertError);
+          } else {
+            specialInsertCount++;
+            console.log(`✅ Inserted special option: ${optionName}`);
+          }
         }
       }
 
-      console.log('✅ Options inserted successfully');
+      console.log(`✅ Options inserted: ${standardInsertCount} standard, ${specialInsertCount} special`);
 
       // Insert custom options (TEXT DATA - goes to Supabase)
       if (vehicleOptions.customOptions.length > 0) {
+        console.log('📝 Inserting custom options:', vehicleOptions.customOptions);
+        let customInsertCount = 0;
+        
         for (const customOption of vehicleOptions.customOptions) {
-          await supabase.from('vehicle_custom_options').insert({
+          const { error: customError } = await supabase.from('vehicle_custom_options').insert({
             vehicle_id: vehicle.id,
             option_name: customOption.trim(),
           });
+
+          if (customError) {
+            console.error(`❌ Failed to insert custom option "${customOption}":`, customError);
+          } else {
+            customInsertCount++;
+            console.log(`✅ Inserted custom option: ${customOption}`);
+          }
         }
-        console.log('✅ Custom options inserted successfully');
+        console.log(`✅ Custom options inserted: ${customInsertCount}/${vehicleOptions.customOptions.length}`);
+      } else {
+        console.log('ℹ️  No custom options to insert');
       }
 
       // Upload images to S3 (IMAGE DATA - goes to AWS S3)
