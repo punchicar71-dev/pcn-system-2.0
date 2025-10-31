@@ -1,32 +1,33 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
-export async function POST(request: Request) {
+export async function GET() {
   try {
-    const { accessToken, refreshToken } = await request.json()
-    
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createClient()
 
-    // Set the session using the tokens from the client
-    const { data, error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    })
+    const { data: { user }, error } = await supabase.auth.getUser()
 
-    if (error) {
-      console.error('Session set error:', error)
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error || !user) {
+      return NextResponse.json({ user: null, session: null }, { status: 200 })
     }
 
-    console.log('Session set successfully on server')
-    return NextResponse.json({ success: true, session: data.session }, { status: 200 })
+    const { data: { session } } = await supabase.auth.getSession()
+
+    return NextResponse.json({ user, session }, { status: 200 })
   } catch (error) {
     console.error('Session API error:', error)
     return NextResponse.json(
-      { error: 'An error occurred setting session' },
+      { error: 'An error occurred getting session' },
       { status: 500 }
     )
   }
+}
+
+// This POST endpoint is no longer needed with the new SSR setup
+// but keeping it for backwards compatibility
+export async function POST() {
+  return NextResponse.json(
+    { message: 'Session management is now handled automatically by Supabase SSR' },
+    { status: 200 }
+  )
 }

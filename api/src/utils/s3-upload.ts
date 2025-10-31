@@ -118,31 +118,48 @@ export const deleteFromS3 = async (key: string): Promise<boolean> => {
 };
 
 /**
- * Delete all images for a vehicle
+ * Delete all images for a vehicle using S3 keys
  */
-export const deleteVehicleImages = async (vehicleId: string): Promise<boolean> => {
+export const deleteVehicleImages = async (s3Keys: string[]): Promise<boolean> => {
   try {
-    const folders = ['cr_pepar_image', 'vehicle_360_image', 'vehicle_images'];
+    if (!s3Keys || s3Keys.length === 0) {
+      console.log('No S3 keys provided for deletion');
+      return true; // Nothing to delete
+    }
+
+    // Filter out any null/undefined keys
+    const validKeys = s3Keys.filter(key => key && key.trim() !== '');
     
-    for (const folder of folders) {
-      // List all objects for this vehicle in each folder
-      const listCommand = new ListObjectsV2Command({
+    if (validKeys.length === 0) {
+      console.log('No valid S3 keys to delete');
+      return true;
+    }
+
+    console.log(`Deleting ${validKeys.length} objects from S3:`, validKeys);
+
+    // S3 DeleteObjects can handle up to 1000 objects at once
+    // Split into batches if needed
+    const batchSize = 1000;
+    for (let i = 0; i < validKeys.length; i += batchSize) {
+      const batch = validKeys.slice(i, i + batchSize);
+      
+      const deleteCommand = new DeleteObjectsCommand({
         Bucket: S3_BUCKET_NAME,
-        Prefix: `${folder}/${vehicleId}/`,
+        Delete: {
+          Objects: batch.map(key => ({ Key: key })),
+          Quiet: false, // Get detailed response
+        },
       });
 
-      const listResult = await s3Client.send(listCommand);
-
-      if (listResult.Contents && listResult.Contents.length > 0) {
-        // Delete all objects in this folder
-        const deleteCommand = new DeleteObjectsCommand({
-          Bucket: S3_BUCKET_NAME,
-          Delete: {
-            Objects: listResult.Contents.map((obj: any) => ({ Key: obj.Key! })),
-          },
-        });
-
-        await s3Client.send(deleteCommand);
+      const result = await s3Client.send(deleteCommand);
+      
+      if (result.Deleted && result.Deleted.length > 0) {
+        console.log(`✅ Successfully deleted ${result.Deleted.length} objects from S3`);
+      }
+      
+      if (result.Errors && result.Errors.length > 0) {
+        console.error('❌ Errors deleting some objects:', result.Errors);
+        // Continue anyway - some deletions may have succeeded
       }
     }
     

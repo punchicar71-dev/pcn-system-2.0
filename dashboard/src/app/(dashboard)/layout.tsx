@@ -20,7 +20,7 @@ import {
   Key
 } from 'lucide-react'
 import { useSessionHeartbeat } from '@/hooks/useSessionHeartbeat'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase-client'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -51,21 +51,20 @@ export default function DashboardLayout({
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createClient()
         
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
-          const { data: userData } = await supabase
+          const { data: userData, error } = await supabase
             .from('users')
             .select('*')
             .eq('auth_id', session.user.id)
             .single()
           
-          if (userData) {
+          if (userData && !error) {
             setCurrentUser(userData)
+          } else if (error) {
+            console.error('Error fetching user data:', error)
           }
         }
       } catch (error) {
@@ -98,11 +97,7 @@ export default function DashboardLayout({
       setIsLoggingOut(true)
       
       // End the session before logging out
-      const { createClient } = await import('@supabase/supabase-js')
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const supabase = createClient()
       
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {

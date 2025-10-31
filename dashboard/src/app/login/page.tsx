@@ -19,9 +19,6 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // Clear any existing session first to avoid refresh token conflicts
-      await supabase.auth.signOut()
-      
       console.log('Login attempt with:', emailOrUsername)
       
       // Determine if input is email or username
@@ -49,7 +46,7 @@ export default function LoginPage() {
         console.log('Found email for username:', email)
       }
 
-      // Sign in with Supabase
+      // Sign in with Supabase - the new SSR package handles session management automatically
       console.log('Attempting to sign in with email:', email)
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email,
@@ -58,61 +55,47 @@ export default function LoginPage() {
 
       if (signInError) {
         console.error('Sign in error:', signInError)
-        setError('Invalid email/username or password')
-        setLoading(false)
-        return
-      }
-
-      console.log('Login successful! Session:', data.session)
-      
-      // Set session on server side
-      console.log('Setting session on server...')
-      try {
-        const sessionResponse = await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            accessToken: data.session.access_token,
-            refreshToken: data.session.refresh_token,
-          }),
-        })
-
-        if (!sessionResponse.ok) {
-          console.error('Failed to set session on server')
-          setError('Failed to complete login. Please try again.')
-          setLoading(false)
-          return
+        
+        // Provide specific error messages
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Invalid email/username or password. Please check your credentials and try again.')
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Please confirm your email address before logging in.')
+        } else {
+          setError(signInError.message || 'Failed to sign in. Please try again.')
         }
-
-        console.log('Session set on server successfully!')
-      } catch (fetchError) {
-        console.error('Fetch error when setting session:', fetchError)
-        setError('Network error. Please check your connection and try again.')
+        
         setLoading(false)
         return
       }
+
+      if (!data.user) {
+        setError('Login failed. No user data returned.')
+        setLoading(false)
+        return
+      }
+
+      console.log('Login successful! User:', data.user.email)
       
-      // Short delay then redirect
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Short delay to allow cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 300))
       
       console.log('Redirecting to dashboard...')
-      // Use window.location.href for a full page load
-      window.location.href = '/dashboard'
+      // Use router.push for client-side navigation
+      router.push('/dashboard')
+      router.refresh() // Refresh to update middleware
+      
     } catch (err) {
       console.error('Login error:', err)
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       
       // Provide user-friendly error messages
-      if (errorMessage.includes('fetch')) {
-        setError('Network error. Please check your connection and try again.')
-      } else if (errorMessage.includes('Invalid login') || errorMessage.includes('Invalid password')) {
+      if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
+        setError('Network error. Please check your internet connection and try again.')
+      } else if (errorMessage.toLowerCase().includes('credentials')) {
         setError('Invalid email/username or password')
-      } else if (errorMessage.includes('refresh_token') || errorMessage.includes('Already Used')) {
-        setError('Session expired. Please clear your browser cache and try again.')
       } else {
-        setError('An error occurred. Please try again.')
+        setError('An unexpected error occurred. Please try again.')
       }
       
       setLoading(false)

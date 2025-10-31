@@ -1,6 +1,5 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // GET - Get single user by ID
@@ -9,13 +8,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createClient()
 
     // Check if current user is authenticated
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
     
-    if (!session) {
+    if (!authUser) {
       return NextResponse.json(
         { error: 'Unauthorized - No session found' },
         { status: 401 }
@@ -55,13 +53,12 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createClient()
 
     // Check if current user is authenticated and is an admin
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
     
-    if (!session) {
+    if (!authUser) {
       return NextResponse.json(
         { error: 'Unauthorized - No session found' },
         { status: 401 }
@@ -72,7 +69,7 @@ export async function PUT(
     const { data: currentUser, error: userError } = await supabase
       .from('users')
       .select('access_level')
-      .eq('auth_id', session.user.id)
+      .eq('auth_id', authUser.id)
       .single()
 
     if (userError || !currentUser) {
@@ -151,13 +148,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createClient()
 
     // Check if current user is authenticated and is an admin
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
     
-    if (!session) {
+    if (!authUser) {
       return NextResponse.json(
         { error: 'Unauthorized - No session found' },
         { status: 401 }
@@ -168,7 +164,7 @@ export async function DELETE(
     const { data: currentUser, error: userError } = await supabase
       .from('users')
       .select('access_level, id, auth_id')
-      .eq('auth_id', session.user.id)
+      .eq('auth_id', authUser.id)
       .single()
 
     if (userError || !currentUser) {
@@ -195,7 +191,7 @@ export async function DELETE(
     }
 
     // Use service role client for admin operations
-    const supabaseAdmin = createClient(
+    const supabaseAdmin = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {

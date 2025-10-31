@@ -111,11 +111,13 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
 
       if (sellerInfo) setSellerData(sellerInfo)
 
-      // Fetch vehicle options
+      // Fetch vehicle options (standard and special)
       const { data: optionsData } = await supabase
         .from('vehicle_options')
         .select('option_id')
         .eq('vehicle_id', vehicle.id)
+
+      const allOptions: VehicleOption[] = []
 
       if (optionsData) {
         const optionIds = optionsData.map(opt => opt.option_id)
@@ -124,8 +126,22 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
           .select('option_name')
           .in('id', optionIds)
 
-        if (optionNames) setVehicleOptions(optionNames)
+        if (optionNames) {
+          allOptions.push(...optionNames)
+        }
       }
+
+      // Fetch custom options
+      const { data: customOptionsData } = await supabase
+        .from('vehicle_custom_options')
+        .select('option_name')
+        .eq('vehicle_id', vehicle.id)
+
+      if (customOptionsData) {
+        allOptions.push(...customOptionsData)
+      }
+
+      setVehicleOptions(allOptions)
 
     } catch (error) {
       console.error('Error fetching vehicle data:', error)

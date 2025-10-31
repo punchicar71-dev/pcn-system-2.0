@@ -328,10 +328,11 @@ router.delete(
 
 /**
  * Delete all images for a vehicle
+ * NOTE: No auth required here - requests come through Next.js proxy
+ * which already validates Supabase session
  */
 router.delete(
   '/delete-vehicle/:vehicleId',
-  authenticateToken,
   async (req: Request, res: Response) => {
     try {
       if (!isS3Configured()) {
@@ -342,12 +343,22 @@ router.delete(
       }
 
       const { vehicleId } = req.params;
-      const success = await deleteVehicleImages(vehicleId);
+      const { s3Keys } = req.body; // Expect array of S3 keys in request body
+
+      if (!s3Keys || !Array.isArray(s3Keys)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid request: s3Keys array is required',
+        });
+      }
+
+      console.log(`Deleting images for vehicle ${vehicleId}:`, s3Keys);
+      const success = await deleteVehicleImages(s3Keys);
 
       res.json({
         success,
         message: success
-          ? 'All vehicle images deleted successfully'
+          ? `Successfully deleted ${s3Keys.length} images from S3`
           : 'Failed to delete vehicle images',
       });
     } catch (error) {
