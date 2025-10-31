@@ -6,6 +6,140 @@ A comprehensive vehicle selling management system with a public-facing website a
 
 ## 📢 LATEST UPDATE - October 31, 2025
 
+### ✅ Vehicle Publishing & Options - Critical Fixes Applied
+
+**Fixed NOT NULL constraint violations and vehicle options not saving to database!**
+
+#### Issues Fixed:
+
+1. **🔴 NOT NULL Constraint Violation** - Vehicle Publishing Failed
+   - **Problem**: Body Type, Fuel Type, and Transmission were marked as optional in UI but required in database
+   - **Error**: `null value in column "body_type" of relation "vehicles" violates not-null constraint`
+   - **Solution**: 
+     - Added red asterisk (*) to required fields in Step 1
+     - Enhanced validation in Step 1 form submission
+     - Added comprehensive pre-publish validation
+     - Removed null fallbacks for required fields in database insert
+     - Added specific error handling for constraint violations (23502, 23514)
+
+2. **🔴 Vehicle Options Not Saving** - Step 3 Options Lost
+   - **Problem**: SQL constraint mismatch and silent failures
+   - **Root Cause**: `ON CONFLICT (option_name)` vs `UNIQUE(option_name, option_type)` constraint
+   - **Solution**:
+     - Fixed SQL migration with correct `ON CONFLICT (option_name, option_type)`
+     - Enhanced error tracking with failed options arrays
+     - Added detailed console logging for all option operations
+     - Created verification script for master data setup
+
+#### What's Fixed:
+
+- ✅ **Required Field Validation** - 3-layer validation system
+  - UI indicators with red asterisks
+  - Step-level validation on "Next" click
+  - Final validation before database insert
+  - Database constraints as last resort
+  
+- ✅ **Vehicle Options Master Data** - Proper SQL setup
+  - Fixed insert script: `insert_all_vehicle_options.sql`
+  - Created verification script: `verify_and_setup_vehicle_options.sql`
+  - 28 Standard Options + 21 Special Options
+  - Proper handling of UNIQUE constraint
+
+- ✅ **Enhanced Error Messages** - Clear, actionable feedback
+  - NOT NULL violations show friendly field names
+  - CHECK constraint violations show allowed values
+  - Failed options reported with guidance to run SQL migration
+  - Detailed console logging for debugging
+
+#### Technical Implementation:
+
+**Step1VehicleDetails.tsx:**
+```typescript
+// Added required indicators
+<Label htmlFor="bodyType">
+  Body Type <span className="text-red-500">*</span>
+</Label>
+
+// Enhanced validation
+const missingFields: string[] = [];
+if (!data.bodyType) missingFields.push('Body Type');
+if (!data.fuelType) missingFields.push('Fuel Type');
+if (!data.transmission) missingFields.push('Transmission');
+// ...show all missing fields
+```
+
+**add-vehicle/page.tsx:**
+```typescript
+// Pre-publish comprehensive validation
+const validationErrors: string[] = [];
+if (!vehicleDetails.bodyType) validationErrors.push('Body Type');
+// ... validate all required fields
+
+// Database insert without null fallbacks
+body_type: vehicleDetails.bodyType, // Required - validated above
+fuel_type: vehicleDetails.fuelType, // Required - validated above
+transmission: vehicleDetails.transmission, // Required - validated above
+
+// Enhanced error handling
+if (vehicleError.code === '23502') {
+  // NOT NULL constraint - show friendly error with field name
+}
+if (vehicleError.code === '23514') {
+  // CHECK constraint - show allowed values
+}
+```
+
+**Vehicle Options Fix:**
+```typescript
+// Track failed options
+const failedStandardOptions: string[] = [];
+const failedSpecialOptions: string[] = [];
+
+// Enhanced lookup with is_active filter
+.eq('is_active', true)
+
+// Report results with counts
+console.log(`✅ Options inserted: ${standardInsertCount}/${standardOptions.length} standard`);
+if (failedStandardOptions.length > 0) {
+  console.warn(`⚠️  Failed: ${failedStandardOptions.join(', ')}`);
+  console.warn('Please run: dashboard/migrations/insert_all_vehicle_options.sql');
+}
+```
+
+#### SQL Migrations:
+
+1. **insert_all_vehicle_options.sql** - Fixed constraint handling
+2. **verify_and_setup_vehicle_options.sql** - Comprehensive setup & verification
+
+#### Documentation:
+- [VEHICLE_PUBLISH_NOT_NULL_FIX.md](VEHICLE_PUBLISH_NOT_NULL_FIX.md) - NOT NULL constraint fix
+- [VEHICLE_OPTIONS_FIX_COMPLETE.md](VEHICLE_OPTIONS_FIX_COMPLETE.md) - Vehicle options fix
+- [VEHICLE_OPTIONS_FIX_QUICK_START.md](VEHICLE_OPTIONS_FIX_QUICK_START.md) - Quick reference
+
+#### Required Fields (Now Properly Validated):
+- ✅ Vehicle Number
+- ✅ Vehicle Brand
+- ✅ Model Name
+- ✅ Manufacture Year
+- ✅ Country
+- ✅ **Body Type** (Fixed)
+- ✅ **Fuel Type** (Fixed)
+- ✅ **Transmission** (Fixed)
+- ✅ Selling Amount
+- ✅ Entry Type
+
+#### Benefits:
+- ✅ Users cannot publish incomplete vehicles
+- ✅ Clear error messages at every validation layer
+- ✅ Vehicle options save correctly to database
+- ✅ Detailed logging for debugging
+- ✅ Proper SQL constraint handling
+- ✅ 49 vehicle options available (28 standard + 21 special)
+
+---
+
+## 📢 Previous Update - October 31, 2025
+
 ### ✅ Supabase Authentication System Upgrade - SSR Package Migration
 
 **Complete authentication system modernization with official Supabase SSR package for Next.js 14!**

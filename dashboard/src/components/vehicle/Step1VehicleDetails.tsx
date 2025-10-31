@@ -90,11 +90,24 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation
-    if (!data.vehicleNumber || !data.brandId || !data.modelId || !data.manufactureYear) {
-      alert('Please fill in all required fields');
+    
+    // Comprehensive Validation
+    const missingFields: string[] = [];
+    
+    if (!data.vehicleNumber?.trim()) missingFields.push('Vehicle Number');
+    if (!data.brandId) missingFields.push('Vehicle Brand');
+    if (!data.modelId) missingFields.push('Model Name');
+    if (!data.manufactureYear) missingFields.push('Manufacture Year');
+    if (!data.countryId) missingFields.push('Country');
+    if (!data.bodyType) missingFields.push('Body Type');
+    if (!data.fuelType) missingFields.push('Fuel Type');
+    if (!data.transmission) missingFields.push('Transmission');
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in the following required fields:\n\n${missingFields.join('\n')}`);
       return;
     }
+    
     onNext();
   };
 
@@ -211,7 +224,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         {/* Row 3 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="bodyType">Body Type</Label>
+            <Label htmlFor="bodyType">
+              Body Type <span className="text-red-500">*</span>
+            </Label>
             <Select value={data.bodyType} onValueChange={(value) => onChange({ bodyType: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select" />
@@ -227,7 +242,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
           </div>
 
           <div>
-            <Label htmlFor="fuelType">Fuel</Label>
+            <Label htmlFor="fuelType">
+              Fuel <span className="text-red-500">*</span>
+            </Label>
             <Select value={data.fuelType} onValueChange={(value) => onChange({ fuelType: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select" />
@@ -243,7 +260,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
           </div>
 
           <div>
-            <Label htmlFor="transmission">Transmission</Label>
+            <Label htmlFor="transmission">
+              Transmission <span className="text-red-500">*</span>
+            </Label>
             <Select value={data.transmission} onValueChange={(value) => onChange({ transmission: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select" />

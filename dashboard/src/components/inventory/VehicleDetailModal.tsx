@@ -112,19 +112,34 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
       if (sellerInfo) setSellerData(sellerInfo)
 
       // Fetch vehicle options (standard and special)
-      const { data: optionsData } = await supabase
+      console.log('🔍 Fetching vehicle options for vehicle ID:', vehicle.id)
+      const { data: optionsData, error: optionsError } = await supabase
         .from('vehicle_options')
         .select('option_id')
         .eq('vehicle_id', vehicle.id)
 
+      if (optionsError) {
+        console.error('❌ Error fetching vehicle options:', optionsError)
+      } else {
+        console.log('✅ Vehicle options data:', optionsData)
+      }
+
       const allOptions: VehicleOption[] = []
 
-      if (optionsData) {
+      if (optionsData && optionsData.length > 0) {
         const optionIds = optionsData.map(opt => opt.option_id)
-        const { data: optionNames } = await supabase
+        console.log('📋 Option IDs:', optionIds)
+        
+        const { data: optionNames, error: masterError } = await supabase
           .from('vehicle_options_master')
-          .select('option_name')
+          .select('option_name, option_type')
           .in('id', optionIds)
+
+        if (masterError) {
+          console.error('❌ Error fetching option names:', masterError)
+        } else {
+          console.log('✅ Option names from master:', optionNames)
+        }
 
         if (optionNames) {
           allOptions.push(...optionNames)
@@ -132,15 +147,23 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
       }
 
       // Fetch custom options
-      const { data: customOptionsData } = await supabase
+      console.log('🔍 Fetching custom options for vehicle ID:', vehicle.id)
+      const { data: customOptionsData, error: customError } = await supabase
         .from('vehicle_custom_options')
         .select('option_name')
         .eq('vehicle_id', vehicle.id)
 
-      if (customOptionsData) {
+      if (customError) {
+        console.error('❌ Error fetching custom options:', customError)
+      } else {
+        console.log('✅ Custom options data:', customOptionsData)
+      }
+
+      if (customOptionsData && customOptionsData.length > 0) {
         allOptions.push(...customOptionsData)
       }
 
+      console.log('📊 Total options found:', allOptions.length, allOptions)
       setVehicleOptions(allOptions)
 
     } catch (error) {

@@ -360,44 +360,27 @@ export default function AddVehiclePage() {
     try {
       const { vehicleDetails, sellerDetails, vehicleOptions, sellingDetails, specialNotes } = formState;
 
-      // Validation: Check if required fields are filled
-      if (!vehicleDetails.vehicleNumber.trim()) {
-        alert('Please enter a vehicle number');
-        return;
-      }
-
-      if (!vehicleDetails.brandId) {
-        alert('Please select a vehicle brand');
-        return;
-      }
-
-      if (!vehicleDetails.modelId) {
-        alert('Please select a vehicle model');
-        return;
-      }
-
-      if (!vehicleDetails.manufactureYear) {
-        alert('Please select manufacture year');
-        return;
-      }
-
-      if (!vehicleDetails.countryId) {
-        alert('Please select country');
-        return;
-      }
-
-      if (!sellerDetails.firstName.trim() || !sellerDetails.lastName.trim()) {
-        alert('Please enter seller name');
-        return;
-      }
-
-      if (!sellerDetails.mobileNumber.trim()) {
-        alert('Please enter seller mobile number');
-        return;
-      }
-
-      if (!sellingDetails.sellingAmount.trim()) {
-        alert('Please enter selling amount');
+      // Comprehensive Validation: Check if required fields are filled
+      const validationErrors: string[] = [];
+      
+      if (!vehicleDetails.vehicleNumber.trim()) validationErrors.push('Vehicle Number');
+      if (!vehicleDetails.brandId) validationErrors.push('Vehicle Brand');
+      if (!vehicleDetails.modelId) validationErrors.push('Vehicle Model');
+      if (!vehicleDetails.manufactureYear) validationErrors.push('Manufacture Year');
+      if (!vehicleDetails.countryId) validationErrors.push('Country');
+      if (!vehicleDetails.bodyType) validationErrors.push('Body Type');
+      if (!vehicleDetails.fuelType) validationErrors.push('Fuel Type');
+      if (!vehicleDetails.transmission) validationErrors.push('Transmission');
+      
+      if (!sellerDetails.firstName.trim()) validationErrors.push('Seller First Name');
+      if (!sellerDetails.lastName.trim()) validationErrors.push('Seller Last Name');
+      if (!sellerDetails.mobileNumber.trim()) validationErrors.push('Seller Mobile Number');
+      
+      if (!sellingDetails.sellingAmount.trim()) validationErrors.push('Selling Amount');
+      if (!sellingDetails.entryType) validationErrors.push('Entry Type');
+      
+      if (validationErrors.length > 0) {
+        alert(`❌ Please complete the following required fields:\n\n${validationErrors.join('\n')}\n\nGo back to the relevant steps to fill in the missing information.`);
         return;
       }
 
@@ -411,6 +394,14 @@ export default function AddVehiclePage() {
 
       console.log('Starting vehicle insertion...');
       console.log('User:', user.id);
+      console.log('Vehicle Details:', {
+        vehicleNumber: vehicleDetails.vehicleNumber,
+        brandId: vehicleDetails.brandId,
+        modelId: vehicleDetails.modelId,
+        bodyType: vehicleDetails.bodyType,
+        fuelType: vehicleDetails.fuelType,
+        transmission: vehicleDetails.transmission,
+      });
 
       // Insert vehicle (TEXT DATA - goes to Supabase)
       const { data: vehicle, error: vehicleError } = await supabase
@@ -422,17 +413,17 @@ export default function AddVehiclePage() {
           model_number_other: vehicleDetails.modelNumberOther?.trim() || null,
           manufacture_year: vehicleDetails.manufactureYear,
           country_id: vehicleDetails.countryId,
-          body_type: vehicleDetails.bodyType || null,
-          fuel_type: vehicleDetails.fuelType || null,
-          transmission: vehicleDetails.transmission || null,
+          body_type: vehicleDetails.bodyType, // Required - validated above
+          fuel_type: vehicleDetails.fuelType, // Required - validated above
+          transmission: vehicleDetails.transmission, // Required - validated above
           engine_capacity: vehicleDetails.engineCapacity?.trim() || null,
           exterior_color: vehicleDetails.exteriorColor?.trim() || null,
           registered_year: vehicleDetails.registeredYear || null,
           selling_amount: parseFloat(sellingDetails.sellingAmount.replace(/,/g, '')) || 0,
           mileage: sellingDetails.mileage ? parseFloat(sellingDetails.mileage.replace(/,/g, '')) : null,
-          entry_type: sellingDetails.entryType || null,
+          entry_type: sellingDetails.entryType, // Required - validated above
           entry_date: sellingDetails.entryDate || new Date().toISOString().split('T')[0],
-          status: sellingDetails.status || 'active',
+          status: sellingDetails.status || 'In Sale',
           tag_notes: specialNotes.tagNotes?.trim() || null,
           special_note_print: specialNotes.specialNotePrint?.trim() || null,
           created_by: user.id,
@@ -453,6 +444,29 @@ export default function AddVehiclePage() {
         } else if (vehicleError.code === '23505') {
           alert('❌ Vehicle number already exists. Please use a different number.');
           throw new Error('Duplicate vehicle number');
+        } else if (vehicleError.code === '23502') {
+          // NOT NULL constraint violation
+          const match = vehicleError.message.match(/column "(\w+)"/);
+          const columnName = match ? match[1] : 'unknown field';
+          const fieldMap: { [key: string]: string } = {
+            'body_type': 'Body Type',
+            'fuel_type': 'Fuel Type',
+            'transmission': 'Transmission',
+            'entry_type': 'Entry Type',
+            'vehicle_number': 'Vehicle Number',
+            'brand_id': 'Brand',
+            'model_id': 'Model',
+            'manufacture_year': 'Manufacture Year',
+            'country_id': 'Country',
+            'selling_amount': 'Selling Amount'
+          };
+          const friendlyName = fieldMap[columnName] || columnName;
+          alert(`❌ Required Field Missing: ${friendlyName}\n\nPlease go back and fill in the ${friendlyName} field in Step 1 or Step 4.\n\nTechnical Details: Column "${columnName}" cannot be null.`);
+          throw new Error(`NOT NULL constraint violation: ${columnName}`);
+        } else if (vehicleError.code === '23514') {
+          // CHECK constraint violation
+          alert('❌ Invalid Value: One of the selected values does not match the allowed options.\n\nPlease check:\n- Body Type (SUV, Sedan, Hatchback, Wagon, Coupe, Convertible, Van, Truck)\n- Fuel Type (Petrol, Diesel, Petrol + Hybrid, Diesel + Hybrid, EV)\n- Transmission (Automatic, Manual, Auto)\n- Status (In Sale, Out of Sale, Reserved)');
+          throw new Error('CHECK constraint violation');
         }
         
         throw vehicleError;
@@ -494,8 +508,13 @@ export default function AddVehiclePage() {
         .map(([name]) => name);
 
       console.log('📝 Inserting vehicle options...');
-      console.log('Standard options:', standardOptions);
-      console.log('Special options:', specialOptions);
+      console.log('Standard options selected:', standardOptions);
+      console.log('Special options selected:', specialOptions);
+      console.log('Custom options selected:', vehicleOptions.customOptions);
+
+      // Track failed options for reporting
+      const failedStandardOptions: string[] = [];
+      const failedSpecialOptions: string[] = [];
 
       // Get option IDs from master and insert
       let standardInsertCount = 0;
@@ -505,10 +524,12 @@ export default function AddVehiclePage() {
           .select('id')
           .eq('option_name', optionName)
           .eq('option_type', 'standard')
+          .eq('is_active', true)
           .single();
 
-        if (lookupError) {
-          console.warn(`⚠️  Standard option "${optionName}" not found in master table:`, lookupError);
+        if (lookupError || !optionData) {
+          console.error(`❌ Standard option "${optionName}" not found in master table:`, lookupError);
+          failedStandardOptions.push(optionName);
           continue;
         }
 
@@ -522,6 +543,7 @@ export default function AddVehiclePage() {
 
           if (insertError) {
             console.error(`❌ Failed to insert standard option "${optionName}":`, insertError);
+            failedStandardOptions.push(optionName);
           } else {
             standardInsertCount++;
             console.log(`✅ Inserted standard option: ${optionName}`);
@@ -536,10 +558,12 @@ export default function AddVehiclePage() {
           .select('id')
           .eq('option_name', optionName)
           .eq('option_type', 'special')
+          .eq('is_active', true)
           .single();
 
-        if (lookupError) {
-          console.warn(`⚠️  Special option "${optionName}" not found in master table:`, lookupError);
+        if (lookupError || !optionData) {
+          console.error(`❌ Special option "${optionName}" not found in master table:`, lookupError);
+          failedSpecialOptions.push(optionName);
           continue;
         }
 
@@ -553,6 +577,7 @@ export default function AddVehiclePage() {
 
           if (insertError) {
             console.error(`❌ Failed to insert special option "${optionName}":`, insertError);
+            failedSpecialOptions.push(optionName);
           } else {
             specialInsertCount++;
             console.log(`✅ Inserted special option: ${optionName}`);
@@ -560,7 +585,19 @@ export default function AddVehiclePage() {
         }
       }
 
-      console.log(`✅ Options inserted: ${standardInsertCount} standard, ${specialInsertCount} special`);
+      // Report results
+      console.log(`✅ Options inserted: ${standardInsertCount}/${standardOptions.length} standard, ${specialInsertCount}/${specialOptions.length} special`);
+      
+      if (failedStandardOptions.length > 0 || failedSpecialOptions.length > 0) {
+        console.warn(`⚠️  Failed to save some options:`);
+        if (failedStandardOptions.length > 0) {
+          console.warn(`   Standard: ${failedStandardOptions.join(', ')}`);
+        }
+        if (failedSpecialOptions.length > 0) {
+          console.warn(`   Special: ${failedSpecialOptions.join(', ')}`);
+        }
+        console.warn(`   Please run the SQL migration: dashboard/migrations/insert_all_vehicle_options.sql`);
+      }
 
       // Insert custom options (TEXT DATA - goes to Supabase)
       if (vehicleOptions.customOptions.length > 0) {

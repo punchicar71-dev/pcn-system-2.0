@@ -161,22 +161,39 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
   }
 
   const fetchVehicleOptions = async () => {
+    console.log('🔍 [EditModal] Fetching vehicle options for vehicle ID:', vehicleId)
+    
     const { data, error } = await supabase
       .from('vehicle_options')
       .select('option_id')
       .eq('vehicle_id', vehicleId)
 
-    if (error) throw error
-    setSelectedOptions(data?.map(opt => opt.option_id) || [])
+    if (error) {
+      console.error('❌ [EditModal] Error fetching vehicle options:', error)
+      throw error
+    }
+    
+    console.log('✅ [EditModal] Vehicle options data:', data)
+    const optionIds = data?.map(opt => opt.option_id) || []
+    console.log('📋 [EditModal] Selected option IDs:', optionIds)
+    setSelectedOptions(optionIds)
 
     // Fetch custom options
+    console.log('🔍 [EditModal] Fetching custom options for vehicle ID:', vehicleId)
     const { data: customData, error: customError } = await supabase
       .from('vehicle_custom_options')
       .select('option_name')
       .eq('vehicle_id', vehicleId)
 
-    if (customError) throw customError
-    setCustomOptions(customData?.map(opt => opt.option_name) || [])
+    if (customError) {
+      console.error('❌ [EditModal] Error fetching custom options:', customError)
+      throw customError
+    }
+    
+    console.log('✅ [EditModal] Custom options data:', customData)
+    const customOptionNames = customData?.map(opt => opt.option_name) || []
+    console.log('📝 [EditModal] Custom option names:', customOptionNames)
+    setCustomOptions(customOptionNames)
   }
 
   const fetchBrands = async () => {
@@ -212,13 +229,24 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
   }
 
   const fetchAllOptionsData = async () => {
+    console.log('🔍 [EditModal] Fetching all available options from master table')
+    
     const { data, error } = await supabase
       .from('vehicle_options_master')
       .select('*')
       .eq('is_active', true)
       .order('option_name')
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ [EditModal] Error fetching options master:', error)
+      throw error
+    }
+    
+    console.log('✅ [EditModal] Options master data:', data)
+    console.log('📊 [EditModal] Total available options:', data?.length)
+    console.log('📋 [EditModal] Standard options:', data?.filter(o => o.option_type === 'standard').length)
+    console.log('⭐ [EditModal] Special options:', data?.filter(o => o.option_type === 'special').length)
+    
     setAllOptions(data || [])
   }
 
@@ -319,16 +347,29 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
       // Image upload/deletion removed — this modal only updates data via Supabase
 
       // 5. Update Vehicle Options
+      console.log('🔄 [EditModal] Updating vehicle options...')
+      console.log('📋 [EditModal] Selected option IDs:', selectedOptions)
+      console.log('📝 [EditModal] Custom options:', customOptions)
+      
       // Delete existing options
-      await supabase
+      const { error: deleteError } = await supabase
         .from('vehicle_options')
         .delete()
         .eq('vehicle_id', vehicleId)
 
+      if (deleteError) {
+        console.error('❌ [EditModal] Error deleting existing options:', deleteError)
+        throw deleteError
+      }
+      console.log('✅ [EditModal] Deleted existing vehicle options')
+
       // Insert new options
+      let insertedCount = 0
       for (const optionId of selectedOptions) {
         const option = allOptions.find(opt => opt.id === optionId)
-        await supabase
+        console.log(`➕ [EditModal] Inserting option: ${option?.option_name} (${option?.option_type})`)
+        
+        const { error: insertError } = await supabase
           .from('vehicle_options')
           .insert({
             vehicle_id: vehicleId!,
@@ -336,22 +377,46 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
             option_type: option?.option_type || 'standard',
             is_enabled: true
           })
+        
+        if (insertError) {
+          console.error('❌ [EditModal] Error inserting option:', insertError)
+          throw insertError
+        }
+        insertedCount++
       }
+      console.log(`✅ [EditModal] Inserted ${insertedCount} standard/special options`)
 
       // 6. Update Custom Options
-      await supabase
+      const { error: deleteCustomError } = await supabase
         .from('vehicle_custom_options')
         .delete()
         .eq('vehicle_id', vehicleId)
 
+      if (deleteCustomError) {
+        console.error('❌ [EditModal] Error deleting custom options:', deleteCustomError)
+        throw deleteCustomError
+      }
+      console.log('✅ [EditModal] Deleted existing custom options')
+
+      let customInsertedCount = 0
       for (const optionName of customOptions) {
-        await supabase
+        console.log(`➕ [EditModal] Inserting custom option: ${optionName}`)
+        
+        const { error: insertCustomError } = await supabase
           .from('vehicle_custom_options')
           .insert({
             vehicle_id: vehicleId!,
             option_name: optionName
           })
+        
+        if (insertCustomError) {
+          console.error('❌ [EditModal] Error inserting custom option:', insertCustomError)
+          throw insertCustomError
+        }
+        customInsertedCount++
       }
+      console.log(`✅ [EditModal] Inserted ${customInsertedCount} custom options`)
+      console.log(`🎉 [EditModal] Total options saved: ${insertedCount + customInsertedCount}`)
 
       // Success - trigger callback to show popup
       onSuccess()
