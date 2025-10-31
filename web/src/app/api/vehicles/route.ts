@@ -7,6 +7,16 @@ function transformToVehicleCard(vehicle: any): VehicleCardData {
   const brandName = vehicle.vehicle_brands?.name || 'Unknown Brand'
   const modelName = vehicle.vehicle_models?.name || vehicle.model_number_other || 'Unknown Model'
   
+  // Get all gallery images sorted by display order
+  const galleryImages = vehicle.vehicle_images
+    ?.filter((img: any) => img.image_type === 'gallery')
+    .sort((a: any, b: any) => a.display_order - b.display_order)
+    .map((img: any) => ({
+      id: img.id,
+      image_url: img.image_url,
+      display_order: img.display_order
+    })) || []
+  
   // Get primary image or first image
   const primaryImage = vehicle.vehicle_images?.find((img: any) => img.is_primary) || vehicle.vehicle_images?.[0]
   
@@ -26,6 +36,7 @@ function transformToVehicleCard(vehicle: any): VehicleCardData {
     transmission: vehicle.transmission === 'Auto' ? 'Automatic' : vehicle.transmission,
     mileage: vehicle.mileage,
     imageUrl: primaryImage?.image_url,
+    images: galleryImages,
     daysAgo: daysAgo > 0 ? daysAgo : 1
   }
 }
@@ -33,8 +44,8 @@ function transformToVehicleCard(vehicle: any): VehicleCardData {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const limit = searchParams.get('limit') || '12'
-    const offset = searchParams.get('offset') || '0'
+    const limit = parseInt(searchParams.get('limit') || '12')
+    const offset = parseInt(searchParams.get('offset') || '0')
     const search = searchParams.get('search')
     const brandId = searchParams.get('brand')
     const fuelType = searchParams.get('fuel')
@@ -42,6 +53,7 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice')
     const maxPrice = searchParams.get('maxPrice')
 
+    // Build base query
     let query = supabase
       .from('vehicles')
       .select(`
@@ -62,18 +74,14 @@ export async function GET(request: NextRequest) {
         vehicle_images (
           id,
           image_url,
+          image_type,
           is_primary,
           display_order
         )
-      `)
+      `, { count: 'exact' })
       .eq('status', 'In Sale')
-      .order('created_at', { ascending: false })
 
     // Apply filters
-    if (search) {
-      query = query.or(`vehicle_brands.name.ilike.%${search}%,vehicle_models.name.ilike.%${search}%`)
-    }
-
     if (brandId) {
       query = query.eq('brand_id', brandId)
     }
@@ -94,39 +102,48 @@ export async function GET(request: NextRequest) {
       query = query.lte('selling_amount', parseFloat(maxPrice))
     }
 
-    // Apply pagination
-    query = query.range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1)
+    // Apply ordering
+    query = query.order('created_at', { ascending: false })
 
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1)
+
+    // Execute query
     const { data: vehicles, error, count } = await query
 
     if (error) {
       console.error('Error fetching vehicles:', error)
       return NextResponse.json(
-        { error: 'Failed to fetch vehicles' },
+        { error: 'Failed to fetch vehicles', details: error.message },
         { status: 500 }
       )
     }
 
     // Transform to card format
-    const vehicleCards = vehicles?.map(transformToVehicleCard) || []
+    let vehicleCards = vehicles?.map(transformToVehicleCard) || []
 
-    // Get total count for pagination
-    const { count: totalCount } = await supabase
-      .from('vehicles')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'In Sale')
+    // Apply client-side search filter if provided
+    // This is more reliable than complex Supabase filters
+    if (search) {
+      const searchLower = search.toLowerCase()
+      vehicleCards = vehicleCards.filter(v => 
+        v.brand.toLowerCase().includes(searchLower) ||
+        v.model.toLowerCase().includes(searchLower) ||
+        v.name.toLowerCase().includes(searchLower)
+      )
+    }
 
     return NextResponse.json({
       vehicles: vehicleCards,
-      total: totalCount,
-      limit: parseInt(limit),
-      offset: parseInt(offset)
+      total: count,
+      limit: limit,
+      offset: offset
     })
 
   } catch (error) {
     console.error('API Error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

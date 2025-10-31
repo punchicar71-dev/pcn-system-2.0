@@ -151,6 +151,7 @@ export interface VehicleCardData {
   mileage?: number
   condition?: string
   imageUrl?: string
+  images?: Array<{ id: string; image_url: string; display_order: number }>
   rating?: number
   daysAgo?: number
 }

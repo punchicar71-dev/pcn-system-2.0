@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Check, Phone, MapPin, Calendar } from 'lucide-react';
+import Image360Viewer from '@/components/Image360Viewer';
 
 interface VehicleDetail {
   id: string;
@@ -28,7 +29,8 @@ interface VehicleDetail {
   special_note_print?: string;
   created_at: string;
   updated_at: string;
-  images: Array<{ id: string; image_url: string; is_primary: boolean; display_order: number }>;
+  images: Array<{ id: string; image_url: string; is_primary: boolean; display_order: number; image_type?: string }>;
+  image_360?: Array<{ id: string; image_url: string; image_type: string; display_order: number }>;
   options: Array<{ id: string; name: string; type: string }>;
   custom_options: Array<{ id: string; option_name: string }>;
   seller?: {
@@ -55,6 +57,7 @@ export default function VehicleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<'gallery' | '360'>('gallery');
 
   useEffect(() => {
     const fetchVehicle = async () => {
@@ -112,20 +115,41 @@ export default function VehicleDetailPage() {
         {/* Header with Back Button */}
         <div className="mb-8 bg-white rounded-lg border border-gray-300 p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Link
                 href="/vehicles"
                 className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
               >
                 <ArrowLeft className="w-5 h-5" />
-                View Mode:
+                <span>Back</span>
               </Link>
-              <button className="px-3 py-1 border border-gray-400 rounded text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Gallery
-              </button>
-              <button className="px-3 py-1 border border-gray-400 rounded text-sm font-medium text-gray-700 hover:bg-gray-50">
-                360° View
-              </button>
+              
+              <div className="border-l border-gray-300 pl-4">
+                <span className="text-sm font-medium text-gray-700 mr-3">View Mode:</span>
+                <button 
+                  onClick={() => setViewMode('gallery')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                    viewMode === 'gallery' 
+                      ? 'bg-yellow-500 text-black border border-yellow-600' 
+                      : 'border border-gray-400 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  🖼️ Gallery
+                </button>
+                <button 
+                  onClick={() => setViewMode('360')}
+                  disabled={!vehicle.image_360 || vehicle.image_360.length === 0}
+                  className={`ml-2 px-3 py-1 rounded text-sm font-medium transition-all ${
+                    viewMode === '360' 
+                      ? 'bg-blue-500 text-white border border-blue-600' 
+                      : !vehicle.image_360 || vehicle.image_360.length === 0
+                      ? 'border border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100'
+                      : 'border border-gray-400 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  🔄 360° View
+                </button>
+              </div>
             </div>
           </div>
 
@@ -139,8 +163,8 @@ export default function VehicleDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Images and Details */}
           <div className="lg:col-span-2">
-            {/* Image Gallery */}
-            {vehicleImages.length > 0 && (
+            {/* Image Gallery - Gallery View */}
+            {vehicleImages.length > 0 && viewMode === 'gallery' && (
               <div className="bg-white rounded-lg border border-gray-300 overflow-hidden mb-8">
                 {/* Main Image */}
                 <div className="relative h-80 bg-gray-100 flex items-center justify-center">
@@ -181,6 +205,31 @@ export default function VehicleDetailPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* 360 View - 360 Images */}
+            {viewMode === '360' && vehicle.image_360 && vehicle.image_360.length > 0 && (
+              <div className="mb-8">
+                <Image360Viewer 
+                  images={vehicle.image_360.map(img => img.image_url)}
+                  autoRotate={false}
+                  autoRotateSpeed={50}
+                  sensitivity={5}
+                  height="500px"
+                  showControls={true}
+                />
+              </div>
+            )}
+
+            {/* No 360 View Message */}
+            {viewMode === '360' && (!vehicle.image_360 || vehicle.image_360.length === 0) && (
+              <div className="bg-white rounded-lg border border-gray-300 overflow-hidden mb-8 p-12">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="text-6xl mb-4">🔄</div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">360° View Not Available</h3>
+                  <p className="text-gray-600">No 360-degree images available for this vehicle yet.</p>
+                </div>
               </div>
             )}
 

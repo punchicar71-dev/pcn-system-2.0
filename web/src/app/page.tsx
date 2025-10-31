@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Car, Shield, Award, Wrench, CheckCircle, Search } from 'lucide-react';
+import UploadSection from '@/components/UploadSection';
 
 export default function HomePage() {
   return (
@@ -191,6 +192,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Upload Section Component */}
+      <UploadSection />
 
       {/* Services Overview */}
       <section className="py-16 bg-slate-900 text-white">

@@ -109,14 +109,25 @@ export async function GET(
       created_at: vehicle.created_at,
       updated_at: vehicle.updated_at,
       
-      // Sort images by display order and primary status
+      // Sort images by display order and primary status - Gallery images only
       images: vehicle.vehicle_images
+        ?.filter((img: any) => img.image_type === 'gallery')
         ?.sort((a: any, b: any) => {
           if (a.is_primary && !b.is_primary) return -1
           if (!a.is_primary && b.is_primary) return 1
           return a.display_order - b.display_order
-        })
-        ?.filter((img: any) => img.image_type === 'gallery') || [],
+        }) || [],
+      
+      // 360 degree images - sorted by display order
+      image_360: vehicle.vehicle_images
+        ?.filter((img: any) => img.image_type === 'image_360')
+        ?.sort((a: any, b: any) => a.display_order - b.display_order)
+        ?.map((img: any) => ({
+          id: img.id,
+          image_url: img.image_url,
+          image_type: img.image_type,
+          display_order: img.display_order
+        })) || [],
       
       // Group options by type
       options: vehicle.vehicle_options
