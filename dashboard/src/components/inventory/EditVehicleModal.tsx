@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
-import Image from 'next/image'
+// Image upload/ui removed from this modal — keep component focused on data edits only
 import {
   Dialog,
   DialogContent,
@@ -67,12 +67,6 @@ interface SellerData {
   email_address?: string
 }
 
-interface VehicleImage {
-  id: string
-  image_url: string
-  image_type: string
-  display_order: number
-}
 
 interface Brand {
   id: string
@@ -103,21 +97,14 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
   // Vehicle Data
   const [vehicleData, setVehicleData] = useState<VehicleData | null>(null)
   const [sellerData, setSellerData] = useState<SellerData | null>(null)
-  const [vehicleImages, setVehicleImages] = useState<VehicleImage[]>([])
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [customOptions, setCustomOptions] = useState<string[]>([])
-  
   // Dropdowns Data
   const [brands, setBrands] = useState<Brand[]>([])
   const [models, setModels] = useState<Model[]>([])
   const [countries, setCountries] = useState<Country[]>([])
   const [allOptions, setAllOptions] = useState<OptionMaster[]>([])
   
-  // Image Upload States
-  const [newVehicleImages, setNewVehicleImages] = useState<File[]>([])
-  const [newCrImages, setNewCrImages] = useState<File[]>([])
-  const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
-
   // Fetch all data when modal opens
   useEffect(() => {
     if (isOpen && vehicleId) {
@@ -136,14 +123,13 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
     try {
       setLoading(true)
       await Promise.all([
-        fetchVehicleData(),
-        fetchSellerData(),
-        fetchVehicleImages(),
-        fetchVehicleOptions(),
-        fetchBrands(),
-        fetchCountries(),
-        fetchAllOptionsData()
-      ])
+          fetchVehicleData(),
+          fetchSellerData(),
+          fetchVehicleOptions(),
+          fetchBrands(),
+          fetchCountries(),
+          fetchAllOptionsData()
+        ])
     } catch (error) {
       console.error('Error fetching data:', error)
       alert('Failed to load vehicle data')
@@ -172,17 +158,6 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
 
     if (error && error.code !== 'PGRST116') throw error
     setSellerData(data)
-  }
-
-  const fetchVehicleImages = async () => {
-    const { data, error } = await supabase
-      .from('vehicle_images')
-      .select('*')
-      .eq('vehicle_id', vehicleId)
-      .order('display_order', { ascending: true })
-
-    if (error) throw error
-    setVehicleImages(data || [])
   }
 
   const fetchVehicleOptions = async () => {
@@ -247,27 +222,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
     setAllOptions(data || [])
   }
 
-  const handleImageUpload = (files: FileList, type: 'vehicle' | 'cr') => {
-    const fileArray = Array.from(files)
-    if (type === 'vehicle') {
-      setNewVehicleImages(prev => [...prev, ...fileArray])
-    } else {
-      setNewCrImages(prev => [...prev, ...fileArray])
-    }
-  }
 
-  const handleRemoveExistingImage = (imageId: string) => {
-    setImagesToDelete(prev => [...prev, imageId])
-    setVehicleImages(prev => prev.filter(img => img.id !== imageId))
-  }
-
-  const handleRemoveNewImage = (index: number, type: 'vehicle' | 'cr') => {
-    if (type === 'vehicle') {
-      setNewVehicleImages(prev => prev.filter((_, i) => i !== index))
-    } else {
-      setNewCrImages(prev => prev.filter((_, i) => i !== index))
-    }
-  }
 
   const handleOptionToggle = (optionId: string) => {
     setSelectedOptions(prev => 
@@ -285,54 +240,6 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
 
   const handleCustomOptionRemove = (optionName: string) => {
     setCustomOptions(prev => prev.filter(opt => opt !== optionName))
-  }
-
-  const uploadNewImages = async () => {
-    const uploadedUrls: { url: string; type: string }[] = []
-
-    // Upload vehicle images to local storage
-    for (const file of newVehicleImages) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('vehicleId', vehicleId!)
-      formData.append('imageType', 'gallery')
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Upload failed')
-      }
-
-      const result = await response.json()
-      uploadedUrls.push({ url: result.url, type: 'gallery' })
-    }
-
-    // Upload CR images to local storage
-    for (const file of newCrImages) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('vehicleId', vehicleId!)
-      formData.append('imageType', 'cr_paper')
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Upload failed')
-      }
-
-      const result = await response.json()
-      uploadedUrls.push({ url: result.url, type: 'cr_paper' })
-    }
-
-    return uploadedUrls
   }
 
   const handleSubmit = async () => {
@@ -409,37 +316,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
         }
       }
 
-      // 3. Delete marked images
-      for (const imageId of imagesToDelete) {
-        const { error } = await supabase
-          .from('vehicle_images')
-          .delete()
-          .eq('id', imageId)
-
-        if (error) throw error
-      }
-
-      // 4. Upload new images
-      if (newVehicleImages.length > 0 || newCrImages.length > 0) {
-        const uploadedUrls = await uploadNewImages()
-        
-        // Insert new image records
-        for (const { url, type } of uploadedUrls) {
-          const { error } = await supabase
-            .from('vehicle_images')
-            .insert({
-              vehicle_id: vehicleId!,
-              image_url: url,
-              image_type: type,
-              storage_path: url,
-              file_name: url.split('/').pop() || '',
-              is_primary: false,
-              display_order: vehicleImages.length + 1
-            })
-
-          if (error) throw error
-        }
-      }
+      // Image upload/deletion removed — this modal only updates data via Supabase
 
       // 5. Update Vehicle Options
       // Delete existing options
@@ -476,7 +353,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
           })
       }
 
-      alert('Vehicle updated successfully!')
+      // Success - trigger callback to show popup
       onSuccess()
       handleClose()
     } catch (error: any) {
@@ -489,9 +366,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
 
   const handleClose = () => {
     setActiveTab('vehicle')
-    setNewVehicleImages([])
-    setNewCrImages([])
-    setImagesToDelete([])
+    // reset any transient state if added later
     onClose()
   }
 
@@ -763,131 +638,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                 </div>
               </div>
 
-              {/* Existing Images */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium mb-2">Current Images</label>
-                <div className="grid grid-cols-4 gap-4">
-                  {vehicleImages.filter(img => img.image_type === 'gallery').map((image) => (
-                    <div key={image.id} className="relative">
-                      <Image
-                        src={image.image_url}
-                        alt="Vehicle"
-                        width={150}
-                        height={100}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      <button
-                        onClick={() => handleRemoveExistingImage(image.id)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* New Vehicle Images Upload */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium mb-2">Add Vehicle Images</label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => e.target.files && handleImageUpload(e.target.files, 'vehicle')}
-                    className="hidden"
-                    id="vehicle-images"
-                  />
-                  <label htmlFor="vehicle-images" className="cursor-pointer">
-                    <p className="text-gray-600">Drop file here</p>
-                    <p className="text-gray-400 text-sm mt-1">Or</p>
-                    <button type="button" className="mt-2 px-4 py-2 border rounded-lg hover:bg-gray-50">
-                      Choose files
-                    </button>
-                  </label>
-                </div>
-                {newVehicleImages.length > 0 && (
-                  <div className="grid grid-cols-4 gap-4 mt-4">
-                    {newVehicleImages.map((file, index) => (
-                      <div key={index} className="relative">
-                        <Image
-                          src={URL.createObjectURL(file)}
-                          alt="New"
-                          width={150}
-                          height={100}
-                          className="w-full h-24 object-cover rounded-lg border"
-                        />
-                        <button
-                          onClick={() => handleRemoveNewImage(index, 'vehicle')}
-                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* CR Paper / Vehicle Papers Upload */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium mb-2">CR Image / Vehicle Pepars</label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => e.target.files && handleImageUpload(e.target.files, 'cr')}
-                    className="hidden"
-                    id="cr-images"
-                  />
-                  <label htmlFor="cr-images" className="cursor-pointer">
-                    <p className="text-gray-600">Drop file here</p>
-                    <p className="text-gray-400 text-sm mt-1">Or</p>
-                    <button type="button" className="mt-2 px-4 py-2 border rounded-lg hover:bg-gray-50">
-                      Choose files
-                    </button>
-                  </label>
-                </div>
-                {/* Show existing CR papers */}
-                <div className="grid grid-cols-4 gap-4 mt-4">
-                  {vehicleImages.filter(img => img.image_type === 'cr_paper' || img.image_type === 'document').map((image) => (
-                    <div key={image.id} className="relative">
-                      <Image
-                        src={image.image_url}
-                        alt="Document"
-                        width={150}
-                        height={100}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      <button
-                        onClick={() => handleRemoveExistingImage(image.id)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                  {newCrImages.map((file, index) => (
-                    <div key={`new-${index}`} className="relative">
-                      <Image
-                        src={URL.createObjectURL(file)}
-                        alt="New Document"
-                        width={150}
-                        height={100}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      <button
-                        onClick={() => handleRemoveNewImage(index, 'cr')}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Image upload and display removed per request */}
             </TabsContent>
 
             {/* Seller Details Tab */}

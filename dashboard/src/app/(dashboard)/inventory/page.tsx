@@ -22,6 +22,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import EditVehicleModal from '@/components/inventory/EditVehicleModal'
 import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
 import VehicleDetailModal from '@/components/inventory/VehicleDetailModal'
+import SuccessPopup from '@/components/ui/SuccessPopup'
 
 interface Vehicle {
   id: string
@@ -86,6 +87,10 @@ export default function InventoryPage() {
   // Detail Modal States
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [detailVehicleData, setDetailVehicleData] = useState<any>(null)
+
+  // Success Popup State
+  const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false)
+  const [successVehicleInfo, setSuccessVehicleInfo] = useState({ brand: '', model: '', year: '', vehicleNumber: '' })
 
   // Fetch vehicles from database
   useEffect(() => {
@@ -967,7 +972,18 @@ export default function InventoryPage() {
           setEditVehicleId(null)
         }}
         onSuccess={() => {
+          // Get vehicle info for success popup
+          const vehicle = vehicles.find(v => v.id === editVehicleId)
+          if (vehicle) {
+            setSuccessVehicleInfo({
+              brand: vehicle.brand_name,
+              model: vehicle.model_name,
+              year: vehicle.manufacture_year.toString(),
+              vehicleNumber: vehicle.vehicle_number
+            })
+          }
           fetchVehicles() // Refresh the vehicle list
+          setIsSuccessPopupOpen(true) // Show success popup
         }}
       />
 
@@ -982,6 +998,15 @@ export default function InventoryPage() {
           vehicle={detailVehicleData}
         />
       )}
+
+      {/* Success Popup */}
+      <SuccessPopup
+        isOpen={isSuccessPopupOpen}
+        onClose={() => setIsSuccessPopupOpen(false)}
+        title={`${successVehicleInfo.brand} ${successVehicleInfo.model} ${successVehicleInfo.year} - ${successVehicleInfo.vehicleNumber}`}
+        message="Vehicle details successful updated"
+        autoCloseDuration={3000}
+      />
     </div>
   )
 }
