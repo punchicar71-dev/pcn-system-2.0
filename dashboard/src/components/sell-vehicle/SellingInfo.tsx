@@ -124,7 +124,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
       const completeVehicleData = {
         ...vehicle,
         images: images || [],
-        seller_name: seller ? `${seller.first_name} ${seller.last_name}` : 'N/A',
+        seller_name: seller ? `${seller.title || ''} ${seller.first_name} ${seller.last_name}`.trim() : 'N/A',
         seller_mobile: seller?.mobile_number || 'N/A',
         seller_address: seller?.address || '',
         seller_city: seller?.city || '',

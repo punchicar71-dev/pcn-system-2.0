@@ -1,7 +1,11 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+
 interface CustomerDetailsProps {
   formData: {
+    title: string;
     firstName: string;
     lastName: string;
     address: string;
@@ -15,7 +19,23 @@ interface CustomerDetailsProps {
   onNext: () => void;
 }
 
+const titles = ['Mr.', 'Miss.', 'Mrs.', 'Dr.'];
+
 export default function CustomerDetails({ formData, onChange, onNext }: CustomerDetailsProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onNext();
@@ -23,23 +43,57 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
 
   return (
     <div className="bg-white p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Customer Details</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">Seller Details</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* First Name and Last Name */}
         <div className="flex w-full md:flex-cols-2 gap-4">
-          <div>
+          <div className="relative">
             <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
               First Name <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={formData.firstName}
-              onChange={(e) => onChange('firstName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="John"
-              required
-            />
+            <div className="relative flex items-center">
+              {/* Title Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="h-[42px] px-3 border border-r-0 border-gray-300 rounded-l-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-1 min-w-[80px]"
+                >
+                  <span className="text-sm">{formData.title || 'Mr.'}</span>
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                    {titles.map((title) => (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => {
+                          onChange('title', title);
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
+                      >
+                        {title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* First Name Input */}
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => onChange('firstName', e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder=""
+                required
+              />
+            </div>
           </div>
 
           <div>

@@ -33,6 +33,7 @@ export interface VehicleDetailsData {
 }
 
 export interface SellerDetailsData {
+  title: string;
   firstName: string;
   lastName: string;
   address: string;
@@ -88,9 +89,8 @@ export const FUEL_TYPES = [
 ] as const;
 
 export const TRANSMISSIONS = [
-  'Automatic',
-  'Manual',
   'Auto',
+  'Manual',
 ] as const;
 
 export const ENTRY_TYPES = [
@@ -193,6 +193,7 @@ export const initialVehicleDetails: VehicleDetailsData = {
 };
 
 export const initialSellerDetails: SellerDetailsData = {
+  title: 'Mr.',
   firstName: '',
   lastName: '',
   address: '',

@@ -23,10 +23,10 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-black text-white">
+    <footer className="bg-gray-100 text-gray-800">
       {/* Main Footer Content */}
-      <div className="container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="container max-w-[1200px] mx-auto px-6 py-16">
+        <div className="flex gap-12">
           
           {/* Section 1: Company Logo & Info */}
           <div className="space-y-4">
@@ -40,24 +40,26 @@ export default function Footer() {
               />
               
             </div>
-            <div className="pt-4 space-y-1 text-sm text-gray-300">
+            <div className="pt-4 space-y-1 text-sm text-gray-900">
               <p className="font-semibold">Vehicle Park , Malabe</p>
               <p className="text-xs leading-relaxed">
                 When choosing a vehicle from a dealership with 400 options
               </p>
             </div>
-          </div>
-
-          {/* Section 2: Sales Hours */}
-          <div className="space-y-4">
+            <div className="space-y-4">
             <div>
               <h4 className="text-base font-semibold mb-4">Sales Hours</h4>
               <div className="space-y-2 text-sm">
-                <p className="text-gray-300">Open Everyday!</p>
-                <p className="font-semibold text-yellow-400">09:00AM – 06:00PM</p>
+                <p className="text-gray-900">Open Everyday!</p>
+                <p className="font-semibold text-yellow-500">09:00AM – 06:00PM</p>
               </div>
             </div>
           </div>
+          </div>
+
+
+          {/* Section 2: Sales Hours */}
+          
 
           {/* Section 3: Contact Details */}
           <div className="space-y-4">
@@ -138,12 +140,12 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <Separator className="bg-gray-700" />
-      <div className="bg-yellow-400 text-black">
-        <div className="container mx-auto px-6 py-4">
+
+      <div className=" bg-black text-white">
+        <div className="container mx-auto max-w-[1200px] px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-            <p className="font-semibold">&copy; Copyright 2024 Punchi Car Niwasa</p>
-            <p className="text-gray-700">Design & Developed by asanka.live</p>
+            <p className="font-medium text-[13px]">&copy; Copyright 2024 Punchi Car Niwasa</p>
+            <p className="text-gray-300 text-[13px]">Design & Developed by asankaherath.com</p>
           </div>
         </div>
       </div>

@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
   created_by UUID,
   CONSTRAINT check_body_type CHECK (body_type IN ('SUV', 'Sedan', 'Hatchback', 'Wagon', 'Coupe', 'Convertible', 'Van', 'Truck')),
   CONSTRAINT check_fuel_type CHECK (fuel_type IN ('Petrol', 'Diesel', 'Petrol Hybrid', 'Diesel Hybrid', 'EV', 'Petrol + Hybrid', 'Diesel + Hybrid')),
-  CONSTRAINT check_transmission CHECK (transmission IN ('Automatic', 'Manual', 'Auto')),
+  CONSTRAINT check_transmission CHECK (transmission IN ('Auto', 'Manual')),
   CONSTRAINT check_status CHECK (status IN ('In Sale', 'Out of Sale', 'Sold', 'Reserved'))
 );
 
@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
 CREATE TABLE IF NOT EXISTS public.sellers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   vehicle_id UUID REFERENCES public.vehicles(id) ON DELETE CASCADE,
+  title VARCHAR(10) CHECK (title IN ('Mr.', 'Miss.', 'Mrs.', 'Dr.')),
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
   full_name VARCHAR(200) GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED,

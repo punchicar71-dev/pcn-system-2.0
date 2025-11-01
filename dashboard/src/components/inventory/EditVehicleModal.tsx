@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 // Image upload/ui removed from this modal — keep component focused on data edits only
 import {
@@ -56,6 +56,7 @@ interface VehicleData {
 interface SellerData {
   id?: string
   vehicle_id: string
+  title?: string
   first_name: string
   last_name: string
   full_name?: string
@@ -104,6 +105,23 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
   const [models, setModels] = useState<Model[]>([])
   const [countries, setCountries] = useState<Country[]>([])
   const [allOptions, setAllOptions] = useState<OptionMaster[]>([])
+  
+  // Title dropdown state
+  const [isTitleDropdownOpen, setIsTitleDropdownOpen] = useState(false)
+  const titleDropdownRef = useRef<HTMLDivElement>(null)
+  
+  const titles = ['Mr.', 'Miss.', 'Mrs.', 'Dr.']
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (titleDropdownRef.current && !titleDropdownRef.current.contains(event.target as Node)) {
+        setIsTitleDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
   
   // Fetch all data when modal opens
   useEffect(() => {
@@ -311,6 +329,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
           const { error: sellerError } = await supabase
             .from('sellers')
             .update({
+              title: sellerData.title || 'Mr.',
               first_name: sellerData.first_name,
               last_name: sellerData.last_name,
               address: sellerData.address,
@@ -330,6 +349,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
             .from('sellers')
             .insert({
               vehicle_id: vehicleId!,
+              title: sellerData.title || 'Mr.',
               first_name: sellerData.first_name,
               last_name: sellerData.last_name,
               address: sellerData.address,
@@ -592,9 +612,8 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Automatic">Automatic</SelectItem>
-                      <SelectItem value="Manual">Manual</SelectItem>
                       <SelectItem value="Auto">Auto</SelectItem>
+                      <SelectItem value="Manual">Manual</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -711,18 +730,59 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">First Name</label>
-                  <input
-                    type="text"
-                    value={sellerData?.first_name || ''}
-                    onChange={(e) => setSellerData({ 
-                      ...sellerData,
-                      vehicle_id: vehicleId!,
-                      first_name: e.target.value,
-                      last_name: sellerData?.last_name || '',
-                      mobile_number: sellerData?.mobile_number || ''
-                    })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  />
+                  <div className="relative flex items-center">
+                    {/* Title Dropdown */}
+                    <div className="relative" ref={titleDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsTitleDropdownOpen(!isTitleDropdownOpen)}
+                        className="h-[42px] px-3 border border-r-0 border-gray-300 rounded-l-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center gap-1 min-w-[80px]"
+                      >
+                        <span className="text-sm">{sellerData?.title || 'Mr.'}</span>
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      {isTitleDropdownOpen && (
+                        <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                          {titles.map((title) => (
+                            <button
+                              key={title}
+                              type="button"
+                              onClick={() => {
+                                setSellerData({ 
+                                  ...sellerData,
+                                  vehicle_id: vehicleId!,
+                                  title: title,
+                                  first_name: sellerData?.first_name || '',
+                                  last_name: sellerData?.last_name || '',
+                                  mobile_number: sellerData?.mobile_number || ''
+                                })
+                                setIsTitleDropdownOpen(false)
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
+                            >
+                              {title}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* First Name Input */}
+                    <input
+                      type="text"
+                      value={sellerData?.first_name || ''}
+                      onChange={(e) => setSellerData({ 
+                        ...sellerData,
+                        vehicle_id: vehicleId!,
+                        first_name: e.target.value,
+                        last_name: sellerData?.last_name || '',
+                        mobile_number: sellerData?.mobile_number || ''
+                      })}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    />
+                  </div>
                 </div>
 
                 <div>

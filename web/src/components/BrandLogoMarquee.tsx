@@ -45,7 +45,7 @@ export default function BrandLogoMarquee() {
             {brandLogos.map((logo, index) => (
               <div
                 key={`first-${index}`}
-                className="flex-shrink-0 grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                className="flex-shrink-0  transition-all duration-300 opacity-70 hover:opacity-100"
               >
                 <Image
                   src={`/brand_logo/${logo}`}

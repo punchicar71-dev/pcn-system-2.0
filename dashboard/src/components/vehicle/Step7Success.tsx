@@ -9,7 +9,12 @@ interface Step7SuccessProps {
   brandName: string;
   modelName: string;
   year: number;
+  registeredYear: number;
+  engineCapacity: string;
+  exteriorColor: string;
+  sellingAmount: string;
   sellerDetails: {
+    title: string;
     firstName: string;
     lastName: string;
     address: string;
@@ -17,9 +22,25 @@ interface Step7SuccessProps {
     nicNumber: string;
     mobileNumber: string;
   };
+  vehicleOptions: {
+    standardOptions: { [key: string]: boolean };
+    specialOptions: { [key: string]: boolean };
+    customOptions: string[];
+  };
 }
 
-export default function Step7Success({ vehicleNumber, brandName, modelName, year, sellerDetails }: Step7SuccessProps) {
+export default function Step7Success({ 
+  vehicleNumber, 
+  brandName, 
+  modelName, 
+  year, 
+  registeredYear,
+  engineCapacity,
+  exteriorColor,
+  sellingAmount,
+  sellerDetails,
+  vehicleOptions 
+}: Step7SuccessProps) {
   const router = useRouter();
 
   const handleAddNewVehicle = () => {
@@ -150,7 +171,7 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
         <body>
           <div class="template-container">
             <!-- Background Template Image -->
-            <img src="/documents/acceptance.png" alt="Acceptance Template" class="template-image" />
+            <img src="/documents/BARAGANIIMA.png" alt="Acceptance Template" class="template-image" />
             
             <!-- Content Overlay -->
             <div class="content-overlay">
@@ -160,8 +181,8 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
               <!-- Address and City -->
               <div class="field address-city">${sellerDetails.address}, ${sellerDetails.city}</div>
               
-              <!-- Seller First and Last Name -->
-              <div class="field seller-name">${sellerDetails.firstName} ${sellerDetails.lastName}</div>
+              <!-- Seller First and Last Name with Title -->
+              <div class="field seller-name">${sellerDetails.title} ${sellerDetails.firstName} ${sellerDetails.lastName}</div>
               
               <!-- Vehicle Number -->
               <div class="field vehicle-number">${vehicleNumber}</div>
@@ -176,6 +197,276 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
               <div class="field mobile-number">${sellerDetails.mobileNumber}</div>
             </div>
           </div>
+          
+          <script>
+            // Auto print when loaded
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            };
+            
+            // Close window after printing or canceling
+            window.onafterprint = function() {
+              window.close();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
+  const handlePrintPriceTag = () => {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups to print the price tag');
+      return;
+    }
+
+    // Collect all selected options
+    const allOptions: string[] = [];
+    
+    // Add standard options
+    Object.entries(vehicleOptions.standardOptions).forEach(([key, value]) => {
+      if (value) {
+        // Format the key to be more readable (e.g., "airBags" -> "Air Bags")
+        const formatted = key.replace(/([A-Z])/g, ' $1').trim();
+        allOptions.push(formatted.toUpperCase());
+      }
+    });
+    
+    // Add special options
+    Object.entries(vehicleOptions.specialOptions).forEach(([key, value]) => {
+      if (value) {
+        const formatted = key.replace(/([A-Z])/g, ' $1').trim();
+        allOptions.push(formatted.toUpperCase());
+      }
+    });
+    
+    // Add custom options
+    vehicleOptions.customOptions.forEach((option) => {
+      allOptions.push(option.toUpperCase());
+    });
+
+    // Format price with commas
+    const formatPrice = (price: string) => {
+      const num = parseFloat(price.replace(/,/g, ''));
+      return num.toLocaleString('en-US');
+    };
+
+    // Split options into chunks for multiple pages if needed
+    const optionsPerPage = 15; // Show 15 options per page max
+    const optionPages: string[][] = [];
+    for (let i = 0; i < allOptions.length; i += optionsPerPage) {
+      optionPages.push(allOptions.slice(i, i + optionsPerPage));
+    }
+
+    // If no options on first page, at least create one page
+    if (optionPages.length === 0) {
+      optionPages.push([]);
+    }
+
+    // Generate HTML for each page
+    const generatePage = (pageOptions: string[], isFirstPage: boolean) => `
+      <div class="page">
+        ${isFirstPage ? `
+        <div class="header">
+          <h1 class="brand">${brandName.toUpperCase()}</h1>
+          <h2 class="model">${modelName.toUpperCase()}</h2>
+          <div class="color">${exteriorColor.toUpperCase()}</div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="price-section">
+          <div class="price-label">Price :</div>
+          <div class="price-value">${formatPrice(sellingAmount)}</div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="details-grid">
+          <div class="detail-row">
+            <div class="detail-label">Mfg. Year</div>
+            <div class="detail-label">Reg. Year</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-value">${year}</div>
+            <div class="detail-value">${registeredYear}</div>
+          </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="engine-section">
+          <div class="engine-label">Eng. Cap.</div>
+          <div class="engine-value">${engineCapacity}</div>
+        </div>
+        
+        <div class="divider"></div>
+        ` : ''}
+        
+        <div class="options-section">
+          ${pageOptions.map(option => `
+            <div class="option-item">* ${option}</div>
+          `).join('')}
+        </div>
+        
+        ${!isFirstPage && pageOptions.length === 0 ? '' : ''}
+      </div>
+    `;
+
+    const allPagesHtml = optionPages.map((pageOptions, index) => 
+      generatePage(pageOptions, index === 0)
+    ).join('');
+
+    // Prepare the HTML content
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Price Tag - ${brandName} ${modelName}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+            
+            body {
+              font-family: Arial, sans-serif;
+              text-transform: uppercase;
+            }
+            
+            .page {
+              page-break-after: always;
+              padding: 40px;
+              min-height: 100vh;
+            }
+            
+            .page:last-child {
+              page-break-after: auto;
+            }
+            
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            
+            .brand {
+              font-size: 72px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              letter-spacing: 2px;
+            }
+            
+            .model {
+              font-size: 56px;
+              font-weight: bold;
+              margin-bottom: 15px;
+              letter-spacing: 1px;
+            }
+            
+            .color {
+              font-size: 48px;
+              font-weight: normal;
+            }
+            
+            .divider {
+              border-bottom: 3px solid #000;
+              margin: 30px 0;
+            }
+            
+            .price-section {
+              text-align: center;
+              margin: 40px 0;
+            }
+            
+            .price-label {
+              font-size: 42px;
+              margin-bottom: 10px;
+            }
+            
+            .price-value {
+              font-size: 64px;
+              font-weight: bold;
+              letter-spacing: 2px;
+            }
+            
+            .details-grid {
+              margin: 40px 0;
+            }
+            
+            .detail-row {
+              display: flex;
+              justify-content: space-around;
+              margin-bottom: 15px;
+            }
+            
+            .detail-label {
+              font-size: 36px;
+              flex: 1;
+              text-align: center;
+            }
+            
+            .detail-value {
+              font-size: 48px;
+              font-weight: bold;
+              flex: 1;
+              text-align: center;
+            }
+            
+            .engine-section {
+              text-align: center;
+              margin: 40px 0;
+            }
+            
+            .engine-label {
+              font-size: 36px;
+              margin-bottom: 10px;
+            }
+            
+            .engine-value {
+              font-size: 52px;
+              font-weight: bold;
+            }
+            
+            .options-section {
+              margin-top: 40px;
+            }
+            
+            .option-item {
+              font-size: 32px;
+              margin-bottom: 20px;
+              padding-left: 20px;
+              line-height: 1.4;
+              font-weight: 500;
+            }
+            
+            @media print {
+              body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+              }
+              
+              .page {
+                padding: 20px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${allPagesHtml}
           
           <script>
             // Auto print when loaded
@@ -237,6 +528,14 @@ export default function Step7Success({ vehicleNumber, brandName, modelName, year
         >
           <Printer className="w-5 h-5" />
           Print Acceptance Doc
+        </button>
+
+        <button
+          onClick={handlePrintPriceTag}
+          className="w-full sm:w-auto px-6 py-3 text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+        >
+          <Printer className="w-5 h-5" />
+          Print Price Tag
         </button>
 
         <button

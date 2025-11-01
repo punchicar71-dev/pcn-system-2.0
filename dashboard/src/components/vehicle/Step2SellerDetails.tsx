@@ -3,6 +3,8 @@
 import { SellerDetailsData } from '@/types/vehicle-form.types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Step2SellerDetailsProps {
   data: SellerDetailsData;
@@ -11,7 +13,22 @@ interface Step2SellerDetailsProps {
   onBack: () => void;
 }
 
+const titles = ['Mr.', 'Miss.', 'Mrs.', 'Dr.'];
+
 export default function Step2SellerDetails({ data, onChange, onNext, onBack }: Step2SellerDetailsProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -75,13 +92,48 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             <Label htmlFor="firstName">
               First Name <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="firstName"
-              value={data.firstName}
-              onChange={(e) => onChange({ firstName: e.target.value })}
-              placeholder="John"
-              required
-            />
+            <div className="relative flex items-center">
+              {/* Title Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="h-[40px] px-3 border border-r-0 border-gray-300 rounded-l-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-1 min-w-[80px]"
+                >
+                  <span className="text-sm">{data.title || 'Mr.'}</span>
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                    {titles.map((title) => (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => {
+                          onChange({ title });
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
+                      >
+                        {title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* First Name Input */}
+              <Input
+                id="firstName"
+                value={data.firstName}
+                onChange={(e) => onChange({ firstName: e.target.value })}
+                className="flex-1 rounded-l-none border-l-0"
+                placeholder=""
+                required
+              />
+            </div>
           </div>
 
           <div>

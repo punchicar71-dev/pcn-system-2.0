@@ -204,23 +204,51 @@ export default function VehiclesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Search and Filter Section */}
-      <section className="bg-white border-b border-gray-200 py-6">
+      {/* Hero Section */}
+      <section 
+        className="relative h-[400px] flex items-end pb-16 justify-center overflow-hidden"
+        style={{
+          backgroundImage: "url('/vehicle_page_hero.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+       
         
+        {/* Content */}
+        <div className="relative z-10 text-center text-white px-4">
+          <p className="text-sm font-medium tracking-[0.2em] uppercase mb-3 opacity-90">
+            ALL VEHICLE
+          </p>
+          <h1 className="text-5xl font-semibold mb-4 tracking-tight">
+            Punch Car Niwasa
+          </h1>
+          <div className="flex items-center justify-center gap-2 text-lg">
+            <span className="font-normal">Vehicle Park ,</span>
+            <span className="font-bold text-yellow-400">Malabe</span>
+          </div>
+          <p className="mt-6 text-base font-light">
+            Now Available <span className="font-bold text-yellow-400">{vehicles.length} vehicles</span> in our vehicle park
+          </p>
+        </div>
       </section>
 
-<div className='max-w-[1200px] mx-auto border-t border-b '>
+    
+     
+
+<div className='max-w-[1200px] mx-auto  border-b '>
 {/* Brand Logo Marquee */}
       <BrandLogoMarquee />
 </div>
       
 
       {/* Main Content */}
-      <div className="max-w-[1200px] mx-auto px-4 py-6">
-        <div className="flex ">
+      <div className="max-w-[1200px] mx-auto ">
+        <div className="flex border-b mb-10">
           {/* Filters Sidebar */}
           <aside className="w-[300px] flex-shrink-0">
-            <div className=" border-r top-6">
+            <div className=" border-r py-6 ">
               <h2 className="text-[16px] font-semibold text-gray-800 mb-6">Advance filters</h2>
 
                 <div className="space-y-8">
@@ -473,7 +501,7 @@ export default function VehiclesPage() {
 
             {/* Vehicle Results */}
 
-            <div className="flex-1 ">
+            <div className="flex-1 pt-6 ">
               <div className="max-w-auto mx-auto pl-6 ">
           {/* Search Header */}
           <div className="text-start mb-6">

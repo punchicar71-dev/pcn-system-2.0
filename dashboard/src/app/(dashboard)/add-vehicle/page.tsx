@@ -465,7 +465,7 @@ export default function AddVehiclePage() {
           throw new Error(`NOT NULL constraint violation: ${columnName}`);
         } else if (vehicleError.code === '23514') {
           // CHECK constraint violation
-          alert('❌ Invalid Value: One of the selected values does not match the allowed options.\n\nPlease check:\n- Body Type (SUV, Sedan, Hatchback, Wagon, Coupe, Convertible, Van, Truck)\n- Fuel Type (Petrol, Diesel, Petrol + Hybrid, Diesel + Hybrid, EV)\n- Transmission (Automatic, Manual, Auto)\n- Status (In Sale, Out of Sale, Reserved)');
+          alert('❌ Invalid Value: One of the selected values does not match the allowed options.\n\nPlease check:\n- Body Type (SUV, Sedan, Hatchback, Wagon, Coupe, Convertible, Van, Truck)\n- Fuel Type (Petrol, Diesel, Petrol + Hybrid, Diesel + Hybrid, EV)\n- Transmission (Auto, Manual)\n- Status (In Sale, Out of Sale, Reserved)');
           throw new Error('CHECK constraint violation');
         }
         
@@ -481,6 +481,7 @@ export default function AddVehiclePage() {
       // Insert seller (TEXT DATA - goes to Supabase)
       const { error: sellerError } = await supabase.from('sellers').insert({
         vehicle_id: vehicle.id,
+        title: sellerDetails.title || 'Mr.',
         first_name: sellerDetails.firstName.trim(),
         last_name: sellerDetails.lastName.trim(),
         address: sellerDetails.address?.trim() || null,
@@ -729,13 +730,23 @@ export default function AddVehiclePage() {
             brandName={getBrandName()}
             modelName={getModelName()}
             year={formState.vehicleDetails.manufactureYear || 0}
+            registeredYear={formState.vehicleDetails.registeredYear || 0}
+            engineCapacity={formState.vehicleDetails.engineCapacity}
+            exteriorColor={formState.vehicleDetails.exteriorColor}
+            sellingAmount={formState.sellingDetails.sellingAmount}
             sellerDetails={{
+              title: formState.sellerDetails.title,
               firstName: formState.sellerDetails.firstName,
               lastName: formState.sellerDetails.lastName,
               address: formState.sellerDetails.address,
               city: formState.sellerDetails.city,
               nicNumber: formState.sellerDetails.nicNumber,
               mobileNumber: formState.sellerDetails.mobileNumber,
+            }}
+            vehicleOptions={{
+              standardOptions: formState.vehicleOptions.standardOptions,
+              specialOptions: formState.vehicleOptions.specialOptions,
+              customOptions: formState.vehicleOptions.customOptions,
             }}
           />
         )}

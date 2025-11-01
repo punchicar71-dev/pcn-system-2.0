@@ -13,6 +13,7 @@ export default function SellVehiclePage() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   
   const [customerData, setCustomerData] = useState({
+    title: 'Mr.',
     firstName: '',
     lastName: '',
     address: '',
@@ -56,6 +57,7 @@ export default function SellVehiclePage() {
       
       const saleData = {
         vehicle_id: sellingData.selectedVehicle?.id,
+        customer_title: customerData.title || 'Mr.',
         customer_first_name: customerData.firstName,
         customer_last_name: customerData.lastName,
         customer_address: customerData.address || null,

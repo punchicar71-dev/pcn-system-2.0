@@ -2,11 +2,25 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X, Phone, Mail, Globe } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navItems = [
     { name: 'Home', href: '/' },
@@ -18,41 +32,43 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-black shadow-md">
+    <>
       {/* Top Bar */}
-      <div className="bg-[#F5A623] text-black py-2.5">
-        <div className="container mx-auto px-4 flex justify-between items-center text-sm">
+      <div className="bg-black text-white py-2.5">
+        <div className="container max-w-[1200px] mx-auto px-4 flex justify-between items-center text-sm">
           <div className="flex items-center gap-6">
-            <span className="text-xs md:text-sm font-medium">
-              Open Everyday! <span className="font-bold ml-2">09:00AM – 06:00PM</span>
+            <span className="text-xs text-gray-400 ">
+              Open Everyday! <span className="font-medium ml-2 text-xs text-white ">09:00AM – 06:00PM</span>
             </span>
           </div>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-4">
-              <span className="text-xs">Hotline :</span>
-              <a href="tel:+94112413865" className="font-bold hover:text-slate-800 transition-colors">
+              <span className="text-xs text-gray-400">Hotline :</span>
+              <a href="tel:+94112413865" className="font-medium text-xs hover:text-slate-800 transition-colors">
                 0112 413 865
               </a>
-              <a href="tel:+94112413866" className="font-bold hover:text-slate-800 transition-colors">
+              <a href="tel:+94112413866" className="font-medium  text-xs hover:text-slate-800 transition-colors">
                 0112 413 866
               </a>
             </div>
             <div className="hidden md:flex items-center gap-2">
-              <span className="text-xs">Email :</span>
-              <a href="mailto:sales@punchicar.lk" className="font-bold hover:text-slate-800 transition-colors">
+              <span className="text-xs text-gray-400">Email :</span>
+              <a href="mailto:sales@punchicar.lk" className="font-medium text-xs hover:text-slate-800 transition-colors">
                 sales@punchicar.lk
               </a>
             </div>
-            <button className="flex items-center gap-1 hover:text-slate-800 transition-colors">
-              <Globe size={16} />
-              <span className="font-bold">EN</span>
-            </button>
+            
           </div>
         </div>
       </div>
 
-      {/* Main Navigation */}
-      <div className="container bg-black mx-auto px-4 py-3 sticky top-0 z-50">
+      {/* Main Navigation - Sticky Header */}
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-black/50 backdrop-blur-md shadow-lg' 
+          : 'bg-transparent'
+      }`}>
+      <div className="container max-w-[1200px] mb-[-90px] mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
@@ -130,6 +146,7 @@ export default function Header() {
           </nav>
         )}
       </div>
-    </header>
+      </header>
+    </>
   );
 }
