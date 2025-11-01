@@ -49,7 +49,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-[15px] border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 relative">
+    <div className="bg-gray-50 rounded-[15px]  border border-gray-300 overflow-hidden hover:shadow-lg transition-shadow duration-200 relative">
       {/* Availability Badge */}
       <div className="absolute top-3 right-3 z-10 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ">
         Available
@@ -160,7 +160,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           {/* Top section with title and days ago */}
           <div className="flex justify-between items-start mb-2">
             <div>
-              <h3 className="text-[24px] font-bold text-gray-900 mb-1">
+              <h3 className="text-[24px] font-semibold text-gray-900 mb-1">
                 {vehicle.brand} {vehicle.model}
               </h3>
               <p className="text-gray-600">{vehicle.year}</p>
@@ -174,7 +174,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
 
           {/* Price */}
           <div className="mb-3">
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-[18px] font-semibold text-green-600">
               {formatPrice(vehicle.price)}
             </p>
           </div>
@@ -182,22 +182,22 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           {/* Bottom section with specs and button */}
           <div className="flex justify-between ">
             {/* Vehicle Specifications */}
-            <div className="flex gap-10 ">
+            <div className="flex gap-8 ">
               <div>
                 <p className="text-gray-500 text-xs mb-1">Fuel Type:</p>
-                <p className="text-red-600 font-semibold">{vehicle.fuelType}</p>
+                <p className="text-blue-600 text-[16px] font-medium">{vehicle.fuelType}</p>
               </div>
               <Separator orientation="vertical" />
               <div>
-                <p className="text-gray-500 text-xs mb-1">Transmission:</p>
-                <p className="text-red-600 font-semibold">{vehicle.transmission}</p>
+                <p className="text-gray-500 text-xs mb-1">Mileage:</p>
+                <p className="text-blue-600 text-[16px] font-medium">{vehicle.mileage?.toLocaleString()} km</p>
               </div>
             </div>
             
             {/* View Details Button */}
             <Link
               href={`/vehicles/${vehicle.id}`}
-              className="px-4 py-3 flex border border-gray-300 item-center text-gray-700 font-medium rounded-full hover:border-gray-900 hover:bg-gray-900 hover:text-white transition-colors duration-200 text-sm"
+              className="px-4 py-3 flex bg-gray-900 item-center text-white font-medium rounded-full  hover:bg-yellow-500 hover:text-black transition-colors duration-200 text-sm"
             >
               View Details
             </Link>

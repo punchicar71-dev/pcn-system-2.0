@@ -18,7 +18,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-black shadow-md sticky top-0 z-50">
+    <header className="bg-black shadow-md">
       {/* Top Bar */}
       <div className="bg-[#F5A623] text-black py-2.5">
         <div className="container mx-auto px-4 flex justify-between items-center text-sm">
@@ -52,7 +52,7 @@ export default function Header() {
       </div>
 
       {/* Main Navigation */}
-      <div className="container mx-auto px-4 py-3">
+      <div className="container bg-black mx-auto px-4 py-3 sticky top-0 z-50">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
