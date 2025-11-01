@@ -8,19 +8,19 @@ A comprehensive vehicle selling management system with a public-facing website a
 
 ## 📢 LATEST UPDATE - November 1, 2025
 
-### ✅ Database Schema Updates & Bug Fixes Complete
+### ✅ S3 Image Deletion Bug Fix & Enhanced Error Handling
 
-**Major improvements: Seller title fields, transmission standardization, and customer details enhanced!**
+**Critical fix: Vehicle deletion now properly removes ALL images from AWS S3, preventing orphaned files and storage waste!**
 
 #### Recent Changes:
-- ✅ **Seller Title Field**: Added title (Mr/Mrs/Ms/Dr/Rev) to sellers table and forms
-- ✅ **Customer Title Field**: Added title to pending_sales table for customer details
-- ✅ **Transmission Standardization**: Updated transmission values from Manual/Automatic to M/A format
-- ✅ **Database Migrations**: Complete migration scripts for all schema updates
-- ✅ **Form Updates**: Enhanced Step 2 (Seller Details) and Step 7 (Success) components
-- ✅ **Sell Vehicle Flow**: Updated customer details and selling info forms with title field
-- ✅ **Edit Vehicle Modal**: Updated with new transmission format
-- ✅ **Bug Fixes**: Resolved seller details form validation and data persistence issues
+- ✅ **S3 Deletion Fix**: Vehicle deletion now properly removes images from AWS S3
+- ✅ **Enhanced Logging**: Comprehensive emoji-based logging for better debugging
+- ✅ **Error Tracking**: Detailed error messages and success/failure feedback
+- ✅ **Batch Processing**: Efficient handling of multiple images (up to 1000 per batch)
+- ✅ **User Feedback**: Clear alerts showing deletion status and any issues
+- ✅ **Audit Trail**: Complete logging of what was deleted from S3 and database
+- ✅ **Database Schema Updates**: Seller/customer title fields and transmission standardization (completed earlier)
+- ✅ **Bug Fixes**: Resolved S3 deletion issues and form validation problems
 
 #### Deployment Summary:
 - ✅ **All Services**: Dashboard, Web, and API fully integrated
@@ -32,7 +32,15 @@ A comprehensive vehicle selling management system with a public-facing website a
 - ✅ **Git Status**: All changes committed and ready for production
 
 #### What Was Updated:
-1. **Database Schema Enhancements**:
+1. **S3 Image Deletion Enhancement** (Critical Fix):
+   - **Frontend (Dashboard)**: Enhanced deletion logic with comprehensive logging and error tracking
+   - **Backend API**: Improved S3 deletion function with batch processing and validation
+   - **API Routes**: Enhanced error handling and detailed response messages
+   - **Next.js Proxy**: Better request tracing and error propagation
+   - **User Feedback**: Clear success/failure alerts with specific details
+   - **Documentation**: Complete testing guide and troubleshooting steps
+
+2. **Database Schema Enhancements** (Previous Updates):
    - **Sellers Table**: Added `title` column (VARCHAR(10)) for Mr/Mrs/Ms/Dr/Rev
    - **Pending Sales Table**: Added `customer_title` column for customer salutation
    - **Transmission Standardization**: Updated all transmission values to M/A format
@@ -54,6 +62,8 @@ A comprehensive vehicle selling management system with a public-facing website a
    - **Responsive Design**: Improved mobile experience
 
 4. **Documentation Added**:
+   - **S3_DELETE_BUG_FIX.md**: Comprehensive S3 deletion fix documentation
+   - **TESTING_S3_DELETE.md**: Complete testing guide for S3 deletion
    - **SELLER_TITLE_UPDATE.md**: Complete implementation guide
    - **SELLER_TITLE_VISUAL_GUIDE.md**: Visual reference for changes
    - **TRANSMISSION_UPDATE_SUMMARY.md**: Transmission standardization details
@@ -210,6 +220,7 @@ See `.env.example` files in each service directory:
 - [QUICK_START.md](QUICK_START.md) - Getting started immediately
 - [SETUP.md](SETUP.md) - Detailed setup instructions
 - [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing procedures
+- [TESTING_S3_DELETE.md](TESTING_S3_DELETE.md) - S3 deletion testing guide
 
 ### Feature Guides:
 - [360_VIEW_QUICK_GUIDE.md](360_VIEW_QUICK_GUIDE.md) - 360-degree viewer setup
@@ -227,6 +238,7 @@ See `.env.example` files in each service directory:
 - [api/README.md](api/README.md) - Backend API documentation
 - [dashboard/README.md](dashboard/README.md) - Dashboard documentation
 - [web/README.md](web/README.md) - Website documentation
+- [S3_DELETE_BUG_FIX.md](S3_DELETE_BUG_FIX.md) - S3 deletion bug fix details
 
 ---
 
@@ -242,11 +254,14 @@ See `.env.example` files in each service directory:
 
 ### 2. **Image Management**
 - AWS S3 integration for image storage
+- Complete image lifecycle management (upload, view, delete)
+- Proper S3 deletion when vehicles are removed
 - 360-degree image viewer for vehicle inspection
 - Image carousel with multiple viewing angles
 - Drag-and-drop upload interface
-- Batch image operations
+- Batch image operations (up to 1000 images per batch)
 - Secure image retrieval with S3 keys
+- Comprehensive logging and error tracking
 
 ### 3. **Search & Filtering**
 - Full-text search on vehicle attributes

@@ -335,10 +335,13 @@ router.delete(
   '/delete-vehicle/:vehicleId',
   async (req: Request, res: Response) => {
     try {
+      console.log('🗑️ [DELETE Vehicle Images] Request received for vehicle:', req.params.vehicleId);
+      
       if (!isS3Configured()) {
+        console.error('❌ [DELETE Vehicle Images] AWS S3 is not configured');
         return res.status(503).json({
           success: false,
-          error: 'AWS S3 is not configured',
+          error: 'AWS S3 is not configured. Please set AWS environment variables.',
         });
       }
 
@@ -346,26 +349,41 @@ router.delete(
       const { s3Keys } = req.body; // Expect array of S3 keys in request body
 
       if (!s3Keys || !Array.isArray(s3Keys)) {
+        console.error('❌ [DELETE Vehicle Images] Invalid request body:', req.body);
         return res.status(400).json({
           success: false,
           error: 'Invalid request: s3Keys array is required',
         });
       }
 
-      console.log(`Deleting images for vehicle ${vehicleId}:`, s3Keys);
+      console.log(`📋 [DELETE Vehicle Images] Deleting ${s3Keys.length} images for vehicle ${vehicleId}`);
+      console.log('🔑 [DELETE Vehicle Images] S3 Keys:', s3Keys);
+      
       const success = await deleteVehicleImages(s3Keys);
+
+      if (success) {
+        console.log(`✅ [DELETE Vehicle Images] Successfully deleted ${s3Keys.length} images from S3`);
+      } else {
+        console.error('❌ [DELETE Vehicle Images] Failed to delete images from S3');
+      }
 
       res.json({
         success,
         message: success
           ? `Successfully deleted ${s3Keys.length} images from S3`
-          : 'Failed to delete vehicle images',
+          : 'Failed to delete vehicle images from S3',
+        deletedCount: s3Keys.length,
       });
     } catch (error) {
-      console.error('Error deleting vehicle images:', error);
+      console.error('❌ [DELETE Vehicle Images] Exception:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       res.status(500).json({
         success: false,
         error: 'Failed to delete vehicle images',
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }

@@ -123,25 +123,31 @@ export const deleteFromS3 = async (key: string): Promise<boolean> => {
 export const deleteVehicleImages = async (s3Keys: string[]): Promise<boolean> => {
   try {
     if (!s3Keys || s3Keys.length === 0) {
-      console.log('No S3 keys provided for deletion');
+      console.log('⚠️ No S3 keys provided for deletion');
       return true; // Nothing to delete
     }
 
-    // Filter out any null/undefined keys
-    const validKeys = s3Keys.filter(key => key && key.trim() !== '');
+    // Filter out any null/undefined/empty keys
+    const validKeys = s3Keys.filter(key => key && typeof key === 'string' && key.trim() !== '');
     
     if (validKeys.length === 0) {
-      console.log('No valid S3 keys to delete');
+      console.log('⚠️ No valid S3 keys to delete after filtering');
       return true;
     }
 
-    console.log(`Deleting ${validKeys.length} objects from S3:`, validKeys);
+    console.log(`🗑️ Deleting ${validKeys.length} objects from S3 bucket: ${S3_BUCKET_NAME}`);
+    console.log('📋 Keys to delete:', validKeys);
 
     // S3 DeleteObjects can handle up to 1000 objects at once
     // Split into batches if needed
     const batchSize = 1000;
+    let totalDeleted = 0;
+    let totalErrors = 0;
+
     for (let i = 0; i < validKeys.length; i += batchSize) {
       const batch = validKeys.slice(i, i + batchSize);
+      
+      console.log(`🔄 Processing batch ${Math.floor(i / batchSize) + 1} (${batch.length} keys)...`);
       
       const deleteCommand = new DeleteObjectsCommand({
         Bucket: S3_BUCKET_NAME,
@@ -154,18 +160,32 @@ export const deleteVehicleImages = async (s3Keys: string[]): Promise<boolean> =>
       const result = await s3Client.send(deleteCommand);
       
       if (result.Deleted && result.Deleted.length > 0) {
+        totalDeleted += result.Deleted.length;
         console.log(`✅ Successfully deleted ${result.Deleted.length} objects from S3`);
+        result.Deleted.forEach(deleted => {
+          console.log(`  ✓ Deleted: ${deleted.Key}`);
+        });
       }
       
       if (result.Errors && result.Errors.length > 0) {
-        console.error('❌ Errors deleting some objects:', result.Errors);
-        // Continue anyway - some deletions may have succeeded
+        totalErrors += result.Errors.length;
+        console.error(`❌ Errors deleting ${result.Errors.length} objects:`);
+        result.Errors.forEach(error => {
+          console.error(`  ✗ Key: ${error.Key}, Code: ${error.Code}, Message: ${error.Message}`);
+        });
       }
     }
     
-    return true;
+    console.log(`📊 Deletion Summary: ${totalDeleted} deleted, ${totalErrors} errors`);
+    
+    // Return true if at least some deletions succeeded, or if there were no errors
+    return totalErrors === 0 || totalDeleted > 0;
   } catch (error) {
-    console.error('Error deleting vehicle images from S3:', error);
+    console.error('❌ Exception while deleting vehicle images from S3:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return false;
   }
 };

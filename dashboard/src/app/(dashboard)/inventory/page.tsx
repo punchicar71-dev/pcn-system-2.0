@@ -406,6 +406,8 @@ export default function InventoryPage() {
     try {
       const supabase = createClient()
       
+      console.log('🗑️ Starting vehicle deletion process for:', deleteId)
+      
       // First, fetch all S3 keys for this vehicle's images
       const { data: imageRecords, error: fetchError } = await supabase
         .from('vehicle_images')
@@ -413,67 +415,95 @@ export default function InventoryPage() {
         .eq('vehicle_id', deleteId)
 
       if (fetchError) {
-        console.error('Error fetching image records:', fetchError)
+        console.error('❌ Error fetching image records:', fetchError)
         // Continue with deletion even if we can't fetch images
       }
 
       // Extract S3 keys (filter out null/undefined)
       const s3Keys = imageRecords
         ?.map(record => record.s3_key)
-        .filter(key => key !== null && key !== undefined) || []
+        .filter(key => key !== null && key !== undefined && key.trim() !== '') || []
 
-      console.log(`Found ${s3Keys.length} images to delete from S3:`, s3Keys)
+      console.log(`📸 Found ${s3Keys.length} images to delete from S3:`, s3Keys)
 
       // Delete images from S3 if we have any keys
+      let s3DeletionSuccess = false
       if (s3Keys.length > 0) {
         // Get the current session token
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session?.access_token) {
-          console.warn('No valid session token found, skipping S3 deletion')
+          console.warn('⚠️ No valid session token found, skipping S3 deletion')
+          alert('Warning: Could not delete images from S3 (no session token). Continue with database deletion?')
         } else {
-          // Call Next.js API route (which proxies to backend)
-          const s3Response = await fetch(`/api/upload/delete-vehicle/${deleteId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ s3Keys }),
-          })
+          try {
+            // Call Next.js API route (which proxies to backend)
+            console.log('🌐 Calling S3 deletion API...')
+            const s3Response = await fetch(`/api/upload/delete-vehicle/${deleteId}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ s3Keys }),
+            })
 
-          if (!s3Response.ok) {
-            const errorText = await s3Response.text()
-            console.warn('Failed to delete S3 images:', errorText)
-            // Continue with database deletion even if S3 deletion fails
-          } else {
-            const result = await s3Response.json()
-            console.log('✅ S3 deletion result:', result)
+            if (!s3Response.ok) {
+              const errorText = await s3Response.text()
+              console.error('❌ Failed to delete S3 images:', errorText)
+              alert(`Warning: Failed to delete images from S3: ${errorText}\nContinuing with database deletion...`)
+            } else {
+              const result = await s3Response.json()
+              console.log('✅ S3 deletion result:', result)
+              if (result.success) {
+                s3DeletionSuccess = true
+                console.log(`✅ Successfully deleted ${s3Keys.length} images from S3`)
+              } else {
+                console.error('❌ S3 deletion returned success: false')
+              }
+            }
+          } catch (s3Error) {
+            console.error('❌ Exception during S3 deletion:', s3Error)
+            alert(`Warning: Error deleting S3 images: ${s3Error}\nContinuing with database deletion...`)
           }
         }
       } else {
-        console.log('No S3 images to delete for this vehicle')
+        console.log('ℹ️ No S3 images to delete for this vehicle')
+        s3DeletionSuccess = true // No images to delete counts as success
       }
 
       // Then delete from database (this will cascade to vehicle_images, sellers, vehicle_options, etc.)
+      console.log('🗄️ Deleting vehicle from database...')
       const { error } = await supabase
         .from('vehicles')
         .delete()
         .eq('id', deleteId)
 
       if (error) {
-        console.error('Error deleting vehicle:', error)
+        console.error('❌ Error deleting vehicle from database:', error)
         alert('Failed to delete vehicle from database. Please try again.')
         return
       }
 
-      alert('Vehicle and all associated images deleted successfully!')
+      console.log('✅ Vehicle deleted from database successfully')
+
+      // Show appropriate success message
+      if (s3Keys.length > 0) {
+        if (s3DeletionSuccess) {
+          alert('✅ Vehicle and all associated images deleted successfully from both database and S3!')
+        } else {
+          alert('⚠️ Vehicle deleted from database, but some images may remain in S3. Please check S3 console.')
+        }
+      } else {
+        alert('✅ Vehicle deleted successfully!')
+      }
+
       fetchVehicles() // Refresh list
       setIsDeleteDialogOpen(false)
       setDeleteId(null)
     } catch (error) {
-      console.error('Error deleting vehicle:', error)
-      alert('An error occurred while deleting the vehicle.')
+      console.error('❌ Error deleting vehicle:', error)
+      alert(`An error occurred while deleting the vehicle: ${error}`)
     }
   }
 
