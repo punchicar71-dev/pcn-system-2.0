@@ -2,13 +2,59 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 1, 2025 | Version: 2.0.3
+**Status**: ✅ Production Ready | Last Updated: November 2, 2025 | Version: 2.0.4
 
 ---
 
-## 📢 LATEST UPDATE - November 1, 2025
+## 📢 LATEST UPDATE - November 2, 2025
 
-### ✅ S3 Image Deletion Bug Fix & Enhanced Error Handling
+### ✅ Inventory Print Functionality - Document Generation Enhancement
+
+**New Feature: Print documents directly from inventory with a single click! Generate acceptance documents and price tags for any vehicle in your inventory.**
+
+#### Recent Changes:
+- ✅ **Print Documents Modal**: New modal interface for printing vehicle documents
+- ✅ **Print Icon**: Added green printer icon in inventory action column
+- ✅ **Print Acceptance**: Generate and print vehicle acceptance documents with seller details
+- ✅ **Print Price Tag**: Generate and print professional price tags with vehicle specs
+- ✅ **Auto-Print**: Opens print dialog automatically when document is ready
+- ✅ **Data Validation**: Handles missing seller data gracefully with clear warnings
+- ✅ **Template Integration**: Uses existing document templates from Step 7 success flow
+
+#### What Was Added:
+1. **PrintDocumentsModal Component** (`dashboard/src/components/inventory/PrintDocumentsModal.tsx`):
+   - Modal with two print options: "Print Acceptance" and "Print Price Tag"
+   - Displays vehicle info (Brand, Model, Year, Vehicle Number)
+   - Green printer icon matching design standards
+   - Full print functionality from Step7Success integrated
+   - Handles missing seller details with appropriate warnings
+
+2. **Inventory Page Enhancements** (`dashboard/src/app/(dashboard)/inventory/page.tsx`):
+   - Added print button (green printer icon) in action column
+   - New `openPrintModal()` function to fetch and prepare print data
+   - State management for print modal and vehicle data
+   - Fetches vehicle details, seller info, and options dynamically
+   - Integrated print modal component with proper cleanup
+
+3. **Print Features**:
+   - **Print Acceptance Document**: Overlays seller details on acceptance template
+   - **Print Price Tag**: Professional price tag with vehicle specs and options
+   - Auto-print functionality (opens print dialog automatically)
+   - Proper date formatting and data presentation
+   - Multiple pages support for extensive vehicle options
+
+4. **Action Column Order** (Updated):
+   - 👁️ View Details (gray)
+   - 🖨️ **Print Documents (green)** ← NEW
+   - 🖼️ Edit Images (blue)
+   - ✏️ Edit (gray)
+   - 🗑️ Delete (red)
+
+---
+
+## 📋 Previous Updates
+
+### ✅ S3 Image Deletion Bug Fix & Enhanced Error Handling (November 1, 2025)
 
 **Critical fix: Vehicle deletion now properly removes ALL images from AWS S3, preventing orphaned files and storage waste!**
 
@@ -263,7 +309,17 @@ See `.env.example` files in each service directory:
 - Secure image retrieval with S3 keys
 - Comprehensive logging and error tracking
 
-### 3. **Search & Filtering**
+### 3. **Document Generation & Printing**
+- **Print Acceptance Documents**: Generate vehicle acceptance forms with seller details
+- **Print Price Tags**: Professional price tags with vehicle specifications
+- Template-based document generation
+- Auto-print functionality for quick workflow
+- Print directly from inventory page
+- Handles multiple document types
+- Date and data formatting for professional output
+- Support for multi-page documents (options overflow)
+
+### 4. **Search & Filtering**
 - Full-text search on vehicle attributes
 - Filter by brand, model, price range
 - Filter by vehicle condition and features
@@ -271,21 +327,21 @@ See `.env.example` files in each service directory:
 - Real-time search results
 - Paginated results display
 
-### 4. **User Management**
+### 5. **User Management**
 - Role-based access control (Admin, Staff, User)
 - User authentication via Supabase
 - Session persistence and security
 - User profile management
 - Password reset functionality
 
-### 5. **Analytics & Reporting**
+### 6. **Analytics & Reporting**
 - Sales transaction tracking
 - Vehicle listing analytics
 - User activity monitoring
 - Dashboard statistics
 - Report generation
 
-### 6. **Public Website**
+### 7. **Public Website**
 - Responsive vehicle listings
 - Detailed vehicle cards
 - Customer inquiry system

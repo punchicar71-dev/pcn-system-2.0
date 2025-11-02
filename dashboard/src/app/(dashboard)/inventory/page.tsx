@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause, ImageIcon } from 'lucide-react'
+import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause, ImageIcon, Printer } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -23,6 +23,7 @@ import EditVehicleModal from '@/components/inventory/EditVehicleModal'
 import VehicleImageUploadModal from '@/components/inventory/VehicleImageUploadModal'
 import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
 import VehicleDetailModal from '@/components/inventory/VehicleDetailModal'
+import PrintDocumentsModal from '@/components/inventory/PrintDocumentsModal'
 import SuccessPopup from '@/components/ui/SuccessPopup'
 
 interface Vehicle {
@@ -98,6 +99,12 @@ export default function InventoryPage() {
   // Detail Modal States
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [detailVehicleData, setDetailVehicleData] = useState<any>(null)
+
+  // Print Modal States
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
+  const [printVehicleData, setPrintVehicleData] = useState<any>(null)
+  const [printSellerDetails, setPrintSellerDetails] = useState<any>(null)
+  const [printVehicleOptions, setPrintVehicleOptions] = useState<Array<{ option_name: string }>>([])
 
   // Success Popup State
   const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false)
@@ -361,6 +368,76 @@ export default function InventoryPage() {
         console.error('Error downloading document:', error)
         alert('Failed to download document')
       })
+  }
+
+  // Open print modal
+  const openPrintModal = async (vehicleId: string) => {
+    try {
+      // Get vehicle from list
+      const vehicleFromList = vehicles.find(v => v.id === vehicleId)
+      if (!vehicleFromList) {
+        alert('Vehicle not found')
+        return
+      }
+
+      // Fetch complete vehicle data
+      const { data: vehicleData, error: vehicleError } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('id', vehicleId)
+        .single()
+
+      if (vehicleError) {
+        console.error('Vehicle fetch error:', vehicleError)
+        throw vehicleError
+      }
+
+      // Fetch seller details
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .maybeSingle()
+
+      if (sellerError) {
+        console.error('Seller fetch error:', sellerError)
+      }
+
+      // Fetch vehicle options
+      const { data: optionsData } = await supabase
+        .from('vehicle_options')
+        .select('option_id')
+        .eq('vehicle_id', vehicleId)
+
+      let optionNames: Array<{ option_name: string }> = []
+      if (optionsData && optionsData.length > 0) {
+        const optionIds = optionsData.map(opt => opt.option_id)
+        const { data: masterOptions } = await supabase
+          .from('vehicle_options_master')
+          .select('id, option_name')
+          .in('id', optionIds)
+        
+        optionNames = masterOptions?.map(opt => ({ option_name: opt.option_name })) || []
+      }
+
+      // Prepare vehicle data for print modal
+      setPrintVehicleData({
+        vehicleNumber: vehicleFromList.vehicle_number,
+        brandName: vehicleFromList.brand_name,
+        modelName: vehicleFromList.model_name,
+        year: vehicleData.manufacture_year,
+        registeredYear: vehicleData.registered_year || vehicleData.manufacture_year,
+        engineCapacity: vehicleData.engine_capacity || 'N/A',
+        exteriorColor: vehicleData.exterior_color || 'N/A',
+        sellingAmount: vehicleFromList.selling_amount,
+      })
+      setPrintSellerDetails(sellerData)
+      setPrintVehicleOptions(optionNames)
+      setIsPrintModalOpen(true)
+    } catch (error) {
+      console.error('Error loading print data:', error)
+      alert('Failed to load vehicle data for printing')
+    }
   }
 
   // Real-time search filter - Search by Vehicle Number, Brand, and Model
@@ -686,6 +763,13 @@ export default function InventoryPage() {
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openPrintModal(vehicle.id)}
+                          className="p-1 text-green-600 hover:bg-green-50 rounded"
+                          title="Print Documents"
+                        >
+                          <Printer className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => {
@@ -1098,6 +1182,22 @@ export default function InventoryPage() {
             setDetailVehicleData(null)
           }}
           vehicle={detailVehicleData}
+        />
+      )}
+
+      {/* Print Documents Modal */}
+      {printVehicleData && (
+        <PrintDocumentsModal
+          isOpen={isPrintModalOpen}
+          onClose={() => {
+            setIsPrintModalOpen(false)
+            setPrintVehicleData(null)
+            setPrintSellerDetails(null)
+            setPrintVehicleOptions([])
+          }}
+          vehicleData={printVehicleData}
+          sellerDetails={printSellerDetails}
+          vehicleOptions={printVehicleOptions}
         />
       )}
 
