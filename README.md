@@ -2,13 +2,99 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 2, 2025 | Version: 2.0.4
+**Status**: ✅ Production Ready | Last Updated: November 2, 2025 | Version: 2.0.5
 
 ---
 
 ## 📢 LATEST UPDATE - November 2, 2025
 
-### ✅ Inventory Print Functionality - Document Generation Enhancement
+### 🔔 Notification System - Complete Implementation
+
+**New Feature: Real-time notifications for all vehicle operations! Stay informed about every vehicle action with instant notifications and detailed activity tracking.**
+
+#### Recent Changes:
+- 🔔 **Real-time Notifications**: Instant notifications for all vehicle operations
+- ✅ **5 Notification Types**: Add, Update, Delete, Move to Sales, Sold Out
+- 🎨 **Color-Coded Display**: Green, Yellow, Red, Blue, Emerald indicators
+- 📢 **Notification Bell**: Badge counter showing unread count in header
+- 💬 **Detailed Messages**: User name, vehicle info, and action context
+- ⚡ **Performance Fixes**: AWS S3 timeout configuration and error handling
+- 🔧 **Upload Optimization**: Request timeouts and retry logic improvements
+
+#### What Was Added:
+
+1. **Notification System Components**:
+   - **NotificationContext** (`dashboard/src/contexts/NotificationContext.tsx`):
+     - Global state management for notifications
+     - Real-time Supabase subscriptions
+     - Auto-refresh notification count
+   
+   - **NotificationDropdown** (`dashboard/src/components/notifications/NotificationDropdown.tsx`):
+     - Bell icon with unread badge
+     - Dropdown with recent notifications
+     - Color-coded notification cards
+     - Mark as read / Clear all functionality
+   
+   - **Notification Service** (`dashboard/src/lib/notificationService.ts`):
+     - CRUD operations for notifications
+     - Helper functions for vehicle actions
+     - Real-time subscription management
+
+2. **Notification Integration** (All 5 Actions):
+   - **Add Vehicle** (`add-vehicle/page.tsx`):
+     - Creates notification after successful vehicle insertion
+     - Message: "[User] added [Vehicle] to the Inventory."
+   
+   - **Update Vehicle** (`EditVehicleModal.tsx`):
+     - Creates notification after successful update
+     - Message: "[User] updated details of [Vehicle] in the Inventory."
+   
+   - **Delete Vehicle** (`inventory/page.tsx`):
+     - Creates notification after successful deletion
+     - Message: "[User] deleted [Vehicle] from the Inventory."
+   
+   - **Move to Sales** (`sell-vehicle/page.tsx`):
+     - Creates notification when vehicle moves to pending
+     - Message: "[User] moved [Vehicle] to the Selling Process — now listed in Sales Transactions (Pending)."
+   
+   - **Sold Out** (`sales-transactions/page.tsx`):
+     - Creates notification when sale is completed
+     - Message: "[User] completed the sale of [Vehicle] — vehicle moved to Sold Out."
+
+3. **AWS S3 Performance Fixes**:
+   - **Request Timeouts**: 30-second timeout on presigned URL requests
+   - **S3 Client Timeout**: 10-second timeout for S3 operations
+   - **Retry Logic**: Reduced retry attempts from default to 2
+   - **Error Logging**: Detailed timing logs for debugging
+   - **Abort Controllers**: Proper request cancellation on timeout
+
+4. **Database Schema**:
+   ```sql
+   CREATE TABLE notifications (
+     id UUID PRIMARY KEY,
+     user_id UUID REFERENCES users(id),
+     type TEXT NOT NULL, -- 'added', 'updated', 'deleted', 'moved_to_sales', 'sold'
+     title TEXT NOT NULL,
+     message TEXT NOT NULL,
+     vehicle_number TEXT,
+     vehicle_brand TEXT,
+     vehicle_model TEXT,
+     is_read BOOLEAN DEFAULT false,
+     created_at TIMESTAMP DEFAULT NOW(),
+     updated_at TIMESTAMP DEFAULT NOW()
+   );
+   ```
+
+5. **Documentation Created**:
+   - `NOTIFICATION_FIX_COMPLETE.md` - Complete technical documentation
+   - `NOTIFICATION_FLOW_VISUAL.md` - Visual flow diagrams and testing guide
+   - Migration SQL for notifications table
+
+---
+
+## 📋 Previous Updates
+
+### ✅ Inventory Print Functionality - Document Generation Enhancement (November 2, 2025)
 
 **New Feature: Print documents directly from inventory with a single click! Generate acceptance documents and price tags for any vehicle in your inventory.**
 
@@ -21,39 +107,6 @@ A comprehensive vehicle selling management system with a public-facing website a
 - ✅ **Data Validation**: Handles missing seller data gracefully with clear warnings
 - ✅ **Template Integration**: Uses existing document templates from Step 7 success flow
 
-#### What Was Added:
-1. **PrintDocumentsModal Component** (`dashboard/src/components/inventory/PrintDocumentsModal.tsx`):
-   - Modal with two print options: "Print Acceptance" and "Print Price Tag"
-   - Displays vehicle info (Brand, Model, Year, Vehicle Number)
-   - Green printer icon matching design standards
-   - Full print functionality from Step7Success integrated
-   - Handles missing seller details with appropriate warnings
-
-2. **Inventory Page Enhancements** (`dashboard/src/app/(dashboard)/inventory/page.tsx`):
-   - Added print button (green printer icon) in action column
-   - New `openPrintModal()` function to fetch and prepare print data
-   - State management for print modal and vehicle data
-   - Fetches vehicle details, seller info, and options dynamically
-   - Integrated print modal component with proper cleanup
-
-3. **Print Features**:
-   - **Print Acceptance Document**: Overlays seller details on acceptance template
-   - **Print Price Tag**: Professional price tag with vehicle specs and options
-   - Auto-print functionality (opens print dialog automatically)
-   - Proper date formatting and data presentation
-   - Multiple pages support for extensive vehicle options
-
-4. **Action Column Order** (Updated):
-   - 👁️ View Details (gray)
-   - 🖨️ **Print Documents (green)** ← NEW
-   - 🖼️ Edit Images (blue)
-   - ✏️ Edit (gray)
-   - 🗑️ Delete (red)
-
----
-
-## 📋 Previous Updates
-
 ### ✅ S3 Image Deletion Bug Fix & Enhanced Error Handling (November 1, 2025)
 
 **Critical fix: Vehicle deletion now properly removes ALL images from AWS S3, preventing orphaned files and storage waste!**
@@ -65,39 +118,6 @@ A comprehensive vehicle selling management system with a public-facing website a
 - ✅ **Batch Processing**: Efficient handling of multiple images (up to 1000 per batch)
 - ✅ **User Feedback**: Clear alerts showing deletion status and any issues
 - ✅ **Audit Trail**: Complete logging of what was deleted from S3 and database
-- ✅ **Database Schema Updates**: Seller/customer title fields and transmission standardization (completed earlier)
-- ✅ **Bug Fixes**: Resolved S3 deletion issues and form validation problems
-
-#### Deployment Summary:
-- ✅ **All Services**: Dashboard, Web, and API fully integrated
-- ✅ **Features Complete**: Vehicle management, image uploads, filtering, search, brand showcase
-- ✅ **UI Components**: 360-degree viewer, image carousel, brand marquee, upload interface
-- ✅ **Database**: 9 tables with comprehensive schema (including seller/customer title fields)
-- ✅ **Migrations**: Complete migration scripts for schema updates and data standardization
-- ✅ **Documentation**: Implementation guides, bug fix summaries, and quick start references
-- ✅ **Git Status**: All changes committed and ready for production
-
-#### What Was Updated:
-1. **S3 Image Deletion Enhancement** (Critical Fix):
-   - **Frontend (Dashboard)**: Enhanced deletion logic with comprehensive logging and error tracking
-   - **Backend API**: Improved S3 deletion function with batch processing and validation
-   - **API Routes**: Enhanced error handling and detailed response messages
-   - **Next.js Proxy**: Better request tracing and error propagation
-   - **User Feedback**: Clear success/failure alerts with specific details
-   - **Documentation**: Complete testing guide and troubleshooting steps
-
-2. **Database Schema Enhancements** (Previous Updates):
-   - **Sellers Table**: Added `title` column (VARCHAR(10)) for Mr/Mrs/Ms/Dr/Rev
-   - **Pending Sales Table**: Added `customer_title` column for customer salutation
-   - **Transmission Standardization**: Updated all transmission values to M/A format
-   - **Migration Scripts**: Created versioned migration files for all updates
-   - **Data Integrity**: Updated existing records with proper values
-
-2. **Dashboard Components Updated**:
-   - **Step2SellerDetails.tsx**: Enhanced with title field dropdown
-   - **Step7Success.tsx**: Added title display in success confirmation
-   - **CustomerDetails.tsx**: Added customer title field in sell vehicle flow
-   - **SellingInfo.tsx**: Updated to handle customer title field
    - **EditVehicleModal.tsx**: Updated transmission dropdown (Manual → M, Automatic → A)
    - **Form Validation**: Improved validation for all updated fields
 

@@ -76,6 +76,47 @@ export default function SalesTransactionsPage() {
         // Continue anyway - sale status was updated
       }
 
+      // Create notification for vehicle sold out
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, first_name, last_name')
+            .eq('auth_id', session.user.id)
+            .single()
+
+          if (userData) {
+            // Get vehicle details for notification
+            const { data: vehicleData } = await supabase
+              .from('vehicle_inventory_view')
+              .select('vehicle_number, brand_name, model_name')
+              .eq('id', saleData.vehicle_id)
+              .single()
+
+            if (vehicleData) {
+              const userName = `${userData.first_name} ${userData.last_name}`
+              const vehicleInfo = `${vehicleData.brand_name} ${vehicleData.model_name} (${vehicleData.vehicle_number})`
+
+              await supabase.from('notifications').insert({
+                user_id: userData.id,
+                type: 'sold',
+                title: 'Vehicle Sold',
+                message: `${userName} completed the sale of ${vehicleInfo} — vehicle moved to Sold Out.`,
+                vehicle_number: vehicleData.vehicle_number,
+                vehicle_brand: vehicleData.brand_name,
+                vehicle_model: vehicleData.model_name,
+                is_read: false
+              })
+              console.log('✅ Notification created for vehicle sold out')
+            }
+          }
+        }
+      } catch (notifError) {
+        console.error('⚠️  Failed to create notification:', notifError)
+        // Don't block sold out process if notification fails
+      }
+
       alert('Vehicle marked as sold successfully');
       setIsSoldOutModalOpen(false);
       // Trigger refresh

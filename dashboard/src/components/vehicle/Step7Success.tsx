@@ -494,9 +494,9 @@ export default function Step7Success({
   };
 
   return (
-    <div className="bg-white  p-8 text-center">
+    <div className=" w-full  bg-white pt-24 text-center">
       {/* Success Animation */}
-      <div className="mb-6 flex justify-center">
+      <div className="mb-6 flex justify-center items-center">
         <Image 
           src="/done_animation.png" 
           alt="Success" 
@@ -527,7 +527,7 @@ export default function Step7Success({
           className="w-full sm:w-auto px-6 py-3 text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
         >
           <Printer className="w-5 h-5" />
-          Print Acceptance Doc
+          Print Acceptance
         </button>
 
         <button

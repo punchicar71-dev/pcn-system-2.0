@@ -98,6 +98,38 @@ export default function SellVehiclePage() {
         // Continue anyway - sale was recorded
       }
 
+      // Create notification for moving vehicle to sales
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, first_name, last_name')
+            .eq('auth_id', session.user.id)
+            .single()
+
+          if (userData) {
+            const userName = `${userData.first_name} ${userData.last_name}`
+            const vehicleInfo = `${sellingData.selectedVehicle.brand_name} ${sellingData.selectedVehicle.model_name} (${sellingData.selectedVehicle.vehicle_number})`
+
+            await supabase.from('notifications').insert({
+              user_id: userData.id,
+              type: 'moved_to_sales',
+              title: 'Moved to Sales',
+              message: `${userName} moved ${vehicleInfo} to the Selling Process — now listed in Sales Transactions (Pending).`,
+              vehicle_number: sellingData.selectedVehicle.vehicle_number,
+              vehicle_brand: sellingData.selectedVehicle.brand_name,
+              vehicle_model: sellingData.selectedVehicle.model_name,
+              is_read: false
+            })
+            console.log('✅ Notification created for moving vehicle to sales')
+          }
+        }
+      } catch (notifError) {
+        console.error('⚠️  Failed to create notification:', notifError)
+        // Don't block sale if notification fails
+      }
+
       // Success - move to confirmation step
       setCompletedSteps([1, 2]);
       setCurrentStep(3);

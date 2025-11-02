@@ -564,6 +564,41 @@ export default function InventoryPage() {
 
       console.log('✅ Vehicle deleted from database successfully')
 
+      // Create notification for vehicle deletion
+      try {
+        const deletedVehicle = vehicles.find(v => v.id === deleteId)
+        if (deletedVehicle) {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, first_name, last_name')
+              .eq('auth_id', session.user.id)
+              .single()
+
+            if (userData) {
+              const userName = `${userData.first_name} ${userData.last_name}`
+              const vehicleInfo = `${deletedVehicle.brand_name} ${deletedVehicle.model_name} (${deletedVehicle.vehicle_number})`
+
+              await supabase.from('notifications').insert({
+                user_id: userData.id,
+                type: 'deleted',
+                title: 'Vehicle Deleted',
+                message: `${userName} deleted ${vehicleInfo} from the Inventory.`,
+                vehicle_number: deletedVehicle.vehicle_number,
+                vehicle_brand: deletedVehicle.brand_name,
+                vehicle_model: deletedVehicle.model_name,
+                is_read: false
+              })
+              console.log('✅ Notification created for vehicle deletion')
+            }
+          }
+        }
+      } catch (notifError) {
+        console.error('⚠️  Failed to create notification:', notifError)
+        // Don't block deletion if notification fails
+      }
+
       // Show appropriate success message
       if (s3Keys.length > 0) {
         if (s3DeletionSuccess) {
@@ -675,34 +710,34 @@ export default function InventoryPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Vehicle No
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Brand
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Model
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Year
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Mileage
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Country
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Transmission
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fuel Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Action
                 </th>
               </tr>
@@ -726,36 +761,36 @@ export default function InventoryPage() {
               ) : (
                 paginatedVehicles.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                    <td className="px-3 py-3 text-sm text-gray-900 font-medium">
                       {vehicle.vehicle_number}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.brand_name}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.model_name}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.manufacture_year}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
+                    <td className="px-3 py-3 text-sm text-gray-900 font-semibold">
                       {formatCurrency(vehicle.selling_amount)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.mileage ? formatMileage(vehicle.mileage) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.country_name}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.transmission}
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-3 py-3 text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getFuelTypeBadge(vehicle.fuel_type)}`}>
                         {vehicle.fuel_type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-3 py-3 text-sm">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => openDetailModal(vehicle.id)}

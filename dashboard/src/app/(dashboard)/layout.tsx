@@ -21,6 +21,9 @@ import {
 } from 'lucide-react'
 import { useSessionHeartbeat } from '@/hooks/useSessionHeartbeat'
 import { createClient } from '@/lib/supabase-client'
+import { NotificationProvider } from '@/contexts/NotificationContext'
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
+import { Toaster } from '@/components/ui/toaster'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -151,10 +154,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <NotificationProvider>
+      <div className="min-h-screen bg-white">
+        {/* Logout Confirmation Modal */}
+        {showLogoutModal && (
+        <div className="fixed inset-0 z-9 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative animate-in fade-in zoom-in duration-200">
             {/* Close Button */}
             <button
@@ -221,7 +225,7 @@ export default function DashboardLayout({
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-3 px-3 py-2 text-[16px] text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2 text-[16px] text-gray-700 rounded-lg hover:bg-gray-100 active:bg-gray-100 transition-colors"
                   >
                     <item.icon className="w-4 h-4 flex-shrink-0" />
                     <span className="leading-tight">{item.name}</span>
@@ -258,10 +262,7 @@ export default function DashboardLayout({
           {/* Header Right Side */}
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
-            <button className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <NotificationDropdown />
             
             {/* User Profile with Dropdown */}
             <div className="relative">
@@ -300,7 +301,7 @@ export default function DashboardLayout({
                 <>
                   {/* Backdrop to close dropdown */}
                   <div 
-                    className="fixed inset-0 z-10" 
+                    className="fixed inset-0 z-50" 
                     onClick={() => setShowProfileDropdown(false)}
                   />
                   
@@ -352,6 +353,10 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+      
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
+    </NotificationProvider>
   )
 }

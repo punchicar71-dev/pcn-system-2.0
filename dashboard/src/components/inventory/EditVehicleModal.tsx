@@ -438,6 +438,42 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
       console.log(`✅ [EditModal] Inserted ${customInsertedCount} custom options`)
       console.log(`🎉 [EditModal] Total options saved: ${insertedCount + customInsertedCount}`)
 
+      // Create notification for vehicle update
+      if (vehicleData) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, first_name, last_name')
+              .eq('auth_id', session.user.id)
+              .single()
+
+            if (userData) {
+              const userName = `${userData.first_name} ${userData.last_name}`
+              const brandName = brands.find(b => b.id === vehicleData.brand_id)?.name || ''
+              const modelName = models.find(m => m.id === vehicleData.model_id)?.name || ''
+              const vehicleInfo = `${brandName} ${modelName} (${vehicleData.vehicle_number})`
+
+              await supabase.from('notifications').insert({
+                user_id: userData.id,
+                type: 'updated',
+                title: 'Vehicle Updated',
+                message: `${userName} updated details of ${vehicleInfo} in the Inventory.`,
+                vehicle_number: vehicleData.vehicle_number,
+                vehicle_brand: brandName,
+                vehicle_model: modelName,
+                is_read: false
+              })
+              console.log('✅ Notification created for vehicle update')
+            }
+          }
+        } catch (notifError) {
+          console.error('⚠️  Failed to create notification:', notifError)
+          // Don't block update if notification fails
+        }
+      }
+
       // Success - trigger callback to show popup
       onSuccess()
       handleClose()

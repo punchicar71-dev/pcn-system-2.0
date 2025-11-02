@@ -143,11 +143,15 @@ export default function AddVehiclePage() {
         
         const uploadPromise = (async () => {
           try {
-            // Step 1: Get presigned URL from API
+            // Step 1: Get presigned URL from API with timeout
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.access_token) {
               throw new Error('No authentication token available');
             }
+
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
             const presignedResponse = await fetch('/api/upload/presigned-url', {
               method: 'POST',
@@ -161,7 +165,8 @@ export default function AddVehiclePage() {
                 fileName: file.name,
                 mimeType: file.type,
               }),
-            });
+              signal: controller.signal,
+            }).finally(() => clearTimeout(timeoutId));
 
             if (!presignedResponse.ok) {
               const error = await presignedResponse.json();
@@ -220,6 +225,10 @@ export default function AddVehiclePage() {
               throw new Error('No authentication token available');
             }
 
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
             const presignedResponse = await fetch('/api/upload/presigned-url', {
               method: 'POST',
               headers: {
@@ -232,7 +241,8 @@ export default function AddVehiclePage() {
                 fileName: file.name,
                 mimeType: file.type,
               }),
-            });
+              signal: controller.signal,
+            }).finally(() => clearTimeout(timeoutId));
 
             if (!presignedResponse.ok) {
               const error = await presignedResponse.json();
@@ -289,6 +299,10 @@ export default function AddVehiclePage() {
               throw new Error('No authentication token available');
             }
 
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
             const presignedResponse = await fetch('/api/upload/presigned-url', {
               method: 'POST',
               headers: {
@@ -301,7 +315,8 @@ export default function AddVehiclePage() {
                 fileName: file.name,
                 mimeType: file.type,
               }),
-            });
+              signal: controller.signal,
+            }).finally(() => clearTimeout(timeoutId));
 
             if (!presignedResponse.ok) {
               const error = await presignedResponse.json();
@@ -477,6 +492,40 @@ export default function AddVehiclePage() {
       }
 
       console.log('✅ Vehicle created successfully:', vehicle.id);
+
+      // Create notification for vehicle addition
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, first_name, last_name')
+            .eq('auth_id', session.user.id)
+            .single()
+
+          if (userData) {
+            const userName = `${userData.first_name} ${userData.last_name}`
+            const brandName = brands.find(b => b.id === vehicleDetails.brandId)?.name || ''
+            const modelName = models.find(m => m.id === vehicleDetails.modelId)?.name || ''
+            const vehicleInfo = `${brandName} ${modelName} (${vehicleDetails.vehicleNumber})`
+
+            await supabase.from('notifications').insert({
+              user_id: userData.id,
+              type: 'added',
+              title: 'Vehicle Added',
+              message: `${userName} added ${vehicleInfo} to the Inventory.`,
+              vehicle_number: vehicleDetails.vehicleNumber,
+              vehicle_brand: brandName,
+              vehicle_model: modelName,
+              is_read: false
+            })
+            console.log('✅ Notification created for vehicle addition')
+          }
+        }
+      } catch (notifError) {
+        console.error('⚠️  Failed to create notification:', notifError)
+        // Don't block vehicle creation if notification fails
+      }
 
       // Insert seller (TEXT DATA - goes to Supabase)
       const { error: sellerError } = await supabase.from('sellers').insert({

@@ -77,26 +77,40 @@ export const generatePresignedUploadUrl = async (
   fileName: string,
   mimeType: string
 ): Promise<{ presignedUrl: string; key: string; publicUrl: string }> => {
-  const key = generateS3Key(vehicleId, imageType, fileName);
+  console.log(`🔑 Generating presigned URL for ${imageType}: ${fileName}`);
+  const startTime = Date.now();
+  
+  try {
+    const key = generateS3Key(vehicleId, imageType, fileName);
+    console.log(`📁 S3 Key: ${key}`);
 
-  const command = new PutObjectCommand({
-    Bucket: S3_BUCKET_NAME,
-    Key: key,
-    ContentType: mimeType,
-    CacheControl: 'max-age=31536000',
-    Metadata: {
-      vehicleId,
-      imageType,
-      originalFileName: fileName,
-      uploadedAt: new Date().toISOString(),
-    },
-  });
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: key,
+      ContentType: mimeType,
+      CacheControl: 'max-age=31536000',
+      Metadata: {
+        vehicleId,
+        imageType,
+        originalFileName: fileName,
+        uploadedAt: new Date().toISOString(),
+      },
+    });
 
-  // Generate presigned URL valid for 5 minutes
-  const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
-  const publicUrl = getS3PublicUrl(key);
+    console.log(`⏳ Calling getSignedUrl...`);
+    // Generate presigned URL valid for 5 minutes
+    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+    const publicUrl = getS3PublicUrl(key);
 
-  return { presignedUrl, key, publicUrl };
+    const duration = Date.now() - startTime;
+    console.log(`✅ Presigned URL generated in ${duration}ms`);
+
+    return { presignedUrl, key, publicUrl };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error(`❌ Failed to generate presigned URL after ${duration}ms:`, error);
+    throw error;
+  }
 };
 
 /**
