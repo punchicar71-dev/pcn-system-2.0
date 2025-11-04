@@ -2,11 +2,67 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.7
+**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.8
 
 ---
 
-## 📢 LATEST UPDATE - November 4, 2025 (Enhanced)
+## 📢 LATEST UPDATE - November 4, 2025 (Action Column Enhancement)
+
+### 📋 Sales Transaction Sold Out Table - Enhanced Actions Column
+
+**Major Updates: Replaced "Print Invoice" button with compact print icon and added delete functionality with verification modal!**
+
+#### What's New:
+
+1. **🖨️ Print Icon Integration**:
+   - Replaced "Print Invoice" text button with compact printer icon
+   - Direct integration with PrintDocumentModal
+   - Clean, professional icon-based UI
+   - Hover effect: Blue border and background on hover
+   - Cleaner action column layout
+
+2. **🗑️ Delete Functionality**:
+   - New delete icon (Trash2) in action column
+   - Integrated with DeleteConfirmModal (NOT console popup)
+   - Professional verification modal instead of window.alert()
+   - One-click deletion from database
+   - Auto-refresh table after successful deletion
+   - Hover effect: Red border and text on hover
+   - Safety confirmation before permanent deletion
+
+3. **✨ UI/UX Improvements**:
+   - Icon-only action buttons (more compact)
+   - Better spacing between actions (gap-3)
+   - Improved hover states with color changes
+   - Title tooltips on icon buttons
+   - Professional modal dialogs for confirmations
+   - Loading states during delete operations
+
+4. **🔧 Code Changes**:
+   - Added `Trash2` icon import from lucide-react
+   - Integrated `DeleteConfirmModal` component
+   - New state management: `deleteConfirmOpen`, `selectedSaleForDelete`, `isDeleting`
+   - New handler functions: `handleDeleteClick()`, `handleConfirmDelete()`
+   - Simplified `handlePrintInvoice()` to open PrintDocumentModal
+
+#### Files Modified:
+
+- `dashboard/src/components/sales-transactions/SoldOutVehiclesTable.tsx`
+  - Removed "Print Invoice" button text
+  - Added print icon with modal integration
+  - Added delete icon with confirmation modal
+  - Enhanced action column styling and spacing
+
+- `dashboard/src/app/(dashboard)/sales-transactions/page.tsx`
+  - Simplified `handlePrintInvoice()` function
+  - Removed old console-based printing logic
+  - Now delegates to PrintDocumentModal component
+
+#### Previous Update (Print Document Feature & Finance Company Enhancements) ⬇️
+
+---
+
+## 📢 PREVIOUS UPDATE - November 4, 2025 (Enhanced)
 
 ### 🖨️ Print Document Feature & Finance Company Enhancements
 
