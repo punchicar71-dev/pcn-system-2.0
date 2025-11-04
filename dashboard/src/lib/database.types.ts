@@ -30,6 +30,7 @@ export interface SalesAgent {
   user_id: string
   name: string
   email?: string
+  agent_type: 'Office Sales Agent' | 'Vehicle Showroom Agent'
   is_active: boolean
   created_at: string
   updated_at: string

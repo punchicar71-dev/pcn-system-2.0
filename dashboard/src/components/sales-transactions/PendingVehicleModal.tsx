@@ -49,7 +49,9 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
             vehicle_models:model_id (name)
           ),
           sales_agents:sales_agent_id (
-            name
+            id,
+            name,
+            agent_type
           )
         `)
         .eq('id', saleId)
@@ -61,6 +63,25 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
       }
 
       const vehicle = sale.vehicles;
+
+      // Fetch vehicle showroom agent name if third_party_agent contains a UUID
+      if (sale.third_party_agent) {
+        // Check if it's a UUID (pattern: 8-4-4-4-12 hex characters with hyphens)
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidPattern.test(sale.third_party_agent)) {
+          // It's a UUID, fetch the agent name
+          const { data: agentData } = await supabase
+            .from('sales_agents')
+            .select('id, name, agent_type')
+            .eq('id', sale.third_party_agent)
+            .maybeSingle();
+
+          if (agentData) {
+            sale.vehicle_showroom_agent = agentData;
+            sale.third_party_agent = agentData.name;
+          }
+        }
+      }
 
       if (vehicle?.country_id) {
         const { data: countryData } = await supabase
@@ -349,14 +370,28 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
                         {saleData.payment_type}
                       </span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 min-w-[140px]">Sales Agent</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Showroom Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {saleData.sales_agents?.name || saleData.third_party_agent || 'N/A'}
+                        {(() => {
+                          console.log('🏢 Rendering Vehicle Showroom Agent:', saleData.third_party_agent);
+                          return saleData.third_party_agent || 'N/A';
+                        })()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Office Agent</span>
+                      <span className="text-gray-900">:</span>
+                      <span className="font-semibold text-gray-900">
+                        {(() => {
+                          console.log('👔 Rendering Office Sales Agent:', saleData.sales_agents?.name);
+                          return saleData.sales_agents?.name || 'N/A';
+                        })()}
                       </span>
                     </div>
                   </div>
+                  
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
                       <span className="text-gray-600 min-w-[140px]">Customer Price</span>

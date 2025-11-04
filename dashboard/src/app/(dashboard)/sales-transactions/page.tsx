@@ -55,6 +55,64 @@ export default function SalesTransactionsPage() {
         return;
       }
 
+      console.log('🚗 Moving vehicle to sold out, deleting S3 images for vehicle:', saleData.vehicle_id);
+
+      // Delete S3 images before marking as sold
+      const { data: imageRecords, error: imagesFetchError } = await supabase
+        .from('vehicle_images')
+        .select('s3_key')
+        .eq('vehicle_id', saleData.vehicle_id);
+
+      if (imagesFetchError) {
+        console.error('❌ Error fetching image records:', imagesFetchError);
+        // Continue with sold out process even if we can't fetch images
+      }
+
+      // Extract S3 keys (filter out null/undefined)
+      const s3Keys = imageRecords
+        ?.map(record => record.s3_key)
+        .filter(key => key !== null && key !== undefined && key.trim() !== '') || [];
+
+      console.log(`📸 Found ${s3Keys.length} images to delete from S3:`, s3Keys);
+
+      // Delete images from S3 if we have any keys
+      if (s3Keys.length > 0) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.access_token) {
+          try {
+            console.log('🌐 Calling S3 deletion API for sold out vehicle...');
+            const s3Response = await fetch(`/api/upload/delete-vehicle/${saleData.vehicle_id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ s3Keys }),
+            });
+
+            if (!s3Response.ok) {
+              const errorText = await s3Response.text();
+              console.error('❌ Failed to delete S3 images:', errorText);
+              // Don't alert, just log - we'll continue with the sold out process
+            } else {
+              const result = await s3Response.json();
+              console.log('✅ S3 deletion result:', result);
+              if (result.success) {
+                console.log(`✅ Successfully deleted ${s3Keys.length} images from S3`);
+              }
+            }
+          } catch (s3Error) {
+            console.error('❌ Exception during S3 deletion:', s3Error);
+            // Continue with sold out process
+          }
+        } else {
+          console.warn('⚠️ No valid session token, skipping S3 deletion');
+        }
+      } else {
+        console.log('ℹ️ No S3 images to delete for this vehicle');
+      }
+
       // Update pending_vehicle_sales status to 'sold'
       const { error: updateError } = await supabase
         .from('pending_vehicle_sales')
@@ -76,6 +134,19 @@ export default function SalesTransactionsPage() {
       if (vehicleError) {
         console.error('Error updating vehicle status:', vehicleError);
         // Continue anyway - sale status was updated
+      }
+
+      // Delete vehicle images from database (after S3 deletion)
+      const { error: deleteImagesError } = await supabase
+        .from('vehicle_images')
+        .delete()
+        .eq('vehicle_id', saleData.vehicle_id);
+
+      if (deleteImagesError) {
+        console.error('⚠️ Error deleting vehicle images from database:', deleteImagesError);
+        // Continue anyway - images will be handled by the system
+      } else {
+        console.log('✅ Vehicle images deleted from database');
       }
 
       // Create notification for vehicle sold out

@@ -2,11 +2,127 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.8
+**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.9
 
 ---
 
-## 📢 LATEST UPDATE - November 4, 2025 (Action Column Enhancement)
+## 📢 LATEST UPDATE - November 4, 2025 (Sales Agent & Modal Enhancements)
+
+### 🎯 Sales Transaction Agent Fields Enhancement
+
+**Major Updates: Fixed agent fields display, enhanced sell vehicle flow, and improved modal layouts across sales transaction system!**
+
+#### What's New:
+
+1. **👔 Agent Fields Display Fix**:
+   - Fixed Vehicle Showroom Agent and Office Sales Agent display in modals
+   - Changed from storing Agent ID (UUID) to storing Agent Name in sell-vehicle flow
+   - Added UUID-to-name resolution for backwards compatibility with old data
+   - Enhanced modal layouts with clear 2-column grid structure
+   - Renamed field labels for better clarity and UX
+   - Added comprehensive debug logging for troubleshooting
+   - Documentation: `AGENT_FIELDS_COMPLETE_SOLUTION.md`, `AGENT_FIELDS_VERIFICATION_GUIDE.md`
+
+2. **🏢 Sales Agent Type Classification**:
+   - Added agent_type field to sales_agents table with two values:
+     * Office Sales Agent (In-house sales staff)
+     * Vehicle Showroom Agent (Third-party/showroom representatives)
+   - Enhanced Settings → Sales Agent tab with Agent Type dropdown
+   - Updated Sell Vehicle form to filter agents by type
+   - Database migration: `2025_11_add_agent_type_to_sales_agents.sql`
+   - Documentation: `AGENT_TYPE_FEATURE_README.md`, `DEPLOYMENT_CHECKLIST_AGENT_TYPE.md`
+
+3. **🗑️ S3 Image Deletion on Sold Out**:
+   - Automatic deletion of vehicle images from S3 when vehicle is marked as sold out
+   - Deletes all S3 images before moving vehicle to sold status
+   - Cleans up vehicle_images table after S3 deletion
+   - Comprehensive error handling and logging
+   - Fallback to continue sold process even if S3 deletion fails
+
+4. **✨ Modal & Table Improvements**:
+   - Removed redundant "Sales Agent" column from Pending and Sold Out tables
+   - Enhanced PendingVehicleModal with proper agent field display
+   - Enhanced ViewDetailModal with 2-column layout for selling information
+   - Added UUID resolution logic for legacy data display
+   - Improved field labels: "Vehicle Showroom Agent" and "Office Sales Agent"
+   - Better CSV export with separate agent columns
+
+#### Files Modified:
+
+**Sell Vehicle Flow:**
+- `dashboard/src/app/(dashboard)/sell-vehicle/page.tsx`
+  - Added showroom agent name fetch before saving
+  - Now stores agent NAME instead of UUID in database
+  
+- `dashboard/src/components/sell-vehicle/SellingInfo.tsx`
+  - Renamed "In-House Sales Agent" → "Office Sales Agent"
+  - Renamed "Third Party Sales Agent" → "Vehicle Showroom Agent"
+  - Changed from text input to dropdown for Vehicle Showroom Agent
+  - Filtered agents by agent_type for each dropdown
+
+**Sales Transactions:**
+- `dashboard/src/app/(dashboard)/sales-transactions/page.tsx`
+  - Added S3 image deletion logic before marking as sold out
+  - Enhanced logging for S3 deletion process
+  
+- `dashboard/src/components/sales-transactions/PendingVehicleModal.tsx`
+  - Added UUID-to-name resolution for legacy showroom agents
+  - Enhanced agent field display with debug logging
+  
+- `dashboard/src/components/sales-transactions/ViewDetailModal.tsx`
+  - Added UUID-to-name resolution for backwards compatibility
+  - Reorganized selling info section to 2-column grid
+  - Updated CSV export with separate agent columns
+  
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx`
+  - Removed "Sales Agent" column (redundant)
+  
+- `dashboard/src/components/sales-transactions/SoldOutVehicleModal.tsx`
+  - Enhanced agent field labels and layout
+  
+- `dashboard/src/components/sales-transactions/SoldOutVehiclesTable.tsx`
+  - Removed "Sales Agent" column (redundant)
+
+**Settings:**
+- `dashboard/src/components/settings/SalesAgentTab.tsx`
+  - Added Agent Type dropdown in "Add new seller" dialog
+  - Added Agent Type column to sales agents table
+  - Integrated Select UI components for agent type selection
+
+**Database & Types:**
+- `dashboard/migrations/2025_11_add_agent_type_to_sales_agents.sql` (NEW)
+  - Added agent_type column with ENUM type
+  - Default value: 'Office Sales Agent'
+  
+- `dashboard/src/lib/database.types.ts`
+  - Updated SalesAgent interface with agent_type field
+
+#### Documentation Created:
+
+**Agent Fields Fix:**
+- `AGENT_FIELDS_BEFORE_AFTER.md` - Visual comparisons and code diffs
+- `AGENT_FIELDS_COMPLETE_SOLUTION.md` - Complete technical overview
+- `AGENT_FIELDS_FIX_SUMMARY.md` - Root cause and solutions
+- `AGENT_FIELDS_GIT_COMMIT.md` - Git commit template
+- `AGENT_FIELDS_QUICK_REFERENCE.md` - Quick reference guide
+- `AGENT_FIELDS_VERIFICATION_GUIDE.md` - Step-by-step testing
+
+**Agent Type Feature:**
+- `AGENT_TYPE_FEATURE_README.md` - Complete feature overview
+- `AGENT_TYPE_GIT_COMMIT_TEMPLATE.md` - Git commit details
+- `AGENT_TYPE_IMPLEMENTATION_SUMMARY.md` - Implementation summary
+- `AGENT_TYPE_QUICK_GUIDE.md` - Quick setup guide
+- `AGENT_TYPE_UPDATE_COMPLETE.md` - Change documentation
+- `AGENT_TYPE_VISUAL_GUIDE.md` - Visual diagrams
+- `DEPLOYMENT_CHECKLIST_AGENT_TYPE.md` - Deployment checklist
+
+**Vehicle Showroom Agent Fix:**
+- `VEHICLE_SHOWROOM_AGENT_FIX.md` - UUID resolution fix summary
+- `VEHICLE_SHOWROOM_AGENT_VISUAL_GUIDE.md` - Visual before/after guide
+
+---
+
+## 📢 PREVIOUS UPDATE - November 4, 2025 (Action Column Enhancement)
 
 ### 📋 Sales Transaction Sold Out Table - Enhanced Actions Column
 

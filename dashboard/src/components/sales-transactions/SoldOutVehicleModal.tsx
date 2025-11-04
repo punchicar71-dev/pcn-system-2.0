@@ -225,11 +225,24 @@ export default function SoldOutVehicleModal({ isOpen, onClose, saleId }: SoldOut
                         {saleData.payment_type}
                       </span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 min-w-[140px]">Sales Agent</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Showroom Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {saleData.sales_agents?.name || saleData.third_party_agent || 'N/A'}
+                        {(() => {
+                          console.log('🏢 Rendering Vehicle Showroom Agent:', saleData.third_party_agent);
+                          return saleData.third_party_agent || 'N/A';
+                        })()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Office Agent</span>
+                      <span className="text-gray-900">:</span>
+                      <span className="font-semibold text-gray-900">
+                        {(() => {
+                          console.log('👔 Rendering Office Sales Agent:', saleData.sales_agents?.name);
+                          return saleData.sales_agents?.name || 'N/A';
+                        })()}
                       </span>
                     </div>
                   </div>

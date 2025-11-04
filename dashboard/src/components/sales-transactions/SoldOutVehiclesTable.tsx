@@ -296,9 +296,6 @@ export default function SoldOutVehiclesTable({
                   Payment Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sales Agent
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sold Out Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -326,9 +323,6 @@ export default function SoldOutVehiclesTable({
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPaymentTypeBadgeColor(sale.payment_type)}`}>
                         {sale.payment_type}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {sale.sales_agent_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {formatDate(sale.sold_date)}

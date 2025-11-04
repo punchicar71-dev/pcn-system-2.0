@@ -56,6 +56,20 @@ export default function SellVehiclePage() {
     try {
       const supabase = createClient();
       
+      // Fetch the showroom agent name if an ID is provided
+      let showroomAgentName = null;
+      if (sellingData.thirdPartySalesAgent) {
+        const { data: agentData } = await supabase
+          .from('sales_agents')
+          .select('name')
+          .eq('id', sellingData.thirdPartySalesAgent)
+          .single();
+        
+        if (agentData) {
+          showroomAgentName = agentData.name;
+        }
+      }
+      
       const saleData = {
         vehicle_id: sellingData.selectedVehicle?.id,
         customer_title: customerData.title || 'Mr.',
@@ -72,7 +86,7 @@ export default function SellVehiclePage() {
         payment_type: sellingData.paymentType,
         leasing_company_id: sellingData.leasingCompany || null,
         sales_agent_id: sellingData.inHouseSalesAgent || null,
-        third_party_agent: sellingData.thirdPartySalesAgent || null,
+        third_party_agent: showroomAgentName || null,
         status: 'pending',
       };
 

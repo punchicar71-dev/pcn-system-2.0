@@ -312,10 +312,10 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               </div>
             )}
 
-            {/* In-House Sales Agent */}
+            {/* Office Sales Agent */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                In-House Sales Agent
+                Office Sales Agent
               </label>
               <select
                 value={formData.inHouseSalesAgent}
@@ -323,7 +323,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="">Select option...</option>
-                {salesAgents.map((agent) => (
+                {salesAgents.filter((agent) => agent.agent_type === 'Office Sales Agent').map((agent) => (
                   <option key={agent.id} value={agent.id}>
                     {agent.name}
                   </option>
@@ -331,18 +331,23 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               </select>
             </div>
 
-            {/* Third Party Sales Agent */}
+            {/* Vehicle Showroom Agent */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Third Party Sales Agent
+                Vehicle Showroom Agent
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.thirdPartySalesAgent}
                 onChange={(e) => onChange('thirdPartySalesAgent', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Ex: John Doe"
-              />
+              >
+                <option value="">Select option...</option>
+                {salesAgents.filter((agent) => agent.agent_type === 'Vehicle Showroom Agent').map((agent) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

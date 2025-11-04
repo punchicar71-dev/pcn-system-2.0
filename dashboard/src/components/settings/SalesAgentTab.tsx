@@ -23,8 +23,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { supabase } from '@/lib/supabase-client'
 import { SalesAgent } from '@/lib/database.types'
+
+const AGENT_TYPES = [
+  { value: 'Office Sales Agent', label: 'Office Sales Agent' },
+  { value: 'Vehicle Showroom Agent', label: 'Vehicle Showroom Agent' },
+] as const
 
 export default function SalesAgentTab() {
   const [agents, setAgents] = useState<SalesAgent[]>([])
@@ -32,10 +44,16 @@ export default function SalesAgentTab() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    user_id: string
+    name: string
+    email: string
+    agent_type: 'Office Sales Agent' | 'Vehicle Showroom Agent'
+  }>({
     user_id: '',
     name: '',
     email: '',
+    agent_type: 'Office Sales Agent',
   })
 
   useEffect(() => {
@@ -68,12 +86,13 @@ export default function SalesAgentTab() {
           user_id: formData.user_id,
           name: formData.name,
           email: formData.email || null,
+          agent_type: formData.agent_type,
           is_active: true,
         }])
 
       if (error) throw error
 
-      setFormData({ user_id: '', name: '', email: '' })
+      setFormData({ user_id: '', name: '', email: '', agent_type: 'Office Sales Agent' })
       setIsAddDialogOpen(false)
       fetchAgents()
     } catch (error) {
@@ -162,6 +181,24 @@ export default function SalesAgentTab() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="agent-type">Agent Type</Label>
+                <Select
+                  value={formData.agent_type}
+                  onValueChange={(value) => setFormData({ ...formData, agent_type: value as 'Office Sales Agent' | 'Vehicle Showroom Agent' })}
+                >
+                  <SelectTrigger id="agent-type">
+                    <SelectValue placeholder="Select agent type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AGENT_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="agent-email">Email (Optional)</Label>
                 <Input
                   id="agent-email"
@@ -188,6 +225,7 @@ export default function SalesAgentTab() {
             <TableRow>
               <TableHead>User ID</TableHead>
               <TableHead>Sales Agent Name</TableHead>
+              <TableHead>Agent Type</TableHead>
               <TableHead>Availability</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -195,13 +233,13 @@ export default function SalesAgentTab() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : agents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                   No sales agents found
                 </TableCell>
               </TableRow>
@@ -210,6 +248,7 @@ export default function SalesAgentTab() {
                 <TableRow key={agent.id} className={!agent.is_active ? 'opacity-50' : ''}>
                   <TableCell className="font-medium">{agent.user_id}</TableCell>
                   <TableCell>{agent.name}</TableCell>
+                  <TableCell>{agent.agent_type}</TableCell>
                   <TableCell>
                     <Switch
                       checked={agent.is_active}

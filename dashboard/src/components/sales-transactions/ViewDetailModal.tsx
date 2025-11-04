@@ -37,7 +37,9 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
             vehicle_models:model_id (name)
           ),
           sales_agents:sales_agent_id (
-            name
+            id,
+            name,
+            agent_type
           )
         `)
         .eq('id', saleId)
@@ -48,7 +50,33 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
         return;
       }
 
+      console.log('📦 Sale data fetched:', {
+        id: sale.id,
+        third_party_agent: sale.third_party_agent,
+        sales_agent_id: sale.sales_agent_id,
+        sales_agents: sale.sales_agents,
+      });
+
       const vehicle = sale.vehicles;
+
+      // Fetch vehicle showroom agent name if third_party_agent contains a UUID
+      if (sale.third_party_agent) {
+        // Check if it's a UUID (pattern: 8-4-4-4-12 hex characters with hyphens)
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidPattern.test(sale.third_party_agent)) {
+          // It's a UUID, fetch the agent name
+          const { data: agentData } = await supabase
+            .from('sales_agents')
+            .select('id, name, agent_type')
+            .eq('id', sale.third_party_agent)
+            .maybeSingle();
+
+          if (agentData) {
+            sale.vehicle_showroom_agent = agentData;
+            sale.third_party_agent = agentData.name;
+          }
+        }
+      }
 
       if (vehicle?.country_id) {
         const { data: countryData } = await supabase
@@ -122,7 +150,8 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
       ['Customer Price', `Rs. ${saleData.selling_amount?.toLocaleString() || 0}`],
       ['Down Payment', `Rs. ${saleData.advance_amount?.toLocaleString() || 0}`],
       ['Payment Type', saleData.payment_type || 'N/A'],
-      ['Sales Agent', saleData.sales_agents?.name || saleData.third_party_agent || 'N/A'],
+      ['Office Sales Agent', saleData.sales_agents?.name || 'N/A'],
+      ['Showroom Sales Agent', saleData.third_party_agent || 'N/A'],
       ['Status', saleData.status || 'N/A'],
       ['Sold Date', saleData.updated_at ? format(new Date(saleData.updated_at), 'yyyy-MM-dd') : 'N/A'],
       [''],
@@ -204,44 +233,57 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
 
               <div className="bg-gray-50 rounded-lg p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Selling Information</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Selling Price</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">Rs. {saleData.selling_amount?.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Payment Type</span>
                       <span className="text-gray-900">:</span>
                       <span className="inline-block px-3 py-1 bg-cyan-100 text-cyan-800 rounded-md text-sm">
                         {saleData.payment_type}
                       </span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 min-w-[140px]">Sales Agent</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Vehicle Showroom Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {saleData.sales_agents?.name || saleData.third_party_agent || 'N/A'}
+                        {(() => {
+                          console.log('🏢 Rendering Vehicle Showroom Agent:', saleData.third_party_agent);
+                          return saleData.third_party_agent || 'N/A';
+                        })()}
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Customer Price</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">Rs. {saleData.selling_amount?.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Down Payment</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">Rs. {saleData.advance_amount?.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 min-w-[140px]">Sold Out Date</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Office Sales Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {saleData.updated_at ? format(new Date(saleData.updated_at), 'MM/dd/yyyy') : 'N/A'}
+                        {(() => {
+                          console.log('👔 Rendering Office Sales Agent:', saleData.sales_agents?.name);
+                          return saleData.sales_agents?.name || 'N/A';
+                        })()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 min-w-[140px]">Status</span>
+                      <span className="text-gray-900">:</span>
+                      <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-md text-sm font-semibold">
+                        {saleData.status || 'N/A'}
                       </span>
                     </div>
                   </div>

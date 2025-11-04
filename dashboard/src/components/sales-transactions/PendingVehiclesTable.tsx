@@ -188,9 +188,6 @@ export default function PendingVehiclesTable({
                   Payment Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sales Agent
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -217,11 +214,6 @@ export default function PendingVehiclesTable({
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentTypeColor(sale.payment_type)}`}>
                         {sale.payment_type}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {sale.sales_agent_name || sale.third_party_agent || '-'}
-                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
