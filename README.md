@@ -2,27 +2,31 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.6
+**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.7
 
 ---
 
-## 📢 LATEST UPDATE - November 4, 2025
+## 📢 LATEST UPDATE - November 4, 2025 (Enhanced)
 
-### 🖨️ Print Document Feature & Multiple Enhancements
+### 🖨️ Print Document Feature & Finance Company Enhancements
 
-**Major Updates: Print document system, leasing company management, price category improvements, and comprehensive bug fixes!**
+**Major Updates: Enhanced PrintDocumentModal with detailed leasing company debugging, improved field positioning, and comprehensive error handling!**
 
 #### What's New:
 
-1. **🖨️ Print Document System** (Complete):
+1. **🖨️ Print Document System** (Enhanced):
    - Print 5 different document types: Cash Seller, Cash Dealer, Advance Note, Finance Seller, Finance Dealer
    - Auto-populated data from database (vehicle, customer, seller, amounts)
    - Canvas-based document generation with precise field positioning
+   - **NEW**: Enhanced leasing company data fetching with detailed debugging
+   - **NEW**: Comprehensive error logging for finance company tracking
+   - **NEW**: Support for both finance_company and leasing_company_name fields
+   - **NEW**: Added customer landphone field support for all document types
    - Professional document templates with company branding
    - Print or save as PDF functionality
-   - Documentation: `PRINT_DOCUMENT_COMPLETE.md`, `PRINT_DOCUMENT_VISUAL_GUIDE.md`
+   - Documentation: `PRINT_DOCUMENT_COMPLETE.md`, `PRINT_DOCUMENT_VISUAL_GUIDE.md`, `FINANCE_SELLER_LEASING_COMPANY_FIX.md`
 
-2. **🏢 Leasing Company Management** (New):
+2. **🏢 Leasing Company Management** (Stable):
    - Complete leasing company management in Settings
    - Add/Edit/Delete leasing companies
    - Track which leasing company finances each sale
@@ -32,7 +36,7 @@ A comprehensive vehicle selling management system with a public-facing website a
    - 33 pre-loaded Sri Lankan leasing companies
    - Documentation: `dashboard/LEASING_COMPANY_FEATURE.md`
 
-3. **💰 Price Category Enhancements**:
+3. **💰 Price Category Enhancements** (Stable):
    - Added PCN Advance Amount field
    - Optional field (works with or without migration)
    - Auto-calculation and display
@@ -40,7 +44,7 @@ A comprehensive vehicle selling management system with a public-facing website a
    - Migration script: `apply-pcn-advance-migration.sh`
    - Documentation: `PCN_ADVANCE_AMOUNT_COMPLETE.md`
 
-4. **🔧 Sell Vehicle Bug Fixes**:
+4. **🔧 Sell Vehicle Bug Fixes** (Stable):
    - Fixed customer_title schema error
    - Added leasing_company_id tracking
    - Updated "To Pay Amount" display
@@ -74,10 +78,49 @@ A comprehensive vehicle selling management system with a public-facing website a
 - `PRINT_DOCUMENT_IMPLEMENTATION.md` - Technical implementation details
 - `PRINT_DOCUMENT_VISUAL_GUIDE.md` - Visual UI guide
 - `PRINT_DOCUMENT_TESTING_GUIDE.md` - Testing procedures
+- `FINANCE_SELLER_LEASING_COMPANY_FIX.md` - **NEW** Finance seller leasing company debugging guide
 - `PRICE_CATEGORY_FIX.md` - Price category fixes
 - `SELL_VEHICLE_BUG_FIX_COMPLETE.md` - Sell vehicle bug fixes
 - `SELL_VEHICLE_STEP2_UPDATES.md` - Step 2 enhancements
 - `dashboard/LEASING_COMPANY_FEATURE.md` - Leasing company feature
+
+#### 🔧 Technical Enhancements to PrintDocumentModal:
+
+**Enhanced Data Fetching:**
+- ✅ Improved leasing company data retrieval with error handling
+- ✅ Added price category matching for PCN Advance Amount calculation
+- ✅ Robust null/undefined checks with detailed console logging
+- ✅ Support for both `finance_company` and `leasing_company_name` fallback
+
+**Field Positioning Refinements:**
+- ✅ Adjusted seller NIC position in CASH_SELLER (350 → 550, 825 → 2330)
+- ✅ Adjusted customer NIC position in CASH_SELLER (500 → 550, 3030 → 3030)
+- ✅ Added customer_landphone field to CASH_DEALER document
+- ✅ Added customer_landphone field to ADVANCE_NOTE document
+- ✅ Added customer_landphone field to FINANCE_DEALER document
+- ✅ Fixed vehicle info x-coordinate in ADVANCE_NOTE (260 → 220)
+- ✅ Fixed vehicle info x-coordinate in FINANCE_DEALER (1800 → 1730)
+- ✅ Optimized FINANCE_SELLER field positions with explicit string conversion
+- ✅ Updated finance company position in FINANCE_DEALER (1200 → 750, 1355 → 1320)
+
+**Debug Logging Features:**
+- 📊 Leasing company fetch logging with UUID tracking
+- 📊 Price category matching logs with min/max price ranges
+- 📊 Finance company data type and value validation logs
+- 📊 Final text conversion logs before canvas drawing
+- 📊 Complete sale data snapshot for troubleshooting
+
+**Console Output Examples:**
+```
+👤 Seller data: { ... }
+📋 Seller title: [title-value]
+💰 PCN Advance Amount: 50000
+📊 Price Category: [category-name]
+📌 Fetching leasing company with ID: [uuid]
+🏢 Leasing Company Data: { ... }
+💼 Finance Company Final Value: [company-name]
+🏦 Final Text to Draw: [company-name]
+```
 
 ---
 

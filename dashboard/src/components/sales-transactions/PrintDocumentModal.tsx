@@ -65,7 +65,59 @@ export default function PrintDocumentModal({
 
         if (sellerData) {
           sale.seller = sellerData;
+          console.log('👤 Seller data:', sellerData);
+          console.log('📋 Seller title:', sellerData.title);
         }
+      }
+
+      // Fetch PCN advance amount from price categories based on selling amount
+      if (sale?.selling_amount) {
+        const { data: priceCategories } = await supabase
+          .from('price_categories')
+          .select('*')
+          .eq('is_active', true)
+          .order('min_price');
+
+        if (priceCategories && priceCategories.length > 0) {
+          // Find the matching price category
+          const matchingCategory = priceCategories.find(
+            (cat: any) => 
+              sale.selling_amount >= cat.min_price && 
+              sale.selling_amount <= cat.max_price
+          );
+
+          if (matchingCategory) {
+            sale.pcn_advance_amount = matchingCategory.pcn_advance_amount;
+            console.log('💰 PCN Advance Amount:', matchingCategory.pcn_advance_amount);
+            console.log('📊 Price Category:', matchingCategory.name);
+          } else {
+            console.log('⚠️ No matching price category found for selling amount:', sale.selling_amount);
+            sale.pcn_advance_amount = 0;
+          }
+        }
+      }
+
+      // Fetch leasing company separately if leasing_company_id exists
+      if (sale?.leasing_company_id) {
+        console.log('📌 Fetching leasing company with ID:', sale.leasing_company_id);
+        
+        const { data: leasingCompanyData, error: leasingError } = await supabase
+          .from('leasing_companies')
+          .select('*')
+          .eq('id', sale.leasing_company_id)
+          .single();
+
+        if (leasingError) {
+          console.error('❌ Error fetching leasing company:', leasingError);
+        } else if (leasingCompanyData) {
+          sale.leasing_company_name = leasingCompanyData.name;
+          console.log('🏢 Leasing Company Data:', leasingCompanyData);
+          console.log('🏢 Leasing Company Name:', leasingCompanyData.name);
+        } else {
+          console.log('⚠️ No leasing company data returned');
+        }
+      } else {
+        console.log('⚠️ No leasing_company_id in sale data');
       }
 
       console.log('✅ Sale data loaded:', sale);
@@ -106,12 +158,12 @@ export default function PrintDocumentModal({
         ctx.drawImage(img, 0, 0);
 
         // Set font and color for text
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 32px Arial ';
         ctx.fillStyle = '#d30202ff'; // Red color for data
 
         // Helper function to draw text
         const drawText = (text: string, x: number, y: number, fontSize: number = 42) => {
-          ctx.font = `bold ${fontSize}px Arial`;
+          ctx.font = `bold ${fontSize}px Arial `;
           ctx.fillText(text, x, y);
         };
 
@@ -133,15 +185,27 @@ export default function PrintDocumentModal({
           day: '2-digit',
         });
         const customerMobile = saleData.customer_mobile || '';
+        const customerLandphone = saleData.customer_landphone || '';
         const customerNIC = saleData.customer_nic || '';
         const sellerName = saleData.seller 
-          ? `${saleData.seller.first_name} ${saleData.seller.last_name}` 
+          ? `${saleData.seller.title || ''} ${saleData.seller.first_name} ${saleData.seller.last_name}`.trim() 
           : '';
-        const sellerNIC = saleData.seller?.nic || '';
+        console.log('👤 Seller Name with title:', sellerName);
+        console.log('📋 Seller title value:', saleData.seller?.title);
+        const sellerNIC = saleData.seller?.nic_number || '';
         const sellerAddress = saleData.seller 
           ? `${saleData.seller.address}, ${saleData.seller.city}` 
           : '';
         const sellerCity = saleData.seller?.city || '';
+        const financeCompany = saleData.finance_company || saleData.leasing_company_name || '';
+        
+        // Debug logging for finance company
+        console.log('💼 Finance Company Final Value:', financeCompany);
+        console.log('💼 Finance Company Type:', typeof financeCompany);
+        console.log('💼 Sale Data finance_company:', saleData.finance_company);
+        console.log('💼 Sale Data leasing_company_name:', saleData.leasing_company_name);
+        console.log('💼 Sale Data leasing_company_id:', saleData.leasing_company_id);
+        console.log('💼 Complete Sale Data:', JSON.stringify(saleData, null, 2));
 
         // Document-specific positioning
         const marginLeft = 120;
@@ -166,9 +230,9 @@ export default function PrintDocumentModal({
           // Selling Amount
           drawText(sellingAmount, 750, 1295);
           // Seller NIC at bottom
-          drawText(sellerNIC, 350, 825);
+          drawText(sellerNIC, 550, 2330);
           // Customer NIC at bottom
-          drawText(customerNIC, 500, 3030);
+          drawText(customerNIC, 550, 3030);
         } else if (documentType === 'CASH_DEALER') {
           // Vehicle Number (top)
           drawText(vehicleNumber, 720, 630);
@@ -186,6 +250,8 @@ export default function PrintDocumentModal({
           drawText(customerName, 220, 2530);
           // Customer Mobile
           drawText(customerMobile, 1580, 2640);
+          // Customer Landphone
+          drawText(customerLandphone, 1580, 2730);
           // Customer NIC
           drawText(customerNIC, 550, 2728);
         } else if (documentType === 'ADVANCE_NOTE') {
@@ -194,7 +260,7 @@ export default function PrintDocumentModal({
           // Vehicle Number
           drawText(vehicleNumber, 1680, 680);
           // Vehicle Brand/Model
-          drawText(vehicleInfo, 260, 770);
+          drawText(vehicleInfo, 220, 770);
           // Customer Address
           drawText(customerAddress, 1200, 770);
           // Customer Name
@@ -207,6 +273,8 @@ export default function PrintDocumentModal({
           drawText(closeDate, 1200, 995);
           // Customer Mobile at bottom
           drawText(customerMobile, 1300, 2510);
+          // Customer Landphone at bottom
+          drawText(customerLandphone, 1300, 2600);
           // Customer NIC at bottom
           drawText(customerNIC, 530, 2558);
         } else if (documentType === 'FINANCE_SELLER') {
@@ -220,6 +288,13 @@ export default function PrintDocumentModal({
           drawText(closeDate, 180, 430);
           // Vehicle Number
           drawText(vehicleNumber, 180, 600);
+          // Finance Company / Leasing Company
+          console.log('🏦 Drawing Finance/Leasing Company - Value:', financeCompany);
+          console.log('🏦 Drawing Finance/Leasing Company - Type:', typeof financeCompany);
+          console.log('🏦 Drawing Finance/Leasing Company - Length:', financeCompany?.length);
+          const financeCompanyText = financeCompany ? String(financeCompany).trim() : '';
+          console.log('🏦 Final Text to Draw:', financeCompanyText);
+          drawText(financeCompanyText, 200, 1815);
           // Vehicle Brand/Model
           drawText(vehicleInfo,630, 910);
           // Customer Address
@@ -230,22 +305,20 @@ export default function PrintDocumentModal({
           drawText(sellingAmount, 1080, 1270);
           // Advance Amount
           drawText(advanceAmount, 1300, 1390);
+          // Seller NIC
+          drawText(sellerNIC, 580, 2360);
           // To Pay Amount (Balance)
           const balance = (saleData.selling_amount || 0) - (saleData.advance_amount || 0);
           drawText(`Rs. ${balance.toLocaleString()}`, 1200, 1515);
-          // Finance Company
-          drawText(saleData.finance_company || '', 480, 715);
-          // Seller NIC
-          drawText(sellerNIC, 420, 1430);
           // Customer NIC
-          drawText(customerNIC, 620, 2850);
+          drawText(customerNIC, 580, 2840);
         } else if (documentType === 'FINANCE_DEALER') {
           // Vehicle Number (top)
           drawText(vehicleNumber, 620, 765);
           // Date (top right)
           drawText(closeDate, 1990, 656);
           // Vehicle Brand/Model
-          drawText(vehicleInfo, 1800, 860);
+          drawText(vehicleInfo, 1730, 860);
           // Customer Address
           drawText(customerAddress, 660, 960);
           // Customer Name
@@ -258,11 +331,14 @@ export default function PrintDocumentModal({
           const balanceDealer = (saleData.selling_amount || 0) - (saleData.advance_amount || 0);
           drawText(`Rs. ${balanceDealer.toLocaleString()}`, 1840, 1245);
           // Finance Company
-          drawText(saleData.finance_company || '', 1200, 1355);
+          console.log('🏦 Drawing Finance Company (Dealer):', financeCompany);
+          drawText(financeCompany, 750, 1320);
           // Customer Name at bottom
           drawText(customerName, 210, 2300);
           // Customer Mobile
           drawText(customerMobile, 1590, 2420);
+          // Customer Landphone
+          drawText(customerLandphone, 1590, 2510);
           // Customer NIC
           drawText(customerNIC, 540, 2510);
         }
