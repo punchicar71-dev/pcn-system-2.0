@@ -194,92 +194,10 @@ export default function SalesTransactionsPage() {
     }
   };
 
-  const handlePrintInvoice = async (saleId: string) => {
-    try {
-      const supabase = createClient();
-      
-      // Fetch sale details for printing
-      const { data: saleData, error } = await supabase
-        .from('pending_vehicle_sales')
-        .select(`
-          *,
-          vehicles:vehicle_id (
-            vehicle_number,
-            brand_id,
-            model_id,
-            manufacture_year,
-            vehicle_brands:brand_id (
-              name
-            ),
-            vehicle_models:model_id (
-              name
-            )
-          ),
-          sales_agents:sales_agent_id (
-            name
-          )
-        `)
-        .eq('id', saleId)
-        .single();
-
-      if (error || !saleData) {
-        console.error('Error fetching sale data:', error);
-        alert('Failed to fetch sale data');
-        return;
-      }
-
-      // Create a simple invoice format
-      const invoiceContent = `
-        ======================================
-        PUNCHI CAR NIWASA - SALES INVOICE
-        ======================================
-        
-        Invoice Date: ${new Date().toLocaleDateString()}
-        
-        VEHICLE DETAILS:
-        ----------------
-        Vehicle Number: ${saleData.vehicles?.vehicle_number}
-        Brand: ${saleData.vehicles?.vehicle_brands?.name}
-        Model: ${saleData.vehicles?.vehicle_models?.name}
-        Year: ${saleData.vehicles?.manufacture_year}
-        
-        CUSTOMER DETAILS:
-        -----------------
-        Name: ${saleData.customer_first_name} ${saleData.customer_last_name}
-        NIC: ${saleData.customer_nic}
-        Mobile: ${saleData.customer_mobile}
-        Address: ${saleData.customer_address}, ${saleData.customer_city}
-        ${saleData.customer_email ? `Email: ${saleData.customer_email}` : ''}
-        
-        PAYMENT DETAILS:
-        ----------------
-        Selling Amount: Rs. ${saleData.selling_amount.toLocaleString()}
-        Advance Amount: Rs. ${saleData.advance_amount.toLocaleString()}
-        Balance: Rs. ${(saleData.selling_amount - saleData.advance_amount).toLocaleString()}
-        Payment Type: ${saleData.payment_type}
-        
-        Sales Agent: ${saleData.sales_agents?.name || saleData.third_party_agent || 'N/A'}
-        
-        ======================================
-        Thank you for your business!
-        ======================================
-      `;
-
-      // Print using browser's print dialog
-      const printWindow = window.open('', '', 'height=600,width=800');
-      if (printWindow) {
-        printWindow.document.write('<html><head><title>Sales Invoice</title>');
-        printWindow.document.write('<style>body { font-family: monospace; white-space: pre; padding: 20px; }</style>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(invoiceContent);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.print();
-      }
-    } catch (error) {
-      console.error('Error printing invoice:', error);
-      alert('An error occurred while printing the invoice');
-    }
+  const handlePrintInvoice = (saleId: string) => {
+    // Open PrintDocumentModal with the sale ID
+    setSelectedSaleId(saleId);
+    setIsPrintModalOpen(true);
   };
 
   return (

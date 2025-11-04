@@ -1,9 +1,10 @@
 'use client';
 
-import { Search, Eye, Printer, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Search, Eye, Printer, ChevronLeft, ChevronRight, Calendar, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import { format } from 'date-fns';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 interface SoldOutVehiclesTableProps {
   onViewDetail: (saleId: string) => void;
@@ -23,6 +24,9 @@ export default function SoldOutVehiclesTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [selectedSaleForDelete, setSelectedSaleForDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch sold out sales
   useEffect(() => {
@@ -173,6 +177,42 @@ export default function SoldOutVehiclesTable({
     return format(new Date(dateString), 'yyyy.MM.dd');
   };
 
+  const handleDeleteClick = (saleId: string) => {
+    setSelectedSaleForDelete(saleId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedSaleForDelete) return;
+
+    try {
+      setIsDeleting(true);
+      const supabase = createClient();
+
+      // Delete the sale record from pending_vehicle_sales
+      const { error } = await supabase
+        .from('pending_vehicle_sales')
+        .delete()
+        .eq('id', selectedSaleForDelete);
+
+      if (error) {
+        console.error('Error deleting sale:', error);
+        alert('Error deleting sale: ' + error.message);
+        return;
+      }
+
+      // Update the local state to remove the deleted record
+      setSalesData((prevData) => prevData.filter((sale) => sale.id !== selectedSaleForDelete));
+      setDeleteConfirmOpen(false);
+      setSelectedSaleForDelete(null);
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      alert('Error deleting sale');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getPaymentTypeBadgeColor = (type: string) => {
     switch (type) {
       case 'Cash':
@@ -294,7 +334,7 @@ export default function SoldOutVehiclesTable({
                       {formatDate(sale.sold_date)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={() => onViewDetail(sale.id)}
                           className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-[13px] font-medium flex items-center gap-1"
@@ -304,10 +344,17 @@ export default function SoldOutVehiclesTable({
                         </button>
                         <button
                           onClick={() => onPrintInvoice(sale.id)}
-                          className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-[13px] font-medium flex items-center gap-1"
+                          className="p-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                          title="Print Document"
                         >
-                          <Printer className="w-3.5 h-3.5" />
-                          Print Invoice
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(sale.id)}
+                          className="p-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+                          title="Delete Sale"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -397,6 +444,17 @@ export default function SoldOutVehiclesTable({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setSelectedSaleForDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

@@ -159,7 +159,7 @@ export default function PrintDocumentModal({
 
         // Set font and color for text
         ctx.font = 'bold 32px Arial ';
-        ctx.fillStyle = '#d30202ff'; // Red color for data
+        ctx.fillStyle = '#000000ff'; // Red color for data
 
         // Helper function to draw text
         const drawText = (text: string, x: number, y: number, fontSize: number = 42) => {
@@ -170,10 +170,15 @@ export default function PrintDocumentModal({
         // Common data
         const vehicleInfo = `${saleData.vehicles?.vehicle_brands?.name || ''} ${
           saleData.vehicles?.vehicle_models?.name || ''
-        } ${saleData.vehicles?.manufacture_year || ''}`;
-        const vehicleNumber = saleData.vehicles?.vehicle_number || '';
-        const customerName = `${saleData.customer_first_name} ${saleData.customer_last_name}`;
-        const customerAddress = `${saleData.customer_address}, ${saleData.customer_city}`;
+        } ${saleData.vehicles?.manufacture_year || ''}`.toUpperCase();
+        const vehicleNumber = (saleData.vehicles?.vehicle_number || '').toUpperCase();
+        
+        // Customer name with title
+        const customerTitle = saleData.customer_title || ''; // Mr, Miss, Mrs, Dr
+        const customerFullName = `${saleData.customer_first_name} ${saleData.customer_last_name}`.toUpperCase();
+        const customerName = customerTitle ? `${customerTitle} ${customerFullName}` : customerFullName;
+        
+        const customerAddress = `${saleData.customer_address}, ${saleData.customer_city}`.toUpperCase();
         const sellingAmount = `Rs. ${saleData.selling_amount?.toLocaleString() || '0'}`;
         const advanceAmount = `Rs. ${saleData.advance_amount?.toLocaleString() || '0'}`;
         const pcnAdvanceAmount = saleData.pcn_advance_amount 
@@ -186,18 +191,23 @@ export default function PrintDocumentModal({
         });
         const customerMobile = saleData.customer_mobile || '';
         const customerLandphone = saleData.customer_landphone || '';
-        const customerNIC = saleData.customer_nic || '';
-        const sellerName = saleData.seller 
-          ? `${saleData.seller.title || ''} ${saleData.seller.first_name} ${saleData.seller.last_name}`.trim() 
+        const customerNIC = (saleData.customer_nic || '').toUpperCase();
+        
+        // Seller name with title
+        const sellerTitle = saleData.seller?.title || ''; // Mr, Miss, Mrs, Dr
+        const sellerFullName = saleData.seller
+          ? `${saleData.seller.first_name} ${saleData.seller.last_name}`.toUpperCase()
           : '';
+        const sellerName = sellerTitle ? `${sellerTitle} ${sellerFullName}` : sellerFullName;
+        
         console.log('👤 Seller Name with title:', sellerName);
         console.log('📋 Seller title value:', saleData.seller?.title);
-        const sellerNIC = saleData.seller?.nic_number || '';
+        const sellerNIC = (saleData.seller?.nic_number || '').toUpperCase();
         const sellerAddress = saleData.seller 
-          ? `${saleData.seller.address}, ${saleData.seller.city}` 
+          ? `${saleData.seller.address}, ${saleData.seller.city}`.toUpperCase()
           : '';
-        const sellerCity = saleData.seller?.city || '';
-        const financeCompany = saleData.finance_company || saleData.leasing_company_name || '';
+        const sellerCity = (saleData.seller?.city || '').toUpperCase();
+        const financeCompany = (saleData.finance_company || saleData.leasing_company_name || '').toUpperCase();
         
         // Debug logging for finance company
         console.log('💼 Finance Company Final Value:', financeCompany);
