@@ -31,11 +31,14 @@ export default function PriceCategoryTab() {
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
   const [editingCategory, setEditingCategory] = useState<PriceCategory | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     min_price: '',
     max_price: '',
+    pcn_advance_amount: '',
   })
 
   useEffect(() => {
@@ -59,7 +62,7 @@ export default function PriceCategoryTab() {
   }
 
   const handleAddCategory = async () => {
-    if (!formData.name.trim() || !formData.min_price || !formData.max_price) return
+    if (!formData.name.trim() || !formData.min_price || !formData.max_price || !formData.pcn_advance_amount) return
 
     try {
       const { error } = await supabase
@@ -68,12 +71,17 @@ export default function PriceCategoryTab() {
           name: formData.name,
           min_price: parseFloat(formData.min_price),
           max_price: parseFloat(formData.max_price),
+          pcn_advance_amount: parseFloat(formData.pcn_advance_amount),
           is_active: true,
         }])
 
-      if (error) throw error
+      if (error) {
+        console.error('Error adding category:', error)
+        alert(`Error: ${error.message}`)
+        throw error
+      }
 
-      setFormData({ name: '', min_price: '', max_price: '' })
+      setFormData({ name: '', min_price: '', max_price: '', pcn_advance_amount: '' })
       setIsAddDialogOpen(false)
       fetchCategories()
     } catch (error) {
@@ -82,7 +90,7 @@ export default function PriceCategoryTab() {
   }
 
   const handleEditCategory = async () => {
-    if (!editingCategory || !formData.name.trim() || !formData.min_price || !formData.max_price) return
+    if (!editingCategory || !formData.name.trim() || !formData.min_price || !formData.max_price || !formData.pcn_advance_amount) return
 
     try {
       const { error } = await supabase
@@ -91,12 +99,17 @@ export default function PriceCategoryTab() {
           name: formData.name,
           min_price: parseFloat(formData.min_price),
           max_price: parseFloat(formData.max_price),
+          pcn_advance_amount: parseFloat(formData.pcn_advance_amount),
         })
         .eq('id', editingCategory.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error updating category:', error)
+        alert(`Error: ${error.message}`)
+        throw error
+      }
 
-      setFormData({ name: '', min_price: '', max_price: '' })
+      setFormData({ name: '', min_price: '', max_price: '', pcn_advance_amount: '' })
       setEditingCategory(null)
       setIsEditDialogOpen(false)
       fetchCategories()
@@ -120,18 +133,26 @@ export default function PriceCategoryTab() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this price category?')) return
+    setCategoryToDelete(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!categoryToDelete) return
 
     try {
       const { error } = await supabase
         .from('price_categories')
         .delete()
-        .eq('id', id)
+        .eq('id', categoryToDelete)
 
       if (error) throw error
       fetchCategories()
     } catch (error) {
       console.error('Error deleting category:', error)
+    } finally {
+      setIsDeleteDialogOpen(false)
+      setCategoryToDelete(null)
     }
   }
 
@@ -141,6 +162,7 @@ export default function PriceCategoryTab() {
       name: category.name,
       min_price: category.min_price.toString(),
       max_price: category.max_price.toString(),
+      pcn_advance_amount: category.pcn_advance_amount.toString(),
     })
     setIsEditDialogOpen(true)
   }
@@ -205,6 +227,16 @@ export default function PriceCategoryTab() {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="pcn-advance-amount">PCN Advance Amount</Label>
+                <Input
+                  id="pcn-advance-amount"
+                  type="number"
+                  placeholder="e.g., 25000"
+                  value={formData.pcn_advance_amount}
+                  onChange={(e) => setFormData({ ...formData, pcn_advance_amount: e.target.value })}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -222,6 +254,7 @@ export default function PriceCategoryTab() {
             <TableRow>
               <TableHead>Category Name</TableHead>
               <TableHead>Price Range</TableHead>
+              <TableHead>PCN Advance Amount</TableHead>
               <TableHead>Availability</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
@@ -229,13 +262,13 @@ export default function PriceCategoryTab() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : categories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                   No price categories found
                 </TableCell>
               </TableRow>
@@ -246,6 +279,7 @@ export default function PriceCategoryTab() {
                   <TableCell>
                     {formatPrice(category.min_price)} - {formatPrice(category.max_price)}
                   </TableCell>
+                  <TableCell>{formatPrice(category.pcn_advance_amount)}</TableCell>
                   <TableCell>
                     <Switch
                       checked={category.is_active}
@@ -316,12 +350,52 @@ export default function PriceCategoryTab() {
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-pcn-advance-amount">PCN Advance Amount</Label>
+              <Input
+                id="edit-pcn-advance-amount"
+                type="number"
+                value={formData.pcn_advance_amount}
+                onChange={(e) => setFormData({ ...formData, pcn_advance_amount: e.target.value })}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleEditCategory}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Delete Price Category</DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <p className="text-gray-700">
+                Are you sure you want to delete this price category?
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

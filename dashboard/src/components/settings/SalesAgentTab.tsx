@@ -30,6 +30,8 @@ export default function SalesAgentTab() {
   const [agents, setAgents] = useState<SalesAgent[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     user_id: '',
     name: '',
@@ -94,18 +96,26 @@ export default function SalesAgentTab() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this sales agent?')) return
+    setAgentToDelete(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!agentToDelete) return
 
     try {
       const { error } = await supabase
         .from('sales_agents')
         .delete()
-        .eq('id', id)
+        .eq('id', agentToDelete)
 
       if (error) throw error
       fetchAgents()
     } catch (error) {
       console.error('Error deleting agent:', error)
+    } finally {
+      setIsDeleteDialogOpen(false)
+      setAgentToDelete(null)
     }
   }
 
@@ -222,6 +232,40 @@ export default function SalesAgentTab() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Delete Sales Agent</DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <p className="text-gray-700">
+                Are you sure you want to delete this sales agent?
+              </p>
+              <p className="text-gray-600 mt-2">
+                This action cannot be undone.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

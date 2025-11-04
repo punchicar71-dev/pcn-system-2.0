@@ -24,8 +24,8 @@ export default function Confirmation({ vehicleData }: ConfirmationProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="max-w-md mx-auto text-center space-y-6">
+    <div className="bg-gray-50 flex flex-col items-center  h-[600px] justify-center p-6">
+      <div className="max-w-md mx-auto  text-center space-y-6">
         {/* Success Icon */}
         <div className="flex justify-center">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">

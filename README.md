@@ -2,11 +2,86 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 2, 2025 | Version: 2.0.5
+**Status**: ✅ Production Ready | Last Updated: November 4, 2025 | Version: 2.0.6
 
 ---
 
-## 📢 LATEST UPDATE - November 2, 2025
+## 📢 LATEST UPDATE - November 4, 2025
+
+### 🖨️ Print Document Feature & Multiple Enhancements
+
+**Major Updates: Print document system, leasing company management, price category improvements, and comprehensive bug fixes!**
+
+#### What's New:
+
+1. **🖨️ Print Document System** (Complete):
+   - Print 5 different document types: Cash Seller, Cash Dealer, Advance Note, Finance Seller, Finance Dealer
+   - Auto-populated data from database (vehicle, customer, seller, amounts)
+   - Canvas-based document generation with precise field positioning
+   - Professional document templates with company branding
+   - Print or save as PDF functionality
+   - Documentation: `PRINT_DOCUMENT_COMPLETE.md`, `PRINT_DOCUMENT_VISUAL_GUIDE.md`
+
+2. **🏢 Leasing Company Management** (New):
+   - Complete leasing company management in Settings
+   - Add/Edit/Delete leasing companies
+   - Track which leasing company finances each sale
+   - Auto-generated 5-digit company IDs
+   - Active/Inactive status toggle
+   - Integration with Sell Vehicle flow
+   - 33 pre-loaded Sri Lankan leasing companies
+   - Documentation: `dashboard/LEASING_COMPANY_FEATURE.md`
+
+3. **💰 Price Category Enhancements**:
+   - Added PCN Advance Amount field
+   - Optional field (works with or without migration)
+   - Auto-calculation and display
+   - Graceful fallback for missing data
+   - Migration script: `apply-pcn-advance-migration.sh`
+   - Documentation: `PCN_ADVANCE_AMOUNT_COMPLETE.md`
+
+4. **🔧 Sell Vehicle Bug Fixes**:
+   - Fixed customer_title schema error
+   - Added leasing_company_id tracking
+   - Updated "To Pay Amount" display
+   - Simplified Payment Method (Cash/Leasing only)
+   - Conditional leasing company selection
+   - Database migrations included
+   - Documentation: `SELL_VEHICLE_BUG_FIX_COMPLETE.md`
+
+#### Files Created/Modified:
+
+**New Components:**
+- `dashboard/src/components/sales-transactions/PrintDocumentModal.tsx`
+- `dashboard/src/components/settings/LeasingCompanyTab.tsx`
+
+**Database Migrations:**
+- `dashboard/migrations/2025_11_add_leasing_companies.sql`
+- `dashboard/migrations/2025_11_add_pcn_advance_amount_to_price_categories.sql`
+- `dashboard/migrations/2025_11_02_add_leasing_company_to_pending_sales.sql`
+- `dashboard/migrations/2025_11_02_complete_pending_sales_migration.sql`
+- `dashboard/migrations/FIX_pending_vehicle_sales_schema.sql`
+
+**Helper Scripts:**
+- `apply-pcn-advance-migration.sh`
+- `apply-leasing-company-migration.sh`
+- `apply-complete-pending-sales-migration.sh`
+- `fix-sell-vehicle-error.sh`
+- `dashboard/scripts/add-leasing-companies.js`
+
+**Documentation:**
+- `PRINT_DOCUMENT_COMPLETE.md` - Complete print feature documentation
+- `PRINT_DOCUMENT_IMPLEMENTATION.md` - Technical implementation details
+- `PRINT_DOCUMENT_VISUAL_GUIDE.md` - Visual UI guide
+- `PRINT_DOCUMENT_TESTING_GUIDE.md` - Testing procedures
+- `PRICE_CATEGORY_FIX.md` - Price category fixes
+- `SELL_VEHICLE_BUG_FIX_COMPLETE.md` - Sell vehicle bug fixes
+- `SELL_VEHICLE_STEP2_UPDATES.md` - Step 2 enhancements
+- `dashboard/LEASING_COMPANY_FEATURE.md` - Leasing company feature
+
+---
+
+## 📋 Previous Update - November 2, 2025
 
 ### 🔔 Notification System - Complete Implementation
 

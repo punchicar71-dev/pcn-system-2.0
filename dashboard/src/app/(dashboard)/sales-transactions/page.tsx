@@ -8,6 +8,7 @@ import PendingVehicleModal from '@/components/sales-transactions/PendingVehicleM
 import SoldOutVehicleModal from '@/components/sales-transactions/SoldOutVehicleModal';
 import DeleteConfirmModal from '@/components/sales-transactions/DeleteConfirmModal';
 import SoldOutConfirmModal from '@/components/sales-transactions/SoldOutConfirmModal';
+import PrintDocumentModal from '@/components/sales-transactions/PrintDocumentModal';
 import { createClient } from '@/lib/supabase-client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -16,6 +17,7 @@ export default function SalesTransactionsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSoldOutModalOpen, setIsSoldOutModalOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSoldOutProcessing, setIsSoldOutProcessing] = useState(false);
@@ -132,6 +134,11 @@ export default function SalesTransactionsPage() {
   const handleDelete = (saleId: string) => {
     setSelectedSaleId(saleId);
     setIsDeleteModalOpen(true);
+  };
+
+  const handlePrintDocument = (saleId: string) => {
+    setSelectedSaleId(saleId);
+    setIsPrintModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -293,6 +300,7 @@ export default function SalesTransactionsPage() {
               onViewDetail={handleViewDetail}
               onSoldOut={handleSoldOut}
               onDelete={handleDelete}
+              onPrintDocument={handlePrintDocument}
               refreshKey={refreshKey}
             />
           </TabsContent>
@@ -335,6 +343,13 @@ export default function SalesTransactionsPage() {
         onClose={() => setIsSoldOutModalOpen(false)}
         onConfirm={handleConfirmSoldOut}
         isLoading={isSoldOutProcessing}
+      />
+
+      {/* Print Document Modal */}
+      <PrintDocumentModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        saleId={selectedSaleId}
       />
     </div>
   );

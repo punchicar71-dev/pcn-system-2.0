@@ -46,6 +46,8 @@ export default function VehicleBrandsTab() {
   const [isSyncModelOpen, setIsSyncModelOpen] = useState(false)
   const [isViewModelsOpen, setIsViewModelsOpen] = useState(false)
   const [isEditBrandOpen, setIsEditBrandOpen] = useState(false)
+  const [isDeleteBrandOpen, setIsDeleteBrandOpen] = useState(false)
+  const [brandToDelete, setBrandToDelete] = useState<string | null>(null)
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null)
   const [editingBrand, setEditingBrand] = useState<VehicleBrand | null>(null)
   const [newBrandName, setNewBrandName] = useState('')
@@ -179,26 +181,34 @@ export default function VehicleBrandsTab() {
   }
 
   const handleDeleteBrand = async (id: string) => {
-    if (!confirm('Are you sure? This will also delete all associated models.')) return
+    setBrandToDelete(id)
+    setIsDeleteBrandOpen(true)
+  }
+
+  const confirmDeleteBrand = async () => {
+    if (!brandToDelete) return
 
     try {
       const { error } = await supabase
         .from('vehicle_brands')
         .delete()
-        .eq('id', id)
+        .eq('id', brandToDelete)
 
       if (error) throw error
 
       // Optimistically update the UI
-      setBrands(prev => prev.filter(b => b.id !== id))
+      setBrands(prev => prev.filter(b => b.id !== brandToDelete))
       setModels(prev => {
         const newModels = { ...prev }
-        delete newModels[id]
+        delete newModels[brandToDelete]
         return newModels
       })
     } catch (error) {
       console.error('Error deleting brand:', error)
       alert('Error deleting brand. Please try again.')
+    } finally {
+      setIsDeleteBrandOpen(false)
+      setBrandToDelete(null)
     }
   }
 
@@ -583,6 +593,37 @@ export default function VehicleBrandsTab() {
               )}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Brand Confirmation Dialog */}
+      <Dialog open={isDeleteBrandOpen} onOpenChange={setIsDeleteBrandOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Delete Brand</DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <p className="text-gray-700">
+                Are you sure? This will also delete all associated models.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteBrandOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDeleteBrand}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

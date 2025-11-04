@@ -12,6 +12,7 @@ interface SellingInfoProps {
     sellingAmount: string;
     advanceAmount: string;
     paymentType: string;
+    leasingCompany: string;
     inHouseSalesAgent: string;
     thirdPartySalesAgent: string;
   };
@@ -23,6 +24,7 @@ interface SellingInfoProps {
 export default function SellingInfo({ formData, onChange, onBack, onSubmit }: SellingInfoProps) {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [salesAgents, setSalesAgents] = useState<any[]>([]);
+  const [leasingCompanies, setLeasingCompanies] = useState<any[]>([]);
   const [filteredVehicles, setFilteredVehicles] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,8 +77,30 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
       }
     };
 
+    const fetchLeasingCompanies = async () => {
+      try {
+        const supabase = createClient();
+        
+        const { data, error } = await supabase
+          .from('leasing_companies')
+          .select('*')
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching leasing companies:', error);
+          return;
+        }
+
+        setLeasingCompanies(data || []);
+      } catch (error) {
+        console.error('Error fetching leasing companies:', error);
+      }
+    };
+
     fetchVehicles();
     fetchSalesAgents();
+    fetchLeasingCompanies();
   }, []);
 
   // Filter vehicles based on search input
@@ -234,10 +258,25 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               />
             </div>
 
+            {/* To Pay Amount - Calculated */}
+            {formData.sellingAmount && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label className="block text-sm font-medium text-blue-900 mb-1">
+                  To Pay Amount
+                </label>
+                <div className="text-2xl font-bold text-blue-900">
+                  Rs. {(
+                    parseFloat(formData.sellingAmount || '0') - 
+                    parseFloat(formData.advanceAmount || '0')
+                  ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+            )}
+
             {/* Payment Type */}
             <div>
               <label className="block  w-[400px]  text-sm font-medium text-gray-700 mb-1">
-                Payment Type <span className="text-red-500">*</span>
+                Payment Method <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.paymentType}
@@ -248,10 +287,30 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 <option value="">Select option...</option>
                 <option value="Cash">Cash</option>
                 <option value="Leasing">Leasing</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Check">Check</option>
               </select>
             </div>
+
+            {/* Leasing Company - Only show when Payment Type is Leasing */}
+            {formData.paymentType === 'Leasing' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Leasing Company <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.leasingCompany}
+                  onChange={(e) => onChange('leasingCompany', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                >
+                  <option value="">Select leasing company...</option>
+                  {leasingCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* In-House Sales Agent */}
             <div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Eye, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Eye, Trash2, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 
@@ -8,6 +8,7 @@ interface PendingVehiclesTableProps {
   onViewDetail: (saleId: string) => void;
   onSoldOut: (saleId: string) => void;
   onDelete: (saleId: string) => void;
+  onPrintDocument: (saleId: string) => void;
   refreshKey?: number;
 }
 
@@ -15,6 +16,7 @@ export default function PendingVehiclesTable({
   onViewDetail, 
   onSoldOut, 
   onDelete,
+  onPrintDocument,
   refreshKey = 0
 }: PendingVehiclesTableProps) {
   const [salesData, setSalesData] = useState<any[]>([]);
@@ -234,6 +236,13 @@ export default function PendingVehiclesTable({
                           className="px-3 py-1.5 text-[13px] font-medium text-green-600 hover:text-white border border-green-600 hover:bg-green-600 rounded-lg transition-colors"
                         >
                           Sold out
+                        </button>
+                        <button
+                          onClick={() => onPrintDocument(sale.id)}
+                          className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Print Documents"
+                        >
+                          <Printer className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => onDelete(sale.id)}

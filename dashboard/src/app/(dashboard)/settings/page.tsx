@@ -6,6 +6,7 @@ import VehicleBrandsTab from '@/components/settings/VehicleBrandsTab'
 import PriceCategoryTab from '@/components/settings/PriceCategoryTab'
 import SalesAgentTab from '@/components/settings/SalesAgentTab'
 import CountriesTab from '@/components/settings/CountriesTab'
+import LeasingCompanyTab from '@/components/settings/LeasingCompanyTab'
 
 export default function SettingsPage() {
   return (
@@ -13,9 +14,10 @@ export default function SettingsPage() {
       
 
       <Tabs defaultValue="brands" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
           <TabsTrigger value="brands">Vehicle Brands</TabsTrigger>
           <TabsTrigger value="price">Price Category</TabsTrigger>
+          <TabsTrigger value="leasing">Leasing Company</TabsTrigger>
           <TabsTrigger value="agents">Sales Agent</TabsTrigger>
           <TabsTrigger value="countries">Countries</TabsTrigger>
         </TabsList>
@@ -26,6 +28,10 @@ export default function SettingsPage() {
 
         <TabsContent value="price" className="mt-6">
           <PriceCategoryTab />
+        </TabsContent>
+
+        <TabsContent value="leasing" className="mt-6">
+          <LeasingCompanyTab />
         </TabsContent>
 
         <TabsContent value="agents" className="mt-6">

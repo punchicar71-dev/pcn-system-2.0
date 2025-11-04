@@ -30,6 +30,7 @@ export default function SellVehiclePage() {
     sellingAmount: '',
     advanceAmount: '',
     paymentType: '',
+    leasingCompany: '',
     inHouseSalesAgent: '',
     thirdPartySalesAgent: '',
   });
@@ -69,6 +70,7 @@ export default function SellVehiclePage() {
         selling_amount: parseFloat(sellingData.sellingAmount),
         advance_amount: sellingData.advanceAmount ? parseFloat(sellingData.advanceAmount) : 0,
         payment_type: sellingData.paymentType,
+        leasing_company_id: sellingData.leasingCompany || null,
         sales_agent_id: sellingData.inHouseSalesAgent || null,
         third_party_agent: sellingData.thirdPartySalesAgent || null,
         status: 'pending',

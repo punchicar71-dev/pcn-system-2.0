@@ -19,6 +19,7 @@ export interface PriceCategory {
   name: string
   min_price: number
   max_price: number
+  pcn_advance_amount: number
   is_active: boolean
   created_at: string
   updated_at: string
@@ -36,6 +37,15 @@ export interface SalesAgent {
 
 export interface Country {
   id: string
+  name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface LeasingCompany {
+  id: string
+  company_id: string
   name: string
   is_active: boolean
   created_at: string
@@ -215,6 +225,7 @@ export interface VehicleFormData {
 export interface PendingVehicleSale {
   id: string
   vehicle_id: string
+  customer_title?: string
   customer_first_name: string
   customer_last_name: string
   customer_address?: string
@@ -226,6 +237,7 @@ export interface PendingVehicleSale {
   selling_amount: number
   advance_amount?: number
   payment_type: 'Cash' | 'Leasing' | 'Bank Transfer' | 'Check'
+  leasing_company_id?: string
   sales_agent_id?: string
   third_party_agent?: string
   status: 'pending' | 'sold'
