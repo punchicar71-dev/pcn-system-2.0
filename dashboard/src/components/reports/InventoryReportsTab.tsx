@@ -20,7 +20,7 @@ interface VehicleStock {
 
 interface StockSummary {
   total: number
-  inSale: number
+  pendingToSell: number
   reserved: number
   avgDaysInStock: number
 }
@@ -49,7 +49,7 @@ export default function InventoryReportsTab() {
   const [stockList, setStockList] = useState<VehicleStock[]>([])
   const [stockSummary, setStockSummary] = useState<StockSummary>({
     total: 0,
-    inSale: 0,
+    pendingToSell: 0,
     reserved: 0,
     avgDaysInStock: 0
   })
@@ -108,9 +108,20 @@ export default function InventoryReportsTab() {
 
       setStockList(processedVehicles)
 
+      // Fetch pending to sell vehicles from pending_vehicle_sales
+      const { data: pendingVehicles, error: pendingError } = await supabase
+        .from('pending_vehicle_sales')
+        .select('id')
+        .eq('status', 'pending')
+
+      if (pendingError) {
+        console.error('Error fetching pending vehicles:', pendingError)
+      }
+
+      const pendingCount = pendingVehicles?.length || 0
+
       // Calculate summary statistics
       const total = processedVehicles.length
-      const inSale = processedVehicles.filter(v => v.status === 'In Sale').length
       const reserved = processedVehicles.filter(v => v.status === 'Reserved').length
       const avgDays = total > 0 
         ? Math.round(processedVehicles.reduce((sum, v) => sum + v.days_in_stock, 0) / total)
@@ -118,7 +129,7 @@ export default function InventoryReportsTab() {
 
       setStockSummary({
         total,
-        inSale,
+        pendingToSell: pendingCount,
         reserved,
         avgDaysInStock: avgDays
       })
@@ -229,21 +240,20 @@ export default function InventoryReportsTab() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-600 font-medium">Total Stock</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{stockSummary.total}</p>
+        <div className="bg-gray-10 rounded-[15px] p-4 border ">
+          <div className="">
+            <div className='flex items-center justify-between'>
+              <p className="text-[16px] text-gray-600 font-medium">Total Stock</p>
+              <p className="text-[16px] px-3 py-2 bg-blue-100 rounded-full font-bold text-blue-600 mt-1">{stockSummary.total}</p>
             </div>
-            <Package className="w-8 h-8 text-blue-600" />
-          </div>
+            </div>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-600 font-medium">Available for Sale</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{stockSummary.inSale}</p>
+              <p className="text-sm text-green-600 font-medium">Pending to Sell</p>
+              <p className="text-2xl font-bold text-green-900 mt-1">{stockSummary.pendingToSell}</p>
             </div>
             <Car className="w-8 h-8 text-green-600" />
           </div>
