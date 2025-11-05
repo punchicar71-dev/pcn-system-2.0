@@ -81,11 +81,14 @@ export async function PUT(
 
     // Only allow admins to update users
     if (currentUser.access_level?.toLowerCase() !== 'admin') {
+      console.log(`[UPDATE USER] Access denied - User ${authUser.id} with access level "${currentUser.access_level}" attempted to update user ${params.id}`)
       return NextResponse.json(
         { error: 'Forbidden - Only administrators can update users' },
         { status: 403 }
       )
     }
+
+    console.log(`[UPDATE USER] Admin ${authUser.id} updating user ${params.id}`)
 
     const body = await request.json()
     const {

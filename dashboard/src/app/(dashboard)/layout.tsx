@@ -98,16 +98,25 @@ export default function DashboardLayout({
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true)
+      console.log('Starting logout process...')
       
       // End the session before logging out
-      const supabase = createClient()
-      
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        const { endUserSession } = await import('@/lib/sessionManager')
-        await endUserSession(session.user.id)
+      try {
+        const supabase = createClient()
+        
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          console.log('Found active session, ending user session...')
+          const { endUserSession } = await import('@/lib/sessionManager')
+          const endSessionResult = await endUserSession(session.user.id)
+          console.log('End session result:', endSessionResult)
+        }
+      } catch (sessionError) {
+        console.warn('Warning: Could not end user session, continuing with logout:', sessionError)
+        // Don't throw - continue with logout even if session end fails
       }
       
+      console.log('Calling logout API...')
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
@@ -120,6 +129,8 @@ export default function DashboardLayout({
         throw new Error(errorData.error || 'Logout failed')
       }
 
+      console.log('Logout API successful, clearing storage...')
+      
       // Clear browser storage
       localStorage.clear()
       sessionStorage.clear()
@@ -131,9 +142,11 @@ export default function DashboardLayout({
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       
+      console.log('Waiting for cleanup to complete...')
       // Wait briefly for cookies to be cleared
       await new Promise(resolve => setTimeout(resolve, 300))
       
+      console.log('Redirecting to login page...')
       // Force full page reload and navigate to login page
       // This ensures middleware re-evaluates the session
       window.location.replace('/')
@@ -158,7 +171,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-white">
         {/* Logout Confirmation Modal */}
         {showLogoutModal && (
-        <div className="fixed inset-0 z-9 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative animate-in fade-in zoom-in duration-200">
             {/* Close Button */}
             <button
@@ -301,12 +314,12 @@ export default function DashboardLayout({
                 <>
                   {/* Backdrop to close dropdown */}
                   <div 
-                    className="fixed inset-0 z-50" 
+                    className="fixed inset-0 z-40" 
                     onClick={() => setShowProfileDropdown(false)}
                   />
                   
                   {/* Dropdown Content */}
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     {/* My Profile */}
                     <Link
                       href="/settings"

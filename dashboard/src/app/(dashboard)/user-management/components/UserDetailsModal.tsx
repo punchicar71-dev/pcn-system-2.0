@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Upload } from 'lucide-react'
+import { X, Upload, Lock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
@@ -10,6 +10,7 @@ interface UserDetailsModalProps {
   userId: string | null
   onUserUpdated: () => void
   currentUserAccessLevel: string
+  onDeleteUser?: (userId: string) => void
 }
 
 interface UserDetails {
@@ -32,7 +33,8 @@ export default function UserDetailsModal({
   onClose,
   userId,
   onUserUpdated,
-  currentUserAccessLevel
+  currentUserAccessLevel,
+  onDeleteUser
 }: UserDetailsModalProps) {
   const [user, setUser] = useState<UserDetails | null>(null)
   const [loading, setLoading] = useState(false)
@@ -196,6 +198,15 @@ export default function UserDetailsModal({
     setError('')
   }
 
+  const handleDelete = () => {
+    if (!userId || !onDeleteUser) return
+    
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      onDeleteUser(userId)
+      onClose()
+    }
+  }
+
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
@@ -213,14 +224,21 @@ export default function UserDetailsModal({
       {/* Modal */}
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-xl font-bold text-gray-900">User Details</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">User Details</h2>
+              {!isAdmin && (
+                <p className="text-sm text-gray-500 mt-1">View Only - Admin access required to edit</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -238,6 +256,19 @@ export default function UserDetailsModal({
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
                   {error}
+                </div>
+              )}
+
+              {/* View-Only Info Banner for Non-Admins */}
+              {!isAdmin && !isEditing && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-900 mb-1">View-Only Mode</h4>
+                    <p className="text-sm text-blue-700">
+                      You are viewing user details in read-only mode. Only administrators can edit user information.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -408,15 +439,32 @@ export default function UserDetailsModal({
                     </button>
                   </>
                 ) : (
-                  // Only show Edit button for admins
-                  isAdmin && (
+                  <>
+                    {/* Always show Close button */}
                     <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                      onClick={onClose}
+                      className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                     >
-                      Edit Details
+                      Close
                     </button>
-                  )
+                    {/* Only show Edit button for admins */}
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={handleDelete}
+                          className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                        >
+                          Delete User
+                        </button>
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                        >
+                          Edit Details
+                        </button>
+                      </>
+                    )}
+                  </>
                 )}
               </div>
             </div>

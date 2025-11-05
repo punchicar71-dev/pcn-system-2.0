@@ -1,13 +1,13 @@
 'use client'
 
-import { Plus, MoreVertical, Eye, Trash2 } from 'lucide-react'
+import { Plus, MoreVertical, Eye, Trash2, Pencil } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import AddUserModal from './components/AddUserModal'
 import SuccessModal from './components/SuccessModal'
 import DeleteUserModal from './components/DeleteUserModal'
 import UserDetailsModal from './components/UserDetailsModal'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase-client'
 import {
   Table,
   TableBody,
@@ -71,23 +71,21 @@ export default function UserManagementPage() {
   const [successUserName, setSuccessUserName] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Initialize Supabase client
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // Fetch current user on mount (only once)
+  useEffect(() => {
+    fetchCurrentUser()
+  }, [])
 
   // Fetch users on component mount and when page changes
   useEffect(() => {
     fetchUsers()
-    fetchCurrentUser()
     
     // Set up real-time subscription for user changes
     const usersChannel = supabase
       .channel('users-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'users' },
-        (payload) => {
+        (payload: any) => {
           console.log('User change detected:', payload)
           fetchUsers()
         }
@@ -108,6 +106,7 @@ export default function UserManagementPage() {
   const fetchCurrentUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('Current session:', session?.user?.id)
       if (session) {
         const { data: userData } = await supabase
           .from('users')
@@ -115,8 +114,15 @@ export default function UserManagementPage() {
           .eq('auth_id', session.user.id)
           .single()
         
+        console.log('Current user data:', userData)
         if (userData) {
+          // Normalize access_level by trimming whitespace
+          if (userData.access_level) {
+            userData.access_level = userData.access_level.trim()
+          }
           setCurrentUser(userData)
+          console.log('Current user access level:', userData.access_level)
+          console.log('Is admin?', userData.access_level?.toLowerCase() === 'admin')
         }
       }
     } catch (error) {
@@ -200,7 +206,8 @@ export default function UserManagementPage() {
   }
 
   const handleViewDetail = (userId: string) => {
-    console.log('View detail for user:', userId)
+    const isAdmin = currentUser?.access_level?.toLowerCase() === 'admin'
+    console.log(`View detail for user: ${userId} (${isAdmin ? 'Admin' : 'Editor'} - ${isAdmin ? 'Can edit' : 'View only'})`)
     setSelectedUserId(userId)
     setShowUserDetailsModal(true)
   }
@@ -459,7 +466,11 @@ export default function UserManagementPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              getPaginatedUsers().map((user) => (
+              getPaginatedUsers().map((user) => {
+                // Debug logging
+                console.log('Rendering user row:', user.id, 'Current user:', currentUser?.id, 'Access level:', currentUser?.access_level, 'Is admin:', currentUser?.access_level?.toLowerCase() === 'admin')
+                
+                return (
                 <TableRow key={user.id} className="hover:bg-gray-50 transition-colors">
                   <TableCell className="px-6 py-4 text-sm text-gray-900">
                     {user.id.substring(0, 8)}
@@ -490,20 +501,33 @@ export default function UserManagementPage() {
                         <Eye className="w-4 h-4" />
                         View Detail
                       </button>
-                      {/* Only show delete button for admins and prevent self-deletion */}
-                      {currentUser?.access_level?.toLowerCase() === 'admin' && currentUser.id !== user.id && (
-                        <button 
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete User"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      {/* Only show edit and delete buttons for admins */}
+                      {currentUser && currentUser.access_level && currentUser.access_level.toLowerCase() === 'admin' && (
+                        <>
+                          <button 
+                            onClick={() => handleEditUser(user.id)}
+                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit User"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          {/* Prevent self-deletion */}
+                          {currentUser.id !== user.id && (
+                            <button 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+                )
+              })
             )}
           </TableBody>
         </Table>
@@ -635,6 +659,7 @@ export default function UserManagementPage() {
         userId={selectedUserId}
         onUserUpdated={fetchUsers}
         currentUserAccessLevel={currentUser?.access_level || ''}
+        onDeleteUser={handleDeleteUser}
       />
     </div>
   )
