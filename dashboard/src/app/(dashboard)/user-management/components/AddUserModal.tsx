@@ -14,6 +14,7 @@ interface FormData {
   password: string
   reEnterPassword: string
   sendEmail: boolean
+  sendSMS: boolean
   profilePicture: string
 }
 
@@ -260,7 +261,7 @@ export default function AddUserModal({
             </div>
           </div>
 
-          {/* Checkbox */}
+          {/* Checkbox for Email */}
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -272,6 +273,22 @@ export default function AddUserModal({
             />
             <label htmlFor="sendEmail" className="text-sm text-gray-700 cursor-pointer">
               User login details will be automatically sent to the registered email address.
+            </label>
+          </div>
+
+          {/* Checkbox for SMS */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="sendSMS"
+              name="sendSMS"
+              checked={formData.sendSMS}
+              onChange={onInputChange}
+              disabled={!formData.mobileNumber}
+              className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <label htmlFor="sendSMS" className={`text-sm cursor-pointer ${!formData.mobileNumber ? 'text-gray-400' : 'text-gray-700'}`}>
+              Send login credentials via SMS to mobile number (Sri Lankan numbers only: 07XXXXXXXX)
             </label>
           </div>
 

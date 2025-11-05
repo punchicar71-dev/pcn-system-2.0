@@ -65,6 +65,7 @@ export default function UserManagementPage() {
     password: '',
     reEnterPassword: '',
     sendEmail: true,
+    sendSMS: true,
     profilePicture: ''
   })
   const [formLoading, setFormLoading] = useState(false)
@@ -366,7 +367,8 @@ export default function UserManagementPage() {
           role: formData.role,
           password: formData.password,
           profilePicture: formData.profilePicture,
-          sendEmail: formData.sendEmail
+          sendEmail: formData.sendEmail,
+          sendSMS: formData.sendSMS
         })
       })
 
@@ -396,6 +398,7 @@ export default function UserManagementPage() {
         password: '',
         reEnterPassword: '',
         sendEmail: true,
+        sendSMS: true,
         profilePicture: ''
       })
 

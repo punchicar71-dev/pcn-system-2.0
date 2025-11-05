@@ -2,11 +2,127 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 5, 2025 | Version: 2.0.10
+**Status**: ✅ Production Ready | Last Updated: November 5, 2025 | Version: 2.0.11
 
 ---
 
-## 📢 LATEST UPDATE - November 5, 2025 (User Management Icons Fix)
+## 📢 LATEST UPDATE - November 5, 2025 (Reports & Analytics Dashboard + Password Reset Flow)
+
+### 🎯 Comprehensive Reports & Analytics Dashboard
+
+**Major Feature Addition: Complete reporting system with advanced analytics and data visualization!**
+
+#### What's New:
+
+1. **📊 Advanced Reports Module**:
+   - Inventory Reports: Stock aging, brand distribution, turnover rates
+   - Sales & Profitability: Period analysis, salesperson performance, time-to-sell
+   - Financial Reports: Revenue/profit trends, payment types, leasing analysis
+   - Customer & Staff Reports: Sales agent leaderboards, commission tracking, customer database
+   - Real-time data visualization with interactive charts
+
+2. **🔐 Password Reset Flow (SMS OTP)**:
+   - Complete password reset flow with SMS OTP verification
+   - Integration with Text.lk SMS service
+   - Secure JWT token-based reset process
+   - Pages: Forget Password → OTP Verification → Change Password → Success
+   - Database table: `password_reset_otps` with expiration tracking
+   - API routes: `/api/auth/send-otp`, `/api/auth/verify-otp`, `/api/auth/reset-password`
+   - SMS service utility: `dashboard/src/lib/sms-service.ts`
+
+3. **📈 Data Visualization**:
+   - Multiple chart types: Area, Bar, Pie, Line charts
+   - Recharts library integration
+   - Export to CSV functionality for all reports
+   - Date range filters (Week, Month, Quarter, Year)
+   - Interactive tooltips and legends
+
+4. **📱 SMS Integration**:
+   - Text.lk SMS gateway integration
+   - SMS templates for various notifications
+   - Phone number validation and formatting
+   - Test script: `dashboard/test-sms-service.js`
+
+#### Files Created/Updated:
+
+**Reports Components:**
+- `dashboard/src/app/(dashboard)/reports/page.tsx` - Main reports page
+- `dashboard/src/components/reports/InventoryReportsTab.tsx` - Inventory analytics
+- `dashboard/src/components/reports/SalesProfitabilityTab.tsx` - Sales performance
+- `dashboard/src/components/reports/FinancialReportsTab.tsx` - Financial analytics
+- `dashboard/src/components/reports/CustomerStaffReportsTab.tsx` - Staff & customer analytics
+
+**Password Reset Flow:**
+- `dashboard/src/app/(auth)/forget-password/page.tsx` - Password reset initiation
+- `dashboard/src/app/(auth)/verify-otp/page.tsx` - OTP verification
+- `dashboard/src/app/(auth)/change-password/page.tsx` - New password setup
+- `dashboard/src/app/(auth)/password-reset-success/page.tsx` - Success confirmation
+
+**API Routes:**
+- `dashboard/src/app/api/auth/send-otp/route.ts` - Send OTP via SMS
+- `dashboard/src/app/api/auth/verify-otp/route.ts` - Verify OTP code
+- `dashboard/src/app/api/auth/reset-password/route.ts` - Update password
+- `dashboard/src/app/api/sms/route.ts` - General SMS sending endpoint
+
+**Utilities:**
+- `dashboard/src/lib/sms-service.ts` - SMS service integration
+- `dashboard/test-sms-service.js` - SMS testing script
+
+#### Database Changes:
+```sql
+-- New table for OTP tracking
+CREATE TABLE password_reset_otps (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  mobile_number VARCHAR(15) NOT NULL,
+  otp_code VARCHAR(6) NOT NULL,
+  user_id UUID REFERENCES users(id),
+  expires_at TIMESTAMP NOT NULL,
+  verified BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### Environment Variables Required:
+```env
+# Text.lk SMS Configuration
+TEXTLK_API_TOKEN=your_api_token_here
+TEXTLK_API_URL=https://app.text.lk/api/v3/sms/send
+TEXTLK_SENDER_ID=your_approved_sender_id (optional)
+
+# JWT for password reset tokens
+JWT_SECRET=your-secret-key-change-in-production
+```
+
+#### Technical Features:
+
+**Reports Module:**
+- Dynamic date range filtering
+- Real-time data aggregation from multiple tables
+- Responsive design for mobile and desktop
+- Export functionality for all report types
+- Color-coded metrics and status indicators
+- Performance optimized queries
+
+**Password Reset:**
+- 6-digit OTP generation
+- 15-minute expiration window
+- SMS delivery via Text.lk
+- JWT token-based security
+- Supabase Admin API integration
+- Automatic cleanup of expired OTPs
+
+#### Visual Enhancements:
+- Gradient backgrounds for summary cards
+- Icon-based navigation
+- Loading states with animations
+- Empty state handling
+- Responsive tables with horizontal scroll
+- Interactive charts with hover effects
+
+---
+
+## 📢 PREVIOUS UPDATE - November 5, 2025 (User Management Icons Fix)
 
 ### 🎯 User Management Edit/Delete Icons Fix
 

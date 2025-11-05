@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { sendSMS, formatPhoneNumber, isValidSriLankanPhone, smsTemplates } from '@/lib/sms-service'
 
 // GET all users
 export async function GET(request: Request) {
@@ -105,7 +106,8 @@ export async function POST(request: Request) {
       role,
       password,
       profilePicture,
-      sendEmail
+      sendEmail,
+      sendSMS: shouldSendSMS
     } = body
 
     // Validate required fields
@@ -188,6 +190,35 @@ export async function POST(request: Request) {
       } catch (emailError) {
         console.error('Error sending email:', emailError)
         // Don't fail the whole operation if email fails
+      }
+    }
+
+    // Step 4: Send SMS notification if requested and mobile number provided
+    if (shouldSendSMS && mobileNumber) {
+      try {
+        // Validate phone number
+        if (isValidSriLankanPhone(mobileNumber)) {
+          const formattedPhone = formatPhoneNumber(mobileNumber)
+          const smsMessage = smsTemplates.welcome(firstName, email, password)
+          
+          console.log('Sending welcome SMS to:', formattedPhone)
+          
+          const smsResult = await sendSMS({
+            to: formattedPhone,
+            message: smsMessage
+          })
+          
+          if (smsResult.status === 'success') {
+            console.log('Welcome SMS sent successfully to:', formattedPhone)
+          } else {
+            console.error('Failed to send SMS:', smsResult.message)
+          }
+        } else {
+          console.error('Invalid phone number format:', mobileNumber)
+        }
+      } catch (smsError) {
+        console.error('Error sending SMS:', smsError)
+        // Don't fail the whole operation if SMS fails
       }
     }
 
