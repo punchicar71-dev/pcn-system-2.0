@@ -2,11 +2,143 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 5, 2025 | Version: 2.0.11
+**Status**: ✅ Production Ready | Last Updated: November 8, 2025 | Version: 2.0.12
 
 ---
 
-## 📢 LATEST UPDATE - November 5, 2025 (Reports & Analytics Dashboard + Password Reset Flow)
+## 📢 LATEST UPDATE - November 8, 2025 (SMS Gateway Integration + Reports UI Enhancement)
+
+### 🎯 SMS Gateway Integration (Text.lk)
+
+**Major Feature: Complete SMS gateway integration with Text.lk for automated notifications and OTP delivery!**
+
+#### What's New:
+
+1. **📱 Text.lk SMS Service Integration**:
+   - Full API v3 integration with Text.lk SMS gateway
+   - SMS service library with reusable functions
+   - Phone number validation and formatting for Sri Lankan numbers
+   - Support for multiple phone formats (0771234567, 94771234567, +94771234567)
+   - Secure Bearer token authentication
+   - Comprehensive error handling and logging
+
+2. **🔧 SMS Service Features**:
+   - Send SMS via API endpoint: `/api/sms`
+   - Phone number validation and auto-formatting
+   - SMS templates for various scenarios:
+     * Welcome messages for new users
+     * Password reset OTP codes
+     * Account status notifications
+     * Account deletion confirmations
+   - Test scripts for SMS gateway verification
+
+3. **📊 Reports Dashboard UI Enhancement**:
+   - Redesigned report summary cards with modern styling
+   - Updated inventory reports tab with cleaner interface
+   - Changed "Current Stock List" to "Showroom Available Vehicles"
+   - Improved button styling (black background for export)
+   - Refined badge colors for metrics
+   - Removed redundant header from reports page
+
+#### Files Created/Updated:
+
+**SMS Integration:**
+- `dashboard/src/lib/sms-service.ts` - SMS service library with Text.lk integration
+- `dashboard/src/app/api/sms/route.ts` - API endpoint for SMS sending
+- `dashboard/test-sms-service.js` - SMS service test script
+- `dashboard/comprehensive-sms-test.js` - Comprehensive SMS gateway testing suite
+
+**Reports UI:**
+- `dashboard/src/app/(dashboard)/reports/page.tsx` - Removed header section
+- `dashboard/src/components/reports/InventoryReportsTab.tsx` - Updated UI styling and labels
+
+**Documentation:**
+- `SMS_GATEWAY_DIAGNOSTIC_REPORT.md` - Comprehensive diagnostic report
+- `SMS_GATEWAY_FIX_APPLIED.md` - Implementation details and setup guide
+
+#### SMS Service Configuration:
+
+```env
+# Text.lk SMS Gateway Configuration
+TEXTLK_API_TOKEN=your_api_token_here
+TEXTLK_API_URL=https://app.text.lk/api/v3/sms/send
+TEXTLK_SENDER_ID=your_approved_sender_id
+```
+
+#### SMS Service Usage:
+
+```typescript
+// Send SMS
+import { sendSMS } from '@/lib/sms-service'
+
+const result = await sendSMS({
+  to: '0771234567',
+  message: 'Your message here'
+})
+
+// Format phone number
+import { formatPhoneNumber } from '@/lib/sms-service'
+const formatted = formatPhoneNumber('0771234567') // Returns: '94771234567'
+
+// Validate phone number
+import { isValidSriLankanPhone } from '@/lib/sms-service'
+const isValid = isValidSriLankanPhone('0771234567') // Returns: true
+
+// Use SMS templates
+import { smsTemplates } from '@/lib/sms-service'
+const message = smsTemplates.welcome('John', 'john@example.com', 'temp123')
+```
+
+#### Technical Features:
+
+**SMS Gateway:**
+- Bearer token authentication with Text.lk API v3
+- Required parameters: `recipient`, `sender_id`, `type`, `message`
+- Phone number validation for Sri Lankan format (07X XXXX XXX)
+- Automatic phone number formatting to international format
+- Comprehensive error handling with detailed logging
+- SMS templates for consistent messaging
+- Test scripts for gateway verification
+
+**API Specification:**
+```json
+{
+  "recipient": "94771234567",
+  "sender_id": "YourSenderID",
+  "type": "plain",
+  "message": "Your message here"
+}
+```
+
+#### Next Steps:
+
+**⚠️ IMPORTANT: Sender ID Approval Required**
+
+To enable SMS sending, you must:
+1. Login to Text.lk dashboard (https://app.text.lk)
+2. Request a Sender ID (e.g., "PunchiCar", "PCN-System", "PCNLK")
+3. Wait for approval (1-3 business days)
+4. Update `.env.local` with approved Sender ID
+5. Restart development server and test
+
+**Testing Commands:**
+```bash
+# Test SMS service
+cd dashboard
+node test-sms-service.js
+
+# Comprehensive test suite
+node comprehensive-sms-test.js
+
+# Test via API
+curl -X POST http://localhost:3001/api/sms \
+  -H "Content-Type: application/json" \
+  -d '{"to":"94771234567","message":"Test SMS"}'
+```
+
+---
+
+## 📢 PREVIOUS UPDATE - November 5, 2025 (Reports & Analytics Dashboard + Password Reset Flow)
 
 ### 🎯 Comprehensive Reports & Analytics Dashboard
 

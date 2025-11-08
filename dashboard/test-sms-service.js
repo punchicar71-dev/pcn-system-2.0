@@ -55,8 +55,9 @@ async function testEndpoint(endpoint) {
         },
         body: JSON.stringify({
           recipient: TEST_PHONE_NUMBER,
+          sender_id: 'TextLK', // Required parameter - using default name
+          type: 'plain', // Required parameter - 'plain' for regular text
           message: TEST_MESSAGE
-          // Note: sender_id removed - will use default or add your approved sender ID
         })
       })
     }

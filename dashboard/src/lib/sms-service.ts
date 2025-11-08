@@ -33,15 +33,12 @@ export async function sendSMS({ to, message }: SMSParams): Promise<TextLKRespons
       console.warn('⚠️  No Sender ID configured. Please set TEXTLK_SENDER_ID in .env.local after approval.')
     }
 
-    // Build request body
+    // Build request body according to Text.lk API v3 specification
     const requestBody: any = {
       recipient: to,
+      sender_id: senderId || 'TextLK', // Required: Use default if not configured
+      type: 'plain', // Required: 'plain' for regular text messages
       message: message
-    }
-
-    // Only include sender_id if it's configured
-    if (senderId) {
-      requestBody.sender_id = senderId
     }
 
     const response = await fetch(apiUrl, {

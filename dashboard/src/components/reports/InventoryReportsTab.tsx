@@ -240,58 +240,58 @@ export default function InventoryReportsTab() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gray-10 rounded-[15px] p-4 border ">
+        <div className="border rounded-[12px] p-4  ">
           <div className="">
             <div className='flex items-center justify-between'>
               <p className="text-[16px] text-gray-600 font-medium">Total Stock</p>
-              <p className="text-[16px] px-3 py-2 bg-blue-100 rounded-full font-bold text-blue-600 mt-1">{stockSummary.total}</p>
+              <p className="text-[16px] px-3 py-2 bg-blue-100 rounded-full font-bold text-blue-600">{stockSummary.total}</p>
             </div>
             </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-green-600 font-medium">Pending to Sell</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{stockSummary.pendingToSell}</p>
+        <div className="border rounded-[12px] p-4">
+          <div className="">
+            <div className='flex items-center justify-between'>
+              <p className="text-[16px] text-gray-600 font-medium">Pending to Sell</p>
+              <p className="text-[16px] px-3 py-2 bg-green-100 font-bold rounded-full text-green-600 ">{stockSummary.pendingToSell}</p>
             </div>
-            <Car className="w-8 h-8 text-green-600" />
+            
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-amber-600 font-medium">Avg Days in Stock</p>
-              <p className="text-2xl font-bold text-amber-900 mt-1">{stockSummary.avgDaysInStock}</p>
+        <div className="border rounded-[12px] p-4">
+          <div >
+            <div className='flex items-center justify-between'>
+              <p className="text-[16px] text-gray-600 font-medium">Avg Days in Stock</p>
+              <p className="text-[16px] px-3 py-2 bg-yellow-100 font-bold rounded-full text-yellow-600">{stockSummary.avgDaysInStock}</p>
             </div>
-            <Clock className="w-8 h-8 text-amber-600" />
+            
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-purple-600 font-medium">Turnover Rate</p>
-              <p className="text-2xl font-bold text-purple-900 mt-1">{turnoverRate}x</p>
+        <div className="border rounded-[12px] p-4">
+          <div >
+            <div className='flex items-center justify-between'>
+              <p className="text-[16px] text-gray-600 font-medium">Turnover Rate</p>
+              <p className="text-[16px] px-3 py-2 bg-indigo-100 font-bold rounded-full text-indigo-500">{turnoverRate}x</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-purple-600" />
+           
           </div>
         </div>
       </div>
 
       {/* View Selector */}
-      <div className="border-b border-gray-200">
-        <div className="flex gap-6 overflow-x-auto">
+      <div className=" ">
+        <div className="flex gap-6 ">
           <button
             onClick={() => setActiveView('overview')}
-            className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+            className={`py-0 px-4 rounded-[10px] font-medium text-sm transition-colors whitespace-nowrap ${
               activeView === 'overview'
-                ? 'border-blue-600 text-blue-600'
+                ? ' bg-white border shadow-sm text-gray-900'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Current Stock List
+            Inventory Available
           </button>
           <button
             onClick={() => setActiveView('aging')}
@@ -330,10 +330,10 @@ export default function InventoryReportsTab() {
       {activeView === 'overview' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Current Stock List</h3>
+            <h3 className="text-[18px] font-semibold text-gray-900">Showroom Available Vehicles</h3>
             <button
               onClick={handleDownloadReport}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center text-[14px] gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
               <Download className="w-4 h-4" />
               Export CSV

@@ -11,17 +11,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            View comprehensive reports across inventory, sales, finance, and personnel
-          </p>
-        </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <BarChart3 className="w-6 h-6 text-blue-600" />
-        </div>
-      </div>
+      
 
       {/* Tabs */}
       <Tabs defaultValue="inventory" className="w-full">
