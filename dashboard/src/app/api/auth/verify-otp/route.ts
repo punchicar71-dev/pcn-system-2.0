@@ -28,17 +28,27 @@ export async function POST(request: NextRequest) {
     }
 
     const formattedPhone = formatPhoneNumber(mobileNumber)
+    
+    // Create phone number variants to search
+    const phoneVariants = [
+      formattedPhone,                                    // 94710898944
+      `+${formattedPhone}`,                              // +94710898944
+      formattedPhone.startsWith('94') ? `0${formattedPhone.substring(2)}` : formattedPhone  // 0710898944
+    ]
 
-    // Find OTP record
+    console.log('Verifying OTP for mobile number variants:', phoneVariants)
+
+    // Find OTP record (check all phone number variants)
     const { data: otpRecord, error: otpError } = await supabaseAdmin
       .from('password_reset_otps')
       .select('*')
-      .eq('mobile_number', formattedPhone)
+      .in('mobile_number', phoneVariants)
       .eq('otp_code', otp)
       .eq('verified', false)
       .single()
 
     if (otpError || !otpRecord) {
+      console.error('OTP lookup error:', otpError)
       return NextResponse.json(
         { error: 'Invalid or expired OTP code' },
         { status: 400 }
@@ -71,9 +81,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate a temporary token for password reset
+    // Since user_id might be null, we need to look up the user by mobile number
+    // Get user info from the users table
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id, auth_id')
+      .in('mobile_number', phoneVariants)
+      .single()
+
+    if (userError || !user) {
+      console.error('Could not find user for password reset:', userError)
+      return NextResponse.json(
+        { error: 'User not found for password reset' },
+        { status: 404 }
+      )
+    }
+
     const resetToken = jwt.sign(
       { 
-        userId: otpRecord.user_id,
+        userId: user.id,
+        authId: user.auth_id,
         mobileNumber: formattedPhone,
         otpId: otpRecord.id,
         type: 'password_reset'

@@ -41,51 +41,85 @@ export async function POST(request: NextRequest) {
 
     const formattedPhone = formatPhoneNumber(mobileNumber)
 
-    // Check if user exists with this mobile number
+    // Try to find user with multiple phone number formats
+    // Format 1: 94710898944 (international without +)
+    // Format 2: +94710898944 (international with +)
+    // Format 3: 0710898944 (local format)
+    const phoneVariants = [
+      formattedPhone,                                    // 94710898944
+      `+${formattedPhone}`,                              // +94710898944
+      formattedPhone.startsWith('94') ? `0${formattedPhone.substring(2)}` : formattedPhone  // 0710898944
+    ]
+
+    console.log('Searching for user with mobile number variants:', phoneVariants)
+
+    // Check if user exists with any of these mobile number formats
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .select('id, first_name, mobile_number')
-      .eq('mobile_number', formattedPhone)
+      .in('mobile_number', phoneVariants)
       .single()
 
     if (userError || !userData) {
+      console.error('User lookup error:', userError)
+      console.log('No user found with mobile number:', phoneVariants)
       return NextResponse.json(
         { error: 'No account found with this mobile number' },
         { status: 404 }
       )
     }
 
+    console.log('User found:', userData.id, 'with mobile:', userData.mobile_number)
+
     // Generate OTP
     const otpCode = generateOTP()
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes from now
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
 
-    // Clean up any existing OTPs for this mobile number
+    // Clean up any existing OTPs for this mobile number (all variants)
     await supabaseAdmin
       .from('password_reset_otps')
       .delete()
-      .eq('mobile_number', formattedPhone)
+      .in('mobile_number', phoneVariants)
 
     // Store OTP in database
+    // Note: We don't store user_id due to FK constraint issues between auth.users and public.users
+    // The user was already validated by looking up their mobile number above
     const { error: otpError } = await supabaseAdmin
       .from('password_reset_otps')
       .insert({
         mobile_number: formattedPhone,
         otp_code: otpCode,
-        user_id: userData.id,
+        user_id: null, // Set to null to avoid FK constraint issues
         expires_at: expiresAt.toISOString(),
         verified: false
       })
 
     if (otpError) {
-      console.error('Error storing OTP:', otpError)
+      console.error('Error storing OTP in database:', otpError)
+      console.error('OTP Error Details:', {
+        message: otpError.message,
+        code: otpError.code,
+        details: otpError.details
+      })
       return NextResponse.json(
-        { error: 'Failed to generate OTP' },
+        { 
+          error: 'Failed to generate OTP',
+          details: otpError.message 
+        },
         { status: 500 }
       )
     }
 
-    // Send OTP via SMS
+    console.log('OTP stored successfully:', {
+      mobile: formattedPhone,
+      expires: expiresAt.toISOString()
+    })
+
+    // Try to send SMS first before returning success
+    // This ensures we don't report success if SMS fails completely
     const message = smsTemplates.passwordReset(userData.first_name, otpCode)
+    console.log('Sending SMS with message:', message)
+    
     const smsResult = await sendSMS({
       to: formattedPhone,
       message
@@ -105,13 +139,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'OTP sent successfully to your mobile number',
-      expiresIn: 900 // 15 minutes in seconds
+      expiresIn: 300 // 5 minutes in seconds
     })
 
   } catch (error) {
     console.error('Send OTP Error:', error)
+    console.error('Error Details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }

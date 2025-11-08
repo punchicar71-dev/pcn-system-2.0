@@ -137,11 +137,11 @@ export function isValidSriLankanPhone(phoneNumber: string): boolean {
  * SMS Templates for different scenarios
  */
 export const smsTemplates = {
-  welcome: (firstName: string, email: string, password: string) => 
-    `Welcome ${firstName}! Your PCN System account is created. Email: ${email} | Password: ${password}. Please change password after first login.`,
+  welcome: (firstName: string, username: string, email: string, password: string) => 
+    `Hi ${firstName},\n\nYour Punchi Car Niwasa Management System account has been successfully created.\nHere are your login details:\n\nUsername: ${username}\nEmail: ${email}\nPassword: ${password}\n\nPlease keep this information confidential and do not share it with anyone.\n\nThank you,\nPunchi Car Niwasa Team`,
   
-  passwordReset: (firstName: string, resetCode: string) =>
-    `Hi ${firstName}, your password reset code is: ${resetCode}. Valid for 15 minutes.`,
+  passwordReset: (firstName: string, otpCode: string) =>
+    `Punchi Car Niwasa - Password Reset\nYour OTP code is ${otpCode}.\nPlease use this code to reset your password.\nThis code will expire in 5 minutes.\n\n– Punchi Car Niwasa Support`,
   
   accountStatus: (firstName: string, status: string) =>
     `Hi ${firstName}, your PCN System account status has been updated to: ${status}.`,

@@ -102,6 +102,40 @@ export async function PUT(
       profile_picture_url
     } = body
 
+    // Check if username is being changed and if it already exists (excluding current user)
+    if (username) {
+      const { data: existingUsername } = await supabase
+        .from('users')
+        .select('id, username')
+        .eq('username', username)
+        .neq('id', params.id)
+        .single()
+
+      if (existingUsername) {
+        return NextResponse.json(
+          { error: 'Username already exists. Please choose a different username.' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Check if email is being changed and if it already exists (excluding current user)
+    if (email) {
+      const { data: existingEmail } = await supabase
+        .from('users')
+        .select('id, email')
+        .eq('email', email)
+        .neq('id', params.id)
+        .single()
+
+      if (existingEmail) {
+        return NextResponse.json(
+          { error: 'Email already exists. Please use a different email address.' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Update user in database
     const { data: updatedUser, error: updateError } = await supabase
       .from('users')

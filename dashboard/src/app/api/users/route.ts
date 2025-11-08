@@ -118,6 +118,34 @@ export async function POST(request: Request) {
       )
     }
 
+    // Check if username already exists
+    const { data: existingUsername } = await supabaseAdmin
+      .from('users')
+      .select('username')
+      .eq('username', username)
+      .single()
+
+    if (existingUsername) {
+      return NextResponse.json(
+        { error: 'Username already exists. Please choose a different username.' },
+        { status: 400 }
+      )
+    }
+
+    // Check if email already exists
+    const { data: existingEmail } = await supabaseAdmin
+      .from('users')
+      .select('email')
+      .eq('email', email)
+      .single()
+
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: 'Email already exists. Please use a different email address.' },
+        { status: 400 }
+      )
+    }
+
     // Step 1: Create auth user in Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -199,7 +227,7 @@ export async function POST(request: Request) {
         // Validate phone number
         if (isValidSriLankanPhone(mobileNumber)) {
           const formattedPhone = formatPhoneNumber(mobileNumber)
-          const smsMessage = smsTemplates.welcome(firstName, email, password)
+          const smsMessage = smsTemplates.welcome(firstName, username, email, password)
           
           console.log('Sending welcome SMS to:', formattedPhone)
           

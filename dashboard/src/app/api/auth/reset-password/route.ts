@@ -16,6 +16,7 @@ const supabaseAdmin = createClient(
 
 interface ResetTokenPayload {
   userId: string
+  authId: string
   mobileNumber: string
   otpId: string
   type: string
@@ -71,22 +72,35 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's auth ID from users table
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
-      .select('auth_id')
-      .eq('id', decoded.userId)
-      .single()
+    let authId = decoded.authId
+    
+    // If authId is not in token (fallback), look it up from users table
+    if (!authId && decoded.userId) {
+      const { data: userData, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('auth_id')
+        .eq('id', decoded.userId)
+        .single()
 
-    if (userError || !userData) {
+      if (userError || !userData) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
+      authId = userData.auth_id
+    }
+
+    if (!authId) {
       return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+        { error: 'Cannot determine user auth ID' },
+        { status: 400 }
       )
     }
 
     // Update password using Supabase Admin API
     const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
-      userData.auth_id,
+      authId,
       { password: newPassword }
     )
 

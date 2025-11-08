@@ -69,7 +69,7 @@ export default function PasswordResetSuccessPage() {
 
           {/* Back to Login Button */}
           <Link
-            href="/"
+            href="/login"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-900 text-gray-900 font-medium rounded-md hover:bg-gray-50 transition-colors"
           >
             <svg

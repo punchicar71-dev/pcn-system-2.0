@@ -21,6 +21,8 @@ interface UserDetails {
   username: string
   email: string
   mobile_number: string | null
+  phone_verified: boolean
+  phone_verified_at: string | null
   access_level: string
   role: string
   profile_picture_url: string | null
@@ -42,6 +44,10 @@ export default function UserDetailsModal({
   const [isEditing, setIsEditing] = useState(false)
   const [error, setError] = useState('')
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [showOtpInput, setShowOtpInput] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [sendingOtp, setSendingOtp] = useState(false)
+  const [verifyingOtp, setVerifyingOtp] = useState(false)
 
   // Check if current user is admin
   const isAdmin = currentUserAccessLevel?.toLowerCase() === 'admin'
@@ -204,6 +210,91 @@ export default function UserDetailsModal({
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       onDeleteUser(userId)
       onClose()
+    }
+  }
+
+  const handleSendOtp = async () => {
+    if (!user || !user.mobile_number) {
+      setError('Mobile number is required to send OTP')
+      return
+    }
+
+    setSendingOtp(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/users/send-phone-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          authId: user.auth_id,
+          mobileNumber: user.mobile_number,
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setShowOtpInput(true)
+        alert('OTP code sent to your mobile number. Please check your SMS.')
+      } else {
+        setError(data.error || 'Failed to send OTP')
+      }
+    } catch (err) {
+      console.error('Error sending OTP:', err)
+      setError('Failed to send OTP. Please try again.')
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!user || !otpCode) {
+      setError('Please enter the OTP code')
+      return
+    }
+
+    if (otpCode.length !== 6) {
+      setError('OTP code must be 6 digits')
+      return
+    }
+
+    setVerifyingOtp(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/users/verify-phone-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          authId: user.auth_id,
+          mobileNumber: user.mobile_number,
+          otpCode: otpCode
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert('Phone number verified successfully!')
+        setShowOtpInput(false)
+        setOtpCode('')
+        // Refresh user details to show verified status
+        await fetchUserDetails()
+      } else {
+        setError(data.error || 'Failed to verify OTP')
+      }
+    } catch (err) {
+      console.error('Error verifying OTP:', err)
+      setError('Failed to verify OTP. Please try again.')
+    } finally {
+      setVerifyingOtp(false)
     }
   }
 
@@ -382,6 +473,108 @@ export default function UserDetailsModal({
                   />
                 </div>
               </div>
+
+              {/* Phone Verification Section */}
+              {user.mobile_number && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        📱 Mobile Number Verification
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Verify your mobile number to enable SMS notifications and phone authentication
+                      </p>
+                    </div>
+                    {user.phone_verified && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                        ✓ Verified
+                      </span>
+                    )}
+                  </div>
+
+                  {user.phone_verified ? (
+                    <div className="bg-white border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">Phone number verified</p>
+                          <p className="text-sm text-gray-600">
+                            Verified on {new Date(user.phone_verified_at!).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="bg-white border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">Phone not verified</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Click "Send OTP" to receive a verification code via SMS to <strong>{user.mobile_number}</strong>
+                            </p>
+                          </div>
+                        </div>
+
+                        {!showOtpInput ? (
+                          <button
+                            onClick={handleSendOtp}
+                            disabled={sendingOtp}
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sendingOtp ? 'Sending OTP...' : 'Send Verification Code'}
+                          </button>
+                        ) : (
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Enter 6-digit OTP code
+                              </label>
+                              <input
+                                type="text"
+                                maxLength={6}
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                placeholder="000000"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl font-mono tracking-widest"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                OTP sent to {user.mobile_number}. Valid for 15 minutes.
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleVerifyOtp}
+                                disabled={verifyingOtp || otpCode.length !== 6}
+                                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {verifyingOtp ? 'Verifying...' : 'Verify Code'}
+                              </button>
+                              <button
+                                onClick={handleSendOtp}
+                                disabled={sendingOtp}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {sendingOtp ? 'Sending...' : 'Resend'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Profile Picture */}
               <div>
