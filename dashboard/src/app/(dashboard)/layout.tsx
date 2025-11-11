@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -17,7 +18,9 @@ import {
   X,
   ChevronDown,
   User,
-  Key
+  Key,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { useSessionHeartbeat } from '@/hooks/useSessionHeartbeat'
 import { createClient } from '@/lib/supabase-client'
@@ -48,6 +51,9 @@ export default function DashboardLayout({
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [greeting, setGreeting] = useState('')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const pathname = usePathname()
 
   // Initialize session heartbeat to track user activity
   useSessionHeartbeat()
@@ -215,53 +221,100 @@ export default function DashboardLayout({
         </div>
       )}
 
-      {/* Sidebar - 260px width */}
-      <aside className="fixed inset-y-0 left-0 w-[260px] pt-3 bg-white border-r">
+      {/* Sidebar - Dynamic width with smooth transition */}
+      <aside 
+        className={`fixed inset-y-0 left-0 pt-3 bg-white border-r transition-all duration-300 ease-in-out z-[100] ${
+          isSidebarCollapsed ? 'w-[80px]' : 'w-[260px]'
+        }`}
+      >
         <div className="flex flex-col h-full">
           {/* Logo Section - 50px height */}
-          <div className="h-[50px] flex items-center px-5 ">
+          <div className="h-[50px] flex items-center px-5 relative">
             <Image 
               src="/logo.png" 
               alt="Punchi Car Niwasa" 
               width={40} 
               height={40}
-              className="mr-3"
+              className={`transition-all duration-300 ${isSidebarCollapsed ? 'mr-0' : 'mr-3'}`}
             />
-            <div>
-              <h1 className="text-sm font-bold text-gray-800 leading-tight">Punchi Car Niwasa</h1>
-              <p className="text-[10px] text-gray-500">Management System</p>
+            <div className={`overflow-hidden transition-all duration-300 ${
+              isSidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+            }`}>
+              <h1 className="text-sm font-bold text-gray-800 leading-tight whitespace-nowrap">Punchi Car Niwasa</h1>
+              <p className="text-[10px] text-gray-500 whitespace-nowrap">Management System</p>
             </div>
+            
+            {/* Toggle Button */}
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className={`absolute ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2 ml-10' : 'right-2'} top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-100 hover:bg-gray-300 rounded-md flex items-center justify-center transition-all duration-300  z-[200]`}
+            >
+              {isSidebarCollapsed ? (
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              ) : (
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
           </div>
 
           {/* Navigation - Scrollable area */}
           <nav className="flex-1 overflow-y-auto py-5">
-            <ul className="space-y-5 px-5">
+            <ul className={`space-y-5 ${isSidebarCollapsed ? 'px-3' : 'px-5'}`}>
               {navigation.map((item) => (
-                <li key={item.name}>
+                <li 
+                  key={item.name}
+                  className="relative"
+                  onMouseEnter={() => isSidebarCollapsed && setHoveredItem(item.name)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
                   <Link
                     href={item.href}
-                    className="flex items-center gap-3 px-3 py-2 text-[16px] text-gray-700 rounded-lg hover:bg-gray-100 active:bg-gray-100 transition-colors"
+                    className={`flex items-center gap-3 px-3 py-2 text-[16px] rounded-lg transition-all duration-200 ${
+                      isSidebarCollapsed ? 'justify-center' : ''
+                    } ${
+                      pathname === item.href 
+                        ? 'bg-gray-100 text-gray-900 font-medium' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="leading-tight">{item.name}</span>
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    <span className={`leading-tight whitespace-nowrap transition-all duration-300 ${
+                      isSidebarCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-auto opacity-100'
+                    }`}>
+                      {item.name}
+                    </span>
                   </Link>
+                  
+                  {/* Tooltip for collapsed state */}
+                  {isSidebarCollapsed && hoveredItem === item.name && (
+                    <div className="fixed left-[80px] z-[9999]  bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap shadow-lg animate-in fade-in slide-in-from-left-1 duration-200" style={{ top: `${(document.querySelector(`a[href="${item.href}"]`)?.getBoundingClientRect().top || 0) + (document.querySelector(`a[href="${item.href}"]`)?.getBoundingClientRect().height || 0) / 2 - 16}px` }}>
+                      {item.name}
+                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
           </nav>
 
           {/* Footer Section - margin 20px */}
-          <div className="border-t px-5 py-4 mb-5">
-            <div className="text-[10px] text-gray-400">
-              <p>Powered By Aerotop.com</p>
-              <p>Application Version 1.0.0</p>
+          <div className={` py-4 mb-2 transition-all duration-300 ${
+            isSidebarCollapsed ? 'px-3' : 'px-5'
+          }`}>
+            <div className={`text-[12px] text-gray-400 transition-all duration-300 ${
+              isSidebarCollapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'
+            }`}>
+              <p></p>
+              <p>Application Version 1.2.4</p>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* Main content - offset by sidebar width */}
-      <main className="ml-[260px]">
+      {/* Main content - offset by sidebar width with smooth transition */}
+      <main className={`transition-all duration-300 ease-in-out ${
+        isSidebarCollapsed ? 'ml-[80px]' : 'ml-[260px]'
+      }`}>
         {/* Header - 50px height */}
         <header className="bg-white border-b h-[50px] flex items-center justify-between px-6 sticky top-0 z-10">
           {/* Header Left Side - Greeting */}
@@ -292,10 +345,10 @@ export default function DashboardLayout({
                     alt={currentUser.first_name}
                     width={32}
                     height={32}
-                    className="w-8 h-8 rounded-full object-cover"
+                    className="w-7 h-7 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 font-semibold text-sm">
                     {currentUser ? currentUser.first_name.charAt(0).toUpperCase() : ''}
                   </div>
                 )}
@@ -366,7 +419,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content - Full height body */}
-        <div className="min-h-[calc(100vh-50px)] ">
+        <div className="min-h-[calc(100vh-50px)] w-auto ">
           {children}
         </div>
       </main>

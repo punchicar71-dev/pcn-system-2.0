@@ -162,12 +162,12 @@ export default function SellVehiclePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       
 
       <SellVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />
 
-      <div className="max-w-7xl mx-auto ">
+      <div className="max-w-7xl  ">
         {currentStep === 1 && (
           <CustomerDetails
             formData={customerData}

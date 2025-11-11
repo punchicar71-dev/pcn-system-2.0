@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Edit, Search, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,12 +13,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -27,16 +21,10 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { supabase } from '@/lib/supabase-client'
 import { VehicleBrand, VehicleModel } from '@/lib/database.types'
+import { DataTable } from '@/components/ui/data-table'
+import { createColumns, BrandWithModels } from './vehicle-brands-columns'
 
 export default function VehicleBrandsTab() {
   const [brands, setBrands] = useState<VehicleBrand[]>([])
@@ -54,42 +42,30 @@ export default function VehicleBrandsTab() {
   const [newModelName, setNewModelName] = useState('')
   const [selectedBrandForModel, setSelectedBrandForModel] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [rowsPerPage, setRowsPerPage] = useState(6)
 
   useEffect(() => {
     fetchBrands()
   }, [])
 
-  // Memoize filtered brands to avoid recalculation on every render
+  // Memoize brands with models for the data table
+  const brandsWithModels = useMemo((): BrandWithModels[] => {
+    return brands.map(brand => ({
+      ...brand,
+      models: models[brand.id] || []
+    }))
+  }, [brands, models])
+
+  // Filter brands based on search query
   const filteredBrands = useMemo(() => {
-    return brands.filter(brand => 
+    if (!searchQuery) return brandsWithModels
+    
+    return brandsWithModels.filter(brand => 
       brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      models[brand.id]?.some(model => 
+      brand.models.some(model => 
         model.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     )
-  }, [searchQuery, brands, models])
-
-  // Memoize pagination values
-  const { totalPages, startIndex, endIndex, currentBrands } = useMemo(() => {
-    const pages = Math.ceil(filteredBrands.length / rowsPerPage)
-    const start = (currentPage - 1) * rowsPerPage
-    const end = start + rowsPerPage
-    const current = filteredBrands.slice(start, end)
-    
-    return {
-      totalPages: pages,
-      startIndex: start,
-      endIndex: end,
-      currentBrands: current
-    }
-  }, [filteredBrands, currentPage, rowsPerPage])
-
-  // Reset to first page when search query or rows per page changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchQuery, rowsPerPage])
+  }, [searchQuery, brandsWithModels])
 
   const fetchBrands = async () => {
     try {
@@ -357,180 +333,30 @@ export default function VehicleBrandsTab() {
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative w-[400px]">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
         <Input
-          placeholder="Brand, Number, Model"
+          placeholder="Search brand or model..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 "
         />
       </div>
 
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Model</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            ) : currentBrands.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                  {searchQuery ? 'No brands found matching your search' : 'No brands found'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              currentBrands.map((brand) => (
-                <TableRow key={brand.id}>
-                  <TableCell className="font-medium">{brand.name}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {models[brand.id]?.slice(0, 10).map((model) => (
-                        <span
-                          key={model.id}
-                          className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs"
-                        >
-                          {model.name}
-                        </span>
-                      ))}
-                      {models[brand.id]?.length > 10 && (
-                        <span className="text-xs text-gray-500">
-                          +{models[brand.id].length - 10} more
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewModels(brand.id)}
-                      >
-                        View All
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(brand)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteBrand(brand.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-
-        {!loading && filteredBrands.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Rows per page</span>
-              <Select 
-                value={rowsPerPage.toString()} 
-                onValueChange={(value) => {
-                  setRowsPerPage(Number(value))
-                  setCurrentPage(1)
-                }}
-              >
-                <SelectTrigger className="w-16">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500">
-                {startIndex + 1}-{Math.min(endIndex, filteredBrands.length)} of {filteredBrands.length}
-              </span>
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(totalPages, 8) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 8) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 4) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 3) {
-                      pageNum = totalPages - 7 + i;
-                    } else {
-                      pageNum = currentPage - 3 + i;
-                    }
-
-                    if (pageNum === currentPage - 3 && currentPage > 4 && totalPages > 8) {
-                      return <span key="ellipsis-1" className="px-2 flex items-center text-gray-500">...</span>;
-                    }
-                    if (pageNum === currentPage + 3 && currentPage < totalPages - 3 && totalPages > 8) {
-                      return <span key="ellipsis-2" className="px-2 flex items-center text-gray-500">...</span>;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="w-8"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div className="bg-white rounded-lg border p-8 text-center">
+          Loading...
+        </div>
+      ) : (
+        <DataTable 
+          columns={createColumns(
+            openEditDialog,
+            handleDeleteBrand,
+            handleViewModels
+          )} 
+          data={filteredBrands} 
+        />
+      )}
 
       <Dialog open={isEditBrandOpen} onOpenChange={setIsEditBrandOpen}>
         <DialogContent>

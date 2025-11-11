@@ -2,11 +2,106 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 11, 2025 | Version: 2.0.14
+**Status**: ✅ Production Ready | Last Updated: November 11, 2025 | Version: 2.0.15
 
 ---
 
-## 📢 LATEST UPDATE - November 11, 2025 (UI/UX Improvements & Component Enhancements)
+## 📢 LATEST UPDATE - November 11, 2025 (Dashboard Layout & Data Table Enhancements)
+
+### 🎨 Dashboard Layout & UI/UX Improvements
+
+**Major Feature: Collapsible sidebar, responsive layout, and advanced data table implementation!**
+
+#### What's New:
+
+1. **📱 Collapsible Sidebar Navigation**:
+   - Toggle button to collapse/expand sidebar
+   - Smooth transitions between expanded (260px) and collapsed (80px) states
+   - Tooltip hints for navigation items when sidebar is collapsed
+   - Active page highlighting in navigation menu
+   - Responsive main content area adjusts with sidebar state
+   - Improved visual design with hover effects
+   - Version display updated to 1.2.4
+
+2. **📊 Advanced Data Table Component**:
+   - Integrated @tanstack/react-table (v8.21.3) for powerful table functionality
+   - Built-in sorting, filtering, and pagination capabilities
+   - Reusable DataTable component with TypeScript support
+   - Custom column definitions with vehicle-brands-columns
+   - Smart pagination with ellipsis for many pages
+   - Configurable rows per page (6, 10, 20, 50)
+   - Improved performance with memoization
+
+3. **🚗 Vehicle Brands Settings Enhancement**:
+   - Replaced custom table implementation with DataTable component
+   - Removed manual pagination logic (handled by TanStack Table)
+   - Optimized search and filtering
+   - Better performance with large datasets
+   - Cleaner code with separated column definitions
+   - Consistent table styling across the application
+
+4. **🎨 Page Layout Improvements**:
+   - Add Vehicle page: Updated container width for better responsiveness
+   - Sell Vehicle page: Changed background from gray to white
+   - Settings page: Removed unnecessary rounded corners and shadows
+   - Consistent spacing and layout across all pages
+   - Better visual hierarchy and user experience
+
+5. **🔧 User Profile Enhancements**:
+   - Profile picture size adjustment (from 8x8 to 7x7)
+   - Default avatar background changed to gray for better aesthetics
+   - Improved dropdown menu positioning and interaction
+   - Better visual consistency in header area
+
+#### Files Created/Updated:
+
+**New Components:**
+- `dashboard/src/components/ui/data-table.tsx` - Reusable data table component with TanStack Table ✅
+- `dashboard/src/components/settings/vehicle-brands-columns.tsx` - Column definitions for vehicle brands ✅
+
+**Updated Components:**
+- `dashboard/src/app/(dashboard)/layout.tsx` - Added collapsible sidebar functionality
+- `dashboard/src/app/(dashboard)/add-vehicle/page.tsx` - Updated container width
+- `dashboard/src/app/(dashboard)/sell-vehicle/page.tsx` - Changed background color
+- `dashboard/src/app/(dashboard)/settings/page.tsx` - Removed container styling
+- `dashboard/src/components/settings/VehicleBrandsTab.tsx` - Integrated DataTable component
+
+**Package Updates:**
+- `dashboard/package.json` - Added @tanstack/react-table v8.21.3
+- `dashboard/package.json` - Updated @radix-ui/react-slot to v1.2.4
+
+#### Technical Improvements:
+
+**Navigation:**
+- Collapsible sidebar with smooth CSS transitions
+- Active page highlighting for better navigation context
+- Tooltip system for collapsed sidebar state
+- Improved responsive behavior
+
+**Data Management:**
+- TanStack Table for advanced table operations
+- Type-safe column definitions
+- Optimized rendering with React memoization
+- Better performance with large datasets
+
+**Code Quality:**
+- Separated concerns with dedicated column definition files
+- Reusable DataTable component
+- Reduced code duplication
+- Better TypeScript support
+
+#### Next Steps:
+
+**Recommended Actions:**
+- Apply DataTable component to other tables (Inventory, Sales Transactions)
+- Add sorting functionality to table columns
+- Consider adding column visibility toggles
+- Test sidebar behavior on mobile devices
+- Add keyboard shortcuts for sidebar toggle
+
+---
+
+## 📢 PREVIOUS UPDATE - November 11, 2025 (UI/UX Improvements & Component Enhancements)
 
 ### 🎨 User Interface & Experience Enhancements
 
