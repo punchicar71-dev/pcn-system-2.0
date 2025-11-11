@@ -1,6 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import PrintDocumentModal from '@/components/sales-transactions/PrintDocumentModal';
 
 interface ConfirmationProps {
   vehicleData: {
@@ -9,14 +11,15 @@ interface ConfirmationProps {
     year: number;
     vehicleNumber: string;
   };
+  saleId: string;
 }
 
-export default function Confirmation({ vehicleData }: ConfirmationProps) {
+export default function Confirmation({ vehicleData, saleId }: ConfirmationProps) {
   const router = useRouter();
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
-  const handlePrintInvoice = () => {
-    // TODO: Implement print invoice functionality
-    window.print();
+  const handlePrintDocument = () => {
+    setIsPrintModalOpen(true);
   };
 
   const handlePendingList = () => {
@@ -59,10 +62,10 @@ export default function Confirmation({ vehicleData }: ConfirmationProps) {
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-4">
           <button
-            onClick={handlePrintInvoice}
+            onClick={handlePrintDocument}
             className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
           >
-            Print Invoice
+            Print Document
           </button>
           <button
             onClick={handlePendingList}
@@ -72,6 +75,13 @@ export default function Confirmation({ vehicleData }: ConfirmationProps) {
           </button>
         </div>
       </div>
+
+      {/* Print Document Modal */}
+      <PrintDocumentModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        saleId={saleId}
+      />
     </div>
   );
 }

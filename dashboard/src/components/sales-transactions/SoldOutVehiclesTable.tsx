@@ -1,10 +1,11 @@
 'use client';
 
-import { Search, Eye, Printer, ChevronLeft, ChevronRight, Calendar, Trash2 } from 'lucide-react';
+import { Search, Eye, Printer, ChevronLeft, ChevronRight, Trash2, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import { format } from 'date-fns';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface SoldOutVehiclesTableProps {
   onViewDetail: (saleId: string) => void;
@@ -20,7 +21,7 @@ export default function SoldOutVehiclesTable({
   const [salesData, setSalesData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,7 +113,8 @@ export default function SoldOutVehiclesTable({
     if (dateFilter) {
       filtered = filtered.filter((sale) => {
         const saleDate = format(new Date(sale.sold_date), 'yyyy-MM-dd');
-        return saleDate === dateFilter;
+        const filterDate = format(dateFilter, 'yyyy-MM-dd');
+        return saleDate === filterDate;
       });
     }
 
@@ -182,6 +184,72 @@ export default function SoldOutVehiclesTable({
     setDeleteConfirmOpen(true);
   };
 
+  // Export to CSV function
+  const handleExportCSV = () => {
+    if (filteredData.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // Define CSV headers
+    const headers = [
+      'Vehicle Number',
+      'Brand',
+      'Model',
+      'Year',
+      'Customer Name',
+      'Sales Agent',
+      'Payment Type',
+      'Selling Amount (Rs)',
+      'Sold Out Date',
+      'Created Date'
+    ];
+
+    // Convert data to CSV rows
+    const csvRows = filteredData.map(sale => [
+      sale.vehicle_number,
+      sale.brand_name,
+      sale.model_name,
+      sale.manufacture_year,
+      sale.customer_name,
+      sale.sales_agent_name,
+      sale.payment_type,
+      sale.selling_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      formatDate(sale.sold_date),
+      formatDate(sale.created_at)
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...csvRows.map(row => row.map(cell => {
+        // Escape cells containing commas or quotes
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // Generate filename with current date
+    const timestamp = format(new Date(), 'yyyy-MM-dd_HHmmss');
+    const filename = `sold_out_vehicles_${timestamp}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleConfirmDelete = async () => {
     if (!selectedSaleForDelete) return;
 
@@ -239,38 +307,51 @@ export default function SoldOutVehiclesTable({
   return (
     <div className="space-y-6">
       {/* Search and Filter Section */}
-      <div className="flex pt-4 gap-4">
-        {/* Search Vehicle */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Search Vehicle
-          </label>
-          <div className="relative w-[400px] ">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Brand, Number, Model"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      <div className="flex pt-4 gap-4 items-end justify-between">
+        <div className="flex gap-4">
+          {/* Search Vehicle */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search Vehicle
+            </label>
+            <div className="relative w-[400px] ">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Brand, Number, Model"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-9 pl-10 pr-4 py-2.5 border border-gray-200 shadow-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Date Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date Filter
+            </label>
+            <div className="relative w-[400px]">
+              <DatePicker
+                date={dateFilter}
+                onDateChange={setDateFilter}
+                placeholder="Pick a date"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Date Filter */}
+        {/* Export CSV Button */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Date Filter
-          </label>
-          <div className="relative w-[400px]">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full h-10  pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+          <button
+            onClick={handleExportCSV}
+            disabled={filteredData.length === 0}
+            className="h-10 px-4 py-2.5 bg-gray-900 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg flex items-center gap-2 transition-colors font-medium text-sm"
+            title="Export to CSV"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
         </div>
       </div>
 
@@ -364,7 +445,7 @@ export default function SoldOutVehiclesTable({
                         <button
                           onClick={() => {
                             setSearchQuery('');
-                            setDateFilter('');
+                            setDateFilter(undefined);
                           }}
                           className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                         >

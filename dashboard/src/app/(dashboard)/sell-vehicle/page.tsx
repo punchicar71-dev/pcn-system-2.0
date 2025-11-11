@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase-client';
 export default function SellVehiclePage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [createdSaleId, setCreatedSaleId] = useState<string>('');
   
   const [customerData, setCustomerData] = useState({
     title: 'Mr.',
@@ -103,6 +104,11 @@ export default function SellVehiclePage() {
         return;
       }
 
+      // Store the created sale ID for the confirmation page
+      if (data && data.id) {
+        setCreatedSaleId(data.id);
+      }
+
       // Update vehicle status to 'Pending Sale' so it disappears from inventory
       const { error: updateError } = await supabase
         .from('vehicles')
@@ -187,6 +193,7 @@ export default function SellVehiclePage() {
               year: sellingData.selectedVehicle.manufacture_year,
               vehicleNumber: sellingData.selectedVehicle.vehicle_number,
             }}
+            saleId={createdSaleId}
           />
         )}
       </div>

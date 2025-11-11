@@ -216,7 +216,6 @@ export default function UserManagementPage() {
   const handleEditUser = (userId: string) => {
     // Check if current user is admin
     if (!currentUser || currentUser.access_level?.toLowerCase() !== 'admin') {
-      alert('Access Denied: Only administrators can edit user details.')
       return
     }
     console.log('Edit user:', userId)
@@ -227,20 +226,17 @@ export default function UserManagementPage() {
   const handleDeleteUser = async (userId: string) => {
     // Check if current user is admin
     if (!currentUser || currentUser.access_level?.toLowerCase() !== 'admin') {
-      alert('Access Denied: Only administrators can delete users.')
       return
     }
 
     // Prevent self-deletion
     if (currentUser.id === userId) {
-      alert('Error: You cannot delete your own account.')
       return
     }
 
     // Find the user to delete
     const user = users.find(u => u.id === userId)
     if (!user) {
-      alert('User not found')
       return
     }
 
@@ -265,15 +261,13 @@ export default function UserManagementPage() {
         // Success
         setShowDeleteModal(false)
         setUserToDelete(null)
-        alert(`User ${userToDelete.first_name} ${userToDelete.last_name} has been permanently deleted.`)
         fetchUsers() // Refresh the list
       } else {
-        // Error
-        alert(`Failed to delete user: ${data.error || 'Unknown error'}`)
+        // Error - silently fail
+        console.error('Failed to delete user:', data.error)
       }
     } catch (error) {
       console.error('Error deleting user:', error)
-      alert('An error occurred while deleting the user. Please try again.')
     } finally {
       setDeleteLoading(false)
     }

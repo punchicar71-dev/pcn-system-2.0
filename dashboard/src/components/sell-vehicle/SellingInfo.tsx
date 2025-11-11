@@ -4,6 +4,9 @@ import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase-client';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SellingInfoProps {
   formData: {
@@ -181,8 +184,8 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 Search Vehicle <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+                <Input
                   type="text"
                   value={formData.searchVehicle}
                   onChange={(e) => {
@@ -191,7 +194,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                       onChange('selectedVehicle', null);
                     }
                   }}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="pl-10 pr-4"
                   placeholder="Search by Vehicle Number"
                   required
                   disabled={isLoading}
@@ -234,11 +237,10 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Selling Amount <span className="text-red-500">*</span>
               </label>
-              <input
+              <Input
                 type="number"
                 value={formData.sellingAmount}
                 onChange={(e) => onChange('sellingAmount', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Rs"
                 required
               />
@@ -249,11 +251,10 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Advance Amount
               </label>
-              <input
+              <Input
                 type="number"
                 value={formData.advanceAmount}
                 onChange={(e) => onChange('advanceAmount', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Rs"
               />
             </div>
@@ -261,10 +262,10 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
             {/* To Pay Amount - Calculated */}
             {formData.sellingAmount && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <label className="block text-sm font-medium text-blue-900 mb-1">
+                <label className="block text-sm font-medium text-blue-700 mb-1">
                   To Pay Amount
                 </label>
-                <div className="text-2xl font-bold text-blue-900">
+                <div className="text-[18px] font-bold text-blue-700">
                   Rs. {(
                     parseFloat(formData.sellingAmount || '0') - 
                     parseFloat(formData.advanceAmount || '0')
@@ -275,19 +276,22 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
 
             {/* Payment Type */}
             <div>
-              <label className="block  w-[400px]  text-sm font-medium text-gray-700 mb-1">
+              <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
                 Payment Method <span className="text-red-500">*</span>
               </label>
-              <select
+              <Select
                 value={formData.paymentType}
-                onChange={(e) => onChange('paymentType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                onValueChange={(value) => onChange('paymentType', value)}
                 required
               >
-                <option value="">Select option...</option>
-                <option value="Cash">Cash</option>
-                <option value="Leasing">Leasing</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select option..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="Leasing">Leasing</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Leasing Company - Only show when Payment Type is Leasing */}
@@ -296,19 +300,22 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Select Leasing Company <span className="text-red-500">*</span>
                 </label>
-                <select
+                <Select
                   value={formData.leasingCompany}
-                  onChange={(e) => onChange('leasingCompany', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  onValueChange={(value) => onChange('leasingCompany', value)}
                   required
                 >
-                  <option value="">Select leasing company...</option>
-                  {leasingCompanies.map((company) => (
-                    <option key={company.id} value={company.id}>
-                      {company.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select leasing company..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {leasingCompanies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -317,18 +324,21 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Office Sales Agent
               </label>
-              <select
+              <Select
                 value={formData.inHouseSalesAgent}
-                onChange={(e) => onChange('inHouseSalesAgent', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                onValueChange={(value) => onChange('inHouseSalesAgent', value)}
               >
-                <option value="">Select option...</option>
-                {salesAgents.filter((agent) => agent.agent_type === 'Office Sales Agent').map((agent) => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select option..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {salesAgents.filter((agent) => agent.agent_type === 'Office Sales Agent').map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Vehicle Showroom Agent */}
@@ -336,28 +346,31 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Vehicle Showroom Agent
               </label>
-              <select
+              <Select
                 value={formData.thirdPartySalesAgent}
-                onChange={(e) => onChange('thirdPartySalesAgent', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                onValueChange={(value) => onChange('thirdPartySalesAgent', value)}
               >
-                <option value="">Select option...</option>
-                {salesAgents.filter((agent) => agent.agent_type === 'Vehicle Showroom Agent').map((agent) => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select option..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {salesAgents.filter((agent) => agent.agent_type === 'Vehicle Showroom Agent').map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Right Column - Vehicle Details Card */}
           <div>
             {formData.selectedVehicle ? (
-              <div className="bg-gray-50  w-[400px] rounded-lg p-4 border border-gray-200 sticky top-32">
+              <div className="bg-gray-100 mt-6 w-[400px] rounded-lg p-4  sticky top-32">
                 {/* Vehicle Image */}
                 {formData.selectedVehicle.images?.length > 0 && formData.selectedVehicle.images[0].image_url ? (
-                  <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-200">
+                  <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden bg-gray-200">
                     <Image
                       src={formData.selectedVehicle.images[0].image_url}
                       alt={formData.selectedVehicle.vehicle_number}
@@ -374,35 +387,38 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                   </div>
                 )}
                 
-                {/* Vehicle Number */}
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {formData.selectedVehicle.vehicle_number}
-                </h3>
                 
+                <div className='flex gap-3'>
                 {/* Brand and Model */}
                 <p className="text-lg text-gray-700 mb-4">
                   {formData.selectedVehicle.brand_name} {formData.selectedVehicle.model_name}{' '}
                   {formData.selectedVehicle.manufacture_year}
                 </p>
+                <span>:</span>
+               {/* Vehicle Number */}
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {formData.selectedVehicle.vehicle_number}
+                </h3>
+                </div>
+                
+                
 
                 {/* Seller Details */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-sm font-medium text-gray-700">Seller Details</span>
+                <div className="bg-white p-4 rounded-md ">
+                  <div className="flex w-full items-center gap-2 border-b mb-5">
+                    
+                    <span className="text-sm w-full font-medium  mb-3 text-gray-700">Seller Details</span>
                   </div>
                   
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <p className="font-medium">{formData.selectedVehicle.seller_name || 'N/A'}</p>
+                  <div className="space-y-1 ">
+                    <p className="font-medium"><span className='text-[14px] font-normal text-gray-500'>Name: </span><span className='text-[14px] font-semibold text-gray-900' >{formData.selectedVehicle.seller_name || 'N/A'}</span></p>
                     {formData.selectedVehicle.seller_address && (
-                      <p>{formData.selectedVehicle.seller_address}</p>
+                      <p><span className='text-[14px] font-normal text-gray-500'>Address: </span><span className='text-[14px] font-semibold text-gray-900' >{formData.selectedVehicle.seller_address}</span></p>
                     )}
                     {formData.selectedVehicle.seller_city && (
-                      <p>{formData.selectedVehicle.seller_city}</p>
+                      <p><span className='text-[14px] font-normal text-gray-500'>City: </span><span className='text-[14px] font-semibold text-gray-900' >{formData.selectedVehicle.seller_city}</span></p>
                     )}
-                    <p className="text-blue-600">{formData.selectedVehicle.seller_mobile || 'N/A'}</p>
+                    <p className="text-blue-600"><span className='text-[14px] font-normal text-gray-500'>Mobile: </span><span className='text-[14px] font-semibold text-gray-900' >{formData.selectedVehicle.seller_mobile || 'N/A'}</span></p>
                   </div>
                 </div>
               </div>
@@ -423,20 +439,22 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
 
         {/* Action Buttons */}
         <div className="flex justify-start gap-4 pt-4">
-          <button
+          <Button
             type="button"
             onClick={onBack}
-            className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            variant="outline"
+            className="px-8 py-3 font-medium"
           >
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+            variant="default"
+            className="px-8 py-3 font-medium"
             disabled={!formData.selectedVehicle}
           >
             Sell Vehicle
-          </button>
+          </Button>
         </div>
       </form>
     </div>

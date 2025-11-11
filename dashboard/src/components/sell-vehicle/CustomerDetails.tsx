@@ -2,6 +2,9 @@
 
 import { ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface CustomerDetailsProps {
   formData: {
@@ -49,47 +52,49 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
         {/* First Name and Last Name */}
         <div className="flex w-full md:flex-cols-2 gap-4">
           <div className="relative">
-            <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+            <Label className="block w-[400px] mb-1">
               First Name <span className="text-red-500">*</span>
-            </label>
+            </Label>
             <div className="relative flex items-center">
               {/* Title Dropdown */}
               <div className="relative" ref={dropdownRef}>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="h-[42px] px-3 border border-r-0 border-gray-300 rounded-l-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-1 min-w-[80px]"
+                  className="h-9 px-3 rounded-r-none border-r-0 min-w-[80px] justify-between"
                 >
                   <span className="text-sm">{formData.title || 'Mr.'}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                </button>
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
                 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
                     {titles.map((title) => (
-                      <button
+                      <Button
                         key={title}
                         type="button"
+                        variant="ghost"
                         onClick={() => {
                           onChange('title', title);
                           setIsDropdownOpen(false);
                         }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
+                        className="w-full justify-start rounded-none first:rounded-t-lg last:rounded-b-lg h-auto py-2"
                       >
                         {title}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
               </div>
               
               {/* First Name Input */}
-              <input
+              <Input
                 type="text"
                 value={formData.firstName}
                 onChange={(e) => onChange('firstName', e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 rounded-l-none"
                 placeholder=""
                 required
               />
@@ -97,14 +102,14 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
           </div>
 
           <div>
-            <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+            <Label className="block w-[400px] mb-1">
               Last Name <span className="text-red-500">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               value={formData.lastName}
               onChange={(e) => onChange('lastName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full"
               placeholder="Doe"
               required
             />
@@ -113,14 +118,14 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
 
         {/* Address */}
         <div className="w-[820px]">
-          <label className="block  text-sm font-medium text-gray-700 mb-1">
+          <Label className="block mb-1">
             Address
-          </label>
-          <input
+          </Label>
+          <Input
             type="text"
             value={formData.address}
             onChange={(e) => onChange('address', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full"
             placeholder="Ex: No1, Petta, Colombo 1"
           />
         </div>
@@ -128,27 +133,27 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
         {/* City and NIC Number */}
         <div className="flex md:flex-cols-2 gap-4">
           <div >
-            <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+            <Label className="block w-[400px] mb-1">
               Town
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               value={formData.city}
               onChange={(e) => onChange('city', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full"
               placeholder="Select"
             />
           </div>
 
           <div>
-            <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+            <Label className="block w-[400px] mb-1">
               NIC Number
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               value={formData.nicNumber}
               onChange={(e) => onChange('nicNumber', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full"
               placeholder="Ex: 8748909230V"
             />
           </div>
@@ -157,28 +162,28 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
         {/* Mobile Number and Land Phone Number */}
         <div className="flex md:flex-cols-2 gap-4">
           <div>
-            <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+            <Label className="block w-[400px] mb-1">
               Mobile Number <span className="text-red-500">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
               type="tel"
               value={formData.mobileNumber}
               onChange={(e) => onChange('mobileNumber', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full"
               placeholder="+94"
               required
             />
           </div>
 
           <div>
-            <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+            <Label className="block w-[400px] mb-1">
               Land Phone Number
-            </label>
-            <input
+            </Label>
+            <Input
               type="tel"
               value={formData.landPhoneNumber}
               onChange={(e) => onChange('landPhoneNumber', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full"
               placeholder="+94"
             />
           </div>
@@ -186,26 +191,26 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
 
         {/* Email Address */}
         <div className="w-[820px]">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <Label className="block mb-1">
             Email Address
-          </label>
-          <input
+          </Label>
+          <Input
             type="email"
             value={formData.emailAddress}
             onChange={(e) => onChange('emailAddress', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full"
             placeholder="Ex: john.doe@gmail.com"
           />
         </div>
 
         {/* Next Button */}
         <div className="flex justify-start pt-4">
-          <button
+          <Button
             type="submit"
-            className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+            className="px-8"
           >
             Next
-          </button>
+          </Button>
         </div>
       </form>
     </div>

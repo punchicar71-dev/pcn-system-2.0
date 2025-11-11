@@ -9,7 +9,7 @@ import CustomerStaffReportsTab from '@/components/reports/CustomerStaffReportsTa
 
 export default function ReportsPage() {
   return (
-    <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
+    <div className="space-y-6 bg-white p-6 ">
       {/* Header */}
       
 

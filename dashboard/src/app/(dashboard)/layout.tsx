@@ -24,6 +24,7 @@ import { createClient } from '@/lib/supabase-client'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import { Toaster } from '@/components/ui/toaster'
+import { UserProfileModal } from '@/components/profile/UserProfileModal'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -44,6 +45,7 @@ export default function DashboardLayout({
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [greeting, setGreeting] = useState('')
 
@@ -321,14 +323,16 @@ export default function DashboardLayout({
                   {/* Dropdown Content */}
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     {/* My Profile */}
-                    <Link
-                      href="/settings"
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => setShowProfileDropdown(false)}
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false)
+                        setShowProfileModal(true)
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <User className="w-4 h-4" />
                       <span className="text-sm font-medium">My Profile</span>
-                    </Link>
+                    </button>
                     
                     {/* Password Change */}
                     <Link
@@ -369,6 +373,13 @@ export default function DashboardLayout({
       
       {/* Toast Notifications */}
       <Toaster />
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={currentUser}
+      />
     </div>
     </NotificationProvider>
   )
