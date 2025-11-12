@@ -179,7 +179,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-white">
         {/* Logout Confirmation Modal */}
         {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 relative animate-in fade-in zoom-in duration-200">
             {/* Close Button */}
             <button
@@ -223,7 +223,7 @@ export default function DashboardLayout({
 
       {/* Sidebar - Dynamic width with smooth transition */}
       <aside 
-        className={`fixed inset-y-0 left-0 pt-3 bg-white border-r transition-all duration-300 ease-in-out z-[100] ${
+        className={`fixed inset-y-0 left-0 pt-3 bg-white border-r transition-all duration-300 ease-in-out z-10 ${
           isSidebarCollapsed ? 'w-[80px]' : 'w-[260px]'
         }`}
       >
@@ -247,7 +247,7 @@ export default function DashboardLayout({
             {/* Toggle Button */}
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className={`absolute ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2 ml-10' : 'right-2'} top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-100 hover:bg-gray-300 rounded-md flex items-center justify-center transition-all duration-300  z-[200]`}
+              className={`absolute ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2 ml-10' : 'right-2'}  z top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-100 hover:bg-gray-300 rounded-md flex items-center justify-center transition-all duration-300 z-30`}
             >
               {isSidebarCollapsed ? (
                 <ChevronRight className="w-4 h-4 text-gray-600" />
@@ -287,7 +287,7 @@ export default function DashboardLayout({
                   
                   {/* Tooltip for collapsed state */}
                   {isSidebarCollapsed && hoveredItem === item.name && (
-                    <div className="fixed left-[80px] z-[9999]  bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap shadow-lg animate-in fade-in slide-in-from-left-1 duration-200" style={{ top: `${(document.querySelector(`a[href="${item.href}"]`)?.getBoundingClientRect().top || 0) + (document.querySelector(`a[href="${item.href}"]`)?.getBoundingClientRect().height || 0) / 2 - 16}px` }}>
+                    <div className="fixed left-[80px] z-30 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap shadow-lg animate-in fade-in slide-in-from-left-1 duration-200" style={{ top: `${(document.querySelector(`a[href="${item.href}"]`)?.getBoundingClientRect().top || 0) + (document.querySelector(`a[href="${item.href}"]`)?.getBoundingClientRect().height || 0) / 2 - 16}px` }}>
                       {item.name}
                       <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
                     </div>
@@ -316,7 +316,7 @@ export default function DashboardLayout({
         isSidebarCollapsed ? 'ml-[80px]' : 'ml-[260px]'
       }`}>
         {/* Header - 50px height */}
-        <header className="bg-white border-b h-[50px] flex items-center justify-between px-6 sticky top-0 z-10">
+        <header className="bg-white border-b h-[50px] flex items-center justify-between px-6 sticky top-0 ">
           {/* Header Left Side - Greeting */}
           <div className="flex items-center gap-2">
             <span className="text-gray-600 text-[16px]">{greeting}!</span>
@@ -369,12 +369,12 @@ export default function DashboardLayout({
                 <>
                   {/* Backdrop to close dropdown */}
                   <div 
-                    className="fixed inset-0 z-40" 
+                    className="fixed inset-0 z-30" 
                     onClick={() => setShowProfileDropdown(false)}
                   />
                   
                   {/* Dropdown Content */}
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
                     {/* My Profile */}
                     <button
                       onClick={() => {
