@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  dashboard:
+    image: pcnsystem2/pcn-dashboard:latest
+    container_name: pcn-dashboard
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_CLOUDFRONT_URL=${AWS_CLOUDFRONT_URL}
+      - TEXTLK_API_TOKEN=${TEXTLK_API_TOKEN}
+      - TEXTLK_API_URL=${TEXTLK_API_URL}
+      - TEXTLK_SENDER_ID=${TEXTLK_SENDER_ID}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - api
+    networks:
+      - pcn-network
+    restart: unless-stopped
+
+  web:
+    image: pcnsystem2/pcn-web:latest
+    container_name: pcn-web
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    depends_on:
+      - api
+    networks:
+      - pcn-network
+    restart: unless-stopped
+
+  api:
+    image: pcnsystem2/pcn-api:latest
+    container_name: pcn-api
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_CLOUDFRONT_URL=${AWS_CLOUDFRONT_URL}
+      - CORS_ORIGIN=http://localhost:3001,http://localhost:3002
+    networks:
+      - pcn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  pcn-network:
+    driver: bridge

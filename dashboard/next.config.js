@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -26,6 +27,18 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3001'],
     },
+  },
+  // Suppress dynamic route warnings during build
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    maxSize: 50,
+  },
+  // Ignore build errors for known issues
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
   },
 }
 
