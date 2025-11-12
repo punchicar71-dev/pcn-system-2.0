@@ -2,11 +2,107 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 12, 2025 | Version: 2.0.16 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: November 12, 2025 | Version: 2.0.17 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - November 12, 2025 (Docker Deployment & Container Orchestration)
+## 📢 LATEST UPDATE - November 12, 2025 (SMS Notification System for Vehicle Transactions)
+
+### 📱 Automated SMS Notifications
+
+**Major Feature: Complete SMS notification system for vehicle acceptance and sale confirmation!**
+
+#### What's New:
+
+1. **🚗 Vehicle Acceptance SMS**:
+   - Automatic SMS sent when vehicle is added to inventory
+   - Notifies seller that vehicle has been handed over to showroom
+   - Professional message format with contact information
+   - Includes vehicle details (number, brand, model, year)
+   - Personalized with seller's name and title
+
+2. **💰 Vehicle Sale Confirmation SMS**:
+   - Automatic SMS sent when vehicle is sold
+   - Notifies seller with sale confirmation
+   - Includes selling price in formatted currency (LKR)
+   - Personalized message with buyer verification note
+   - Contact information for follow-up
+
+3. **🔧 SMS Service Architecture**:
+   - New `vehicle-sms-service.ts` module for SMS message generation
+   - Type-safe SMS parameters with TypeScript interfaces
+   - Integration with Text.lk SMS gateway
+   - Proper error handling and logging
+   - API endpoints for both notification flows
+
+4. **📡 API Integration**:
+   - POST `/api/vehicles/send-acceptance-sms` - Send vehicle acceptance notification
+   - POST `/api/vehicles/send-sell-confirmation-sms` - Send sale confirmation
+   - Validation of required fields (phone, vehicle details, price)
+   - Comprehensive error responses with detailed messages
+
+5. **✅ Testing & Validation**:
+   - Test scripts for both SMS flows
+   - Browser-based testing utilities
+   - Error handling for missing credentials
+   - Success/failure tracking with detailed logs
+
+#### Technical Implementation:
+
+**New Files:**
+- `dashboard/src/lib/vehicle-sms-service.ts` - SMS message builder and service logic ✅
+- `dashboard/src/app/api/vehicles/send-acceptance-sms/route.ts` - Vehicle acceptance API ✅
+- `dashboard/src/app/api/vehicles/send-sell-confirmation-sms/route.ts` - Sale confirmation API ✅
+- `dashboard/test-sms-both-flows.js` - Node.js testing script ✅
+- `test-sms-browser.js` - Browser-based testing utility ✅
+
+**Updated Pages:**
+- `dashboard/src/app/(dashboard)/add-vehicle/page.tsx` - Integrated acceptance SMS
+- `dashboard/src/app/(dashboard)/sell-vehicle/page.tsx` - Integrated sale confirmation SMS
+
+**Documentation:**
+- `SELL_VEHICLE_SMS_IMPLEMENTATION.md` - Complete implementation guide
+- `SELL_VEHICLE_SMS_FIX_REPORT.md` - Technical fix report
+- `SELL_VEHICLE_SMS_CODE_SNIPPETS.md` - Code examples
+- `SELL_VEHICLE_SMS_TEST_GUIDE.md` - Testing procedures
+- `SMS_BOTH_FLOWS_COMPLETE.md` - Complete flow documentation
+- `VEHICLE_SMS_BOTH_FLOWS_FIXED.md` - Implementation details
+
+#### Message Templates:
+
+**Vehicle Acceptance:**
+```
+Dear [Title] [FirstName],
+
+Your vehicle [VehicleNumber]: [Brand], [Model], [Year] has been successfully handed over to the Punchi Car Niwasa showroom for sale. Once a buyer inspects your vehicle, we will contact you to finalize the best offer.
+
+For any inquiries, please contact: 0112 413 865 | 0117 275 275.
+
+Thank you for trusting Punchi Car Niwasa.
+```
+
+**Sale Confirmation:**
+```
+Dear [Title] [FirstName],
+
+Great news! Your vehicle [VehicleNumber]: [Brand], [Model], [Year] has been successfully sold for LKR [Price]. We'll verify the buyer's details and contact you soon to complete the transaction.
+
+For inquiries: 0112 413 865 | 0117 275 275.
+
+Thank you for choosing Punchi Car Niwasa.
+```
+
+#### Environment Variables Required:
+
+```env
+TEXTLK_USER_ID=your_user_id
+TEXTLK_API_KEY=your_api_key
+TEXTLK_SENDER_ID=PCN
+```
+
+---
+
+## 📢 PREVIOUS UPDATE - November 12, 2025 (Docker Deployment & Container Orchestration)
 
 ### 🐳 Docker Production Deployment
 

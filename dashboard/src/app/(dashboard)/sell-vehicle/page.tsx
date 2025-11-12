@@ -7,6 +7,7 @@ import CustomerDetails from '@/components/sell-vehicle/CustomerDetails';
 import SellingInfo from '@/components/sell-vehicle/SellingInfo';
 import Confirmation from '@/components/sell-vehicle/Confirmation';
 import { createClient } from '@/lib/supabase-client';
+import { sendSellVehicleConfirmationSMS } from '@/lib/vehicle-sms-service';
 
 export default function SellVehiclePage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -150,6 +151,52 @@ export default function SellVehiclePage() {
       } catch (notifError) {
         console.error('⚠️  Failed to create notification:', notifError)
         // Don't block sale if notification fails
+      }
+
+      // 📱 Send SMS confirmation to original vehicle seller
+      try {
+        console.log('📱 Fetching original vehicle seller information...');
+        
+        // Get the original seller who gave the vehicle to showroom
+        const { data: sellerData, error: sellerError } = await supabase
+          .from('sellers')
+          .select('title, first_name, last_name, mobile_number')
+          .eq('vehicle_id', sellingData.selectedVehicle.id)
+          .single();
+
+        if (sellerError || !sellerData) {
+          console.warn('⚠️ Could not fetch seller information:', sellerError);
+        } else if (!sellerData.mobile_number) {
+          console.warn('⚠️ Seller has no mobile number on record');
+        } else {
+          console.log('📱 Sending SMS confirmation to original vehicle seller...');
+          
+          const smsResult = await sendSellVehicleConfirmationSMS({
+            seller: {
+              title: sellerData.title || 'Mr.',
+              firstName: sellerData.first_name,
+              lastName: sellerData.last_name,
+              mobileNumber: sellerData.mobile_number,
+            },
+            vehicle: {
+              vehicleNumber: sellingData.selectedVehicle.vehicle_number,
+              brand: sellingData.selectedVehicle.brand_name,
+              model: sellingData.selectedVehicle.model_name,
+              year: sellingData.selectedVehicle.manufacture_year,
+            },
+            sellingPrice: parseFloat(sellingData.sellingAmount),
+          });
+
+          if (smsResult.success) {
+            console.log('✅ SMS sent successfully to vehicle seller:', smsResult.phoneNumber);
+          } else {
+            console.warn('⚠️ SMS failed to send to vehicle seller:', smsResult.error);
+            // Don't block the sale confirmation - SMS failure is not critical
+          }
+        }
+      } catch (smsError) {
+        console.error('⚠️ SMS error occurred:', smsError);
+        // Don't block the sale confirmation - continue with the flow
       }
 
       // Success - move to confirmation step

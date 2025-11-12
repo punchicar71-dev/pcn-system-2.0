@@ -546,6 +546,41 @@ export default function AddVehiclePage() {
         alert('Warning: Seller information could not be saved.');
       } else {
         console.log('✅ Seller created successfully');
+        
+        // 📱 Send SMS to seller about vehicle acceptance
+        try {
+          console.log('📱 Sending vehicle acceptance SMS to seller...');
+          
+          const { sendVehicleAcceptanceSMS } = await import('@/lib/vehicle-sms-service');
+          
+          const brandName = brands.find(b => b.id === vehicleDetails.brandId)?.name || '';
+          const modelName = models.find(m => m.id === vehicleDetails.modelId)?.name || '';
+          
+          const smsResult = await sendVehicleAcceptanceSMS({
+            seller: {
+              title: sellerDetails.title,
+              firstName: sellerDetails.firstName,
+              lastName: sellerDetails.lastName,
+              mobileNumber: sellerDetails.mobileNumber,
+            },
+            vehicle: {
+              vehicleNumber: vehicleDetails.vehicleNumber,
+              brand: brandName,
+              model: modelName,
+              year: vehicleDetails.manufactureYear || new Date().getFullYear(),
+            },
+          });
+
+          if (smsResult.success) {
+            console.log('✅ Vehicle acceptance SMS sent to:', smsResult.phoneNumber);
+          } else {
+            console.warn('⚠️ SMS failed to send:', smsResult.error);
+            // Don't block vehicle publication if SMS fails
+          }
+        } catch (smsError) {
+          console.error('⚠️ SMS error occurred:', smsError);
+          // Don't block vehicle publication - continue with the flow
+        }
       }
 
       // Insert vehicle options (TEXT DATA - goes to Supabase)
