@@ -2,11 +2,83 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 14, 2025 | Version: 2.0.18 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: November 14, 2025 | Version: 2.0.19 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - November 14, 2025 (Reports & UI Enhancements)
+## 📢 LATEST UPDATE - November 14, 2025 (Sales Agents Report UI Enhancements)
+
+### 📊 Enhanced Sales Agents Report with Calendar Date Picker
+
+**Major Feature: Improved date range selection and UI refinements for Sales Agents Report!**
+
+#### What's New:
+
+1. **📅 Calendar Date Picker Integration**:
+   - Replaced simple text inputs with interactive calendar component
+   - Two-month calendar view for easy date range selection
+   - Visual date range picker with start and end date selection
+   - Clear button to reset date filters quickly
+   - Better user experience with intuitive date selection
+   - Formatted date display (yyyy.MM.dd)
+
+2. **🎨 UI/UX Improvements**:
+   - Updated agent stats cards with modernized design
+   - Horizontal layout for agent statistics with better visual hierarchy
+   - Added visual separators between sections
+   - Improved spacing and padding throughout the report
+   - Compact selected agent info display
+   - Enhanced button styling and layout
+   - Better pagination controls positioning
+
+3. **📊 Reports Tab Layout Enhancement**:
+   - Removed fixed grid layout for more flexible tab navigation
+   - Dynamic tab width adjustments for better responsiveness
+   - Improved padding and spacing in tab list
+   - Cleaner, more modern tab appearance
+
+4. **🔧 Component Updates**:
+   - Added Separator UI component for visual section division
+   - Integrated Calendar component with Popover for date picking
+   - Updated @radix-ui/react-separator to v1.1.8
+   - Better component composition and reusability
+
+#### Technical Implementation:
+
+**New Components:**
+- `dashboard/src/components/ui/separator.tsx` - Visual separator component ✅
+
+**Updated Components:**
+- `dashboard/src/components/reports/SalesAgentsReportTab.tsx` - Calendar integration & UI improvements ✅
+- `dashboard/src/app/(dashboard)/reports/page.tsx` - Tab layout enhancement ✅
+
+**Package Updates:**
+- `@radix-ui/react-separator` updated from v1.1.0 to v1.1.8
+- Added Separator and Calendar UI components to the project
+
+#### Key Enhancements:
+
+**Date Range Selection:**
+- Interactive calendar popover with dual-month view
+- Visual feedback for selected date ranges
+- Easy clearing of date filters
+- Formatted date display for better readability
+
+**Visual Design:**
+- Stats cards redesigned with horizontal layout
+- Agent type badges with color-coded backgrounds
+- Improved spacing and alignment throughout
+- Visual separators for better content organization
+
+**User Experience:**
+- Faster date selection with calendar picker
+- Clear visual hierarchy in statistics
+- Improved table pagination controls
+- Better responsive layout adjustments
+
+---
+
+## 📢 PREVIOUS UPDATE - November 14, 2025 (Reports & UI Enhancements)
 
 ### 📊 Inventory Reports Tab Improvements
 

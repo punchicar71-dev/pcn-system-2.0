@@ -1,8 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Download } from 'lucide-react'
+import { CalendarIcon, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Separator } from "@/components/ui/separator"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -45,7 +53,10 @@ export default function SalesAgentsReportTab() {
   const [loading, setLoading] = useState(true)
   const [agentType, setAgentType] = useState<'Office Sales Agent' | 'Vehicle Showroom Agent' | 'all'>('all')
   const [selectedAgent, setSelectedAgent] = useState<string>('all')
-  const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  })
   
   // Data states
   const [agents, setAgents] = useState<SalesAgent[]>([])
@@ -232,6 +243,7 @@ export default function SalesAgentsReportTab() {
     // Filter by date range
     if (dateRange.from && dateRange.to) {
       const fromDate = new Date(dateRange.from)
+      fromDate.setHours(0, 0, 0, 0)
       const toDate = new Date(dateRange.to)
       toDate.setHours(23, 59, 59, 999)
 
@@ -441,25 +453,27 @@ export default function SalesAgentsReportTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl">
       {/* Agent Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="border rounded-lg p-4">
-          <p className="text-sm text-gray-600 mb-2">Office Sale Agent</p>
-          <p className="text-2xl font-bold text-green-600">{getOfficeAgentStats()} Active</p>
+      <div className="flex  gap-4">
+        <div className=" flex w-[380px] bg-gray-50 items-center border gap-4 rounded-lg p-4">
+          <p className="text-sm font-semibold text-gray-600 ">Office Sale Agent</p>
+          <p className="text-[12px] font-semibold  px-4 py-1 rounded-full text-green-600   bg-green-100">{getOfficeAgentStats()} Active</p>
         </div>
-        <div className="border rounded-lg p-4">
-          <p className="text-sm text-gray-600 mb-2">Vehicle Showroom Agent</p>
-          <p className="text-2xl font-bold text-green-600">{getShowroomAgentStats()} Active</p>
+        <div className=" flex w-[380px] bg-gray-50 items-center border gap-4 rounded-lg p-4">
+          <p className="text-sm font-semibold text-gray-600 ">Vehicle Showroom Agent</p>
+          <p className="text-[12px] font-semibold px-4 py-1 rounded-full text-green-600   bg-green-100">{getShowroomAgentStats()} Active</p>
         </div>
       </div>
+
+    <Separator className="my-4" />
 
       {/* Agents Report Section */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Sales Agents Report</h2>
 
         {/* Filters */}
-        <div className="bg-white border rounded-lg p-4 mb-4">
+        <div className="bg-white ">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {/* Agent Type Filter */}
             <div>
@@ -498,37 +512,72 @@ export default function SalesAgentsReportTab() {
             </div>
 
             {/* Date Range */}
-            <div>
+            <div className="md:col-span-1">
               <label className="text-sm font-medium mb-2 block">Select Date Range</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <input
-                    type="date"
-                    value={dateRange.from}
-                    onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm"
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange.from && !dateRange.to && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "yyyy.MM.dd")} -{" "}
+                          {format(dateRange.to, "yyyy.MM.dd")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "yyyy.MM.dd")
+                      )
+                    ) : (
+                      <span>Pick a date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange.from}
+                    selected={{
+                      from: dateRange.from,
+                      to: dateRange.to,
+                    }}
+                    onSelect={(range) => {
+                      setDateRange({
+                        from: range?.from,
+                        to: range?.to,
+                      })
+                    }}
+                    numberOfMonths={2}
                   />
-                </div>
-                <span className="text-gray-500">-</span>
-                <div className="flex-1">
-                  <input
-                    type="date"
-                    value={dateRange.to}
-                    onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm"
-                  />
-                </div>
-              </div>
+                  <div className="p-3 border-t flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setDateRange({ from: undefined, to: undefined })}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
 
+       <div className='flex justify-between py-4'>
         {/* Selected Agent Info */}
         {selectedAgent !== 'all' && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-4 px-3 py-2 bg-blue-50 h-9 rounded-lg">
             <p className="text-sm">
               <span className="font-semibold">{selectedAgent}</span>
-              <span className="text-gray-600"> - Total Sale: {filteredSalesData.length}</span>
+              <span className="text-gray-600"> - Total Sale: <span className='font-bold text-blue-600'>{filteredSalesData.length}</span> </span>
             </p>
           </div>
         )}
@@ -544,6 +593,7 @@ export default function SalesAgentsReportTab() {
             Export CSV
           </Button>
         </div>
+       </div> 
 
         {/* Table */}
         <div className="border rounded-lg overflow-hidden">
@@ -652,15 +702,13 @@ export default function SalesAgentsReportTab() {
                 {totalPages > 5 && (
                   <>
                     <span className="text-gray-500">...</span>
-                    {totalPages > 5 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(totalPages)}
-                      >
-                        {totalPages}
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                    >
+                      {totalPages}
+                    </Button>
                   </>
                 )}
               </div>

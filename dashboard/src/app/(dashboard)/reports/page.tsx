@@ -14,7 +14,7 @@ export default function ReportsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-4xl">
+        <TabsList className=" px-2">
           <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
           <TabsTrigger value="financial">Financial Reports</TabsTrigger>
           <TabsTrigger value="salesAgents">Sales Agents Report</TabsTrigger>
