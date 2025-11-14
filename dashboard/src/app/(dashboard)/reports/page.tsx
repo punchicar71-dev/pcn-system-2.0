@@ -3,9 +3,8 @@
 import { BarChart3 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import InventoryReportsTab from '@/components/reports/InventoryReportsTab'
-import SalesProfitabilityTab from '@/components/reports/SalesProfitabilityTab'
 import FinancialReportsTab from '@/components/reports/FinancialReportsTab'
-import CustomerStaffReportsTab from '@/components/reports/CustomerStaffReportsTab'
+import SalesAgentsReportTab from '@/components/reports/SalesAgentsReportTab'
 
 export default function ReportsPage() {
   return (
@@ -15,27 +14,22 @@ export default function ReportsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-4xl">
+        <TabsList className="grid w-full grid-cols-3 max-w-4xl">
           <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
-          <TabsTrigger value="sales">Sales & Profitability</TabsTrigger>
           <TabsTrigger value="financial">Financial Reports</TabsTrigger>
-          <TabsTrigger value="customer-staff">Customer & Staff</TabsTrigger>
+          <TabsTrigger value="salesAgents">Sales Agents Report</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="mt-6">
           <InventoryReportsTab />
         </TabsContent>
 
-        <TabsContent value="sales" className="mt-6">
-          <SalesProfitabilityTab />
-        </TabsContent>
-
         <TabsContent value="financial" className="mt-6">
           <FinancialReportsTab />
         </TabsContent>
 
-        <TabsContent value="customer-staff" className="mt-6">
-          <CustomerStaffReportsTab />
+        <TabsContent value="salesAgents" className="mt-6">
+          <SalesAgentsReportTab />
         </TabsContent>
       </Tabs>
     </div>

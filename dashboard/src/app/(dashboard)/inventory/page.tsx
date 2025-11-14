@@ -19,6 +19,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import EditVehicleModal from '@/components/inventory/EditVehicleModal'
 import VehicleImageUploadModal from '@/components/inventory/VehicleImageUploadModal'
 import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
@@ -625,6 +626,88 @@ export default function InventoryPage() {
     setDeleteId(null)
   }
 
+  // Export to CSV
+  const exportToCSV = () => {
+    try {
+      // Define CSV headers
+      const headers = [
+        'Vehicle Number',
+        'Brand',
+        'Model',
+        'Manufacture Year',
+        'Registered Year',
+        'Selling Amount (LKR)',
+        'Mileage (km)',
+        'Country',
+        'Transmission',
+        'Fuel Type',
+        'Body Type',
+        'Engine Capacity',
+        'Exterior Color',
+        'Status',
+        'Entry Type',
+        'Entry Date',
+        'Seller Name',
+        'Seller Mobile',
+        'Seller Email'
+      ]
+
+      // Prepare CSV rows
+      const rows = filteredVehicles.map(vehicle => [
+        vehicle.vehicle_number || '',
+        vehicle.brand_name || '',
+        vehicle.model_name || '',
+        vehicle.manufacture_year || '',
+        vehicle.registered_year || '',
+        vehicle.selling_amount || '',
+        vehicle.mileage || '',
+        vehicle.country_name || '',
+        vehicle.transmission || '',
+        vehicle.fuel_type || '',
+        vehicle.body_type || '',
+        vehicle.engine_capacity || '',
+        vehicle.exterior_color || '',
+        vehicle.status || '',
+        vehicle.entry_type || '',
+        vehicle.entry_date || '',
+        vehicle.seller_name || '',
+        vehicle.seller_mobile || '',
+        vehicle.seller_email || ''
+      ])
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => {
+          // Escape quotes and wrap in quotes if contains comma
+          const cellStr = String(cell)
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`
+          }
+          return cellStr
+        }).join(','))
+      ].join('\n')
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      
+      link.setAttribute('href', url)
+      link.setAttribute('download', `inventory-${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exporting to CSV:', error)
+      alert('Failed to export data. Please try again.')
+    }
+  }
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-LK', {
@@ -668,13 +751,14 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <button 
-          onClick={() => router.push('/add-vehicle')}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-[14px] rounded-lg hover:bg-gray-600 transition-colors"
+        <Button 
+          onClick={exportToCSV}
+          className="flex items-center gap-2 bg-black text-white hover:bg-gray-800"
+          size="default"
         >
-          <Plus className="w-5 h-5" />
-          Add New Vehicle
-        </button>
+          <Download className="w-4 h-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Search */}

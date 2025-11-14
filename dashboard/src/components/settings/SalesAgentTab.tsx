@@ -45,12 +45,10 @@ export default function SalesAgentTab() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null)
   const [formData, setFormData] = useState<{
-    user_id: string
     name: string
     email: string
     agent_type: 'Office Sales Agent' | 'Vehicle Showroom Agent'
   }>({
-    user_id: '',
     name: '',
     email: '',
     agent_type: 'Office Sales Agent',
@@ -76,27 +74,67 @@ export default function SalesAgentTab() {
     }
   }
 
+  const generateUserId = async (): Promise<string> => {
+    try {
+      // Fetch all existing user IDs
+      const { data, error } = await supabase
+        .from('sales_agents')
+        .select('user_id')
+        .order('user_id', { ascending: false })
+        .limit(1)
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        // Extract the numeric part from the last user ID and increment it
+        const lastUserId = data[0].user_id
+        const numericPart = parseInt(lastUserId.replace(/\D/g, ''))
+        const nextNumber = numericPart + 1
+        // Pad with zeros to maintain 5 digits
+        return nextNumber.toString().padStart(5, '0')
+      } else {
+        // If no agents exist, start with 00001
+        return '00001'
+      }
+    } catch (error) {
+      console.error('Error generating user ID:', error)
+      // Fallback to a random number if something goes wrong
+      return Math.floor(10000 + Math.random() * 90000).toString()
+    }
+  }
+
   const handleAddAgent = async () => {
-    if (!formData.user_id.trim() || !formData.name.trim()) return
+    if (!formData.name.trim()) {
+      alert('Please fill in Sales Agent Name')
+      return
+    }
 
     try {
+      // Generate a new unique user ID
+      const newUserId = await generateUserId()
+
       const { error } = await supabase
         .from('sales_agents')
         .insert([{
-          user_id: formData.user_id,
-          name: formData.name,
-          email: formData.email || null,
+          user_id: newUserId,
+          name: formData.name.trim(),
+          email: formData.email.trim() || null,
           agent_type: formData.agent_type,
           is_active: true,
         }])
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        alert(`Error adding agent: ${error.message}`)
+        return
+      }
 
-      setFormData({ user_id: '', name: '', email: '', agent_type: 'Office Sales Agent' })
+      setFormData({ name: '', email: '', agent_type: 'Office Sales Agent' })
       setIsAddDialogOpen(false)
       fetchAgents()
     } catch (error) {
       console.error('Error adding agent:', error)
+      alert('An unexpected error occurred while adding the agent')
     }
   }
 
@@ -107,10 +145,16 @@ export default function SalesAgentTab() {
         .update({ is_active: !currentStatus })
         .eq('id', id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        alert(`Error updating agent status: ${error.message}`)
+        return
+      }
+      
       fetchAgents()
     } catch (error) {
       console.error('Error updating agent:', error)
+      alert('An unexpected error occurred while updating the agent status')
     }
   }
 
@@ -128,10 +172,16 @@ export default function SalesAgentTab() {
         .delete()
         .eq('id', agentToDelete)
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        alert(`Error deleting agent: ${error.message}`)
+        return
+      }
+      
       fetchAgents()
     } catch (error) {
       console.error('Error deleting agent:', error)
+      alert('An unexpected error occurred while deleting the agent')
     } finally {
       setIsDeleteDialogOpen(false)
       setAgentToDelete(null)
@@ -158,19 +208,10 @@ export default function SalesAgentTab() {
             <DialogHeader>
               <DialogTitle>Add New Sales Agent</DialogTitle>
               <DialogDescription>
-                Add a new in-house sales agent to the system
+                Add a new in-house sales agent to the system. User ID will be auto-generated.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="user-id">User ID</Label>
-                <Input
-                  id="user-id"
-                  placeholder="e.g., 00471"
-                  value={formData.user_id}
-                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="agent-name">Sales Agent Name</Label>
                 <Input
@@ -189,7 +230,7 @@ export default function SalesAgentTab() {
                   <SelectTrigger id="agent-type">
                     <SelectValue placeholder="Select agent type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[150]" position="popper">
                     {AGENT_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}

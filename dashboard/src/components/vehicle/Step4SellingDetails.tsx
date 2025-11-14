@@ -5,6 +5,7 @@ import { SellingDetailsData, ENTRY_TYPES, VEHICLE_STATUS } from '@/types/vehicle
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase-client';
 import { PriceCategory } from '@/lib/database.types';
 
@@ -69,7 +70,7 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
   };
 
   return (
-    <div className="bg-white  p-6">
+    <div className="bg-white max-w-4xl p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Vehicle Selling Details</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -185,20 +186,19 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6">
-          <button
+        <div className="flex justify-start gap-4 pt-6">
+          <Button
             type="button"
             onClick={onBack}
-            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            variant="outline"
           >
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
             Next
-          </button>
+          </Button>
         </div>
       </form>
     </div>

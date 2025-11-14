@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { VehicleFormState } from '@/types/vehicle-form.types';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Step6SummaryProps {
   formState: VehicleFormState;
@@ -249,20 +250,21 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between pt-6 mt-6 border-t">
-        <button
+      <div className="flex justify-start gap-4 pt-6 mt-6 border-t">
+        <Button
           type="button"
           onClick={onBack}
           disabled={isPublishing}
-          className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="outline"
+          size="lg"
         >
           Back
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handlePublish}
           disabled={isPublishing}
-          className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          size="lg"
         >
           {isPublishing ? (
             <>
@@ -272,7 +274,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
           ) : (
             'Publish'
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

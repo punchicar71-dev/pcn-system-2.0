@@ -2,6 +2,7 @@
 
 import { SpecialNotesData } from '@/types/vehicle-form.types';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 interface Step5SpecialNotesProps {
   data: SpecialNotesData;
@@ -60,20 +61,19 @@ export default function Step5SpecialNotes({ data, onChange, onNext, onBack }: St
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6">
-          <button
+        <div className="flex justify-start gap-4 pt-6">
+          <Button
             type="button"
             onClick={onBack}
-            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            variant="outline"
           >
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
             Next
-          </button>
+          </Button>
         </div>
       </form>
     </div>

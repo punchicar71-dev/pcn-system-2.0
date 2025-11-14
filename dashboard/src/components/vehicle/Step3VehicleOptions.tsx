@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { VehicleOptionsData, STANDARD_OPTIONS, SPECIAL_OPTIONS } from '@/types/vehicle-form.types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Step3VehicleOptionsProps {
   data: VehicleOptionsData;
@@ -15,8 +17,6 @@ interface Step3VehicleOptionsProps {
 }
 
 export default function Step3VehicleOptions({ data, onChange, onNext, onBack }: Step3VehicleOptionsProps) {
-  const [standardSearch, setStandardSearch] = useState('');
-  const [specialSearch, setSpecialSearch] = useState('');
   const [customOptionInput, setCustomOptionInput] = useState('');
 
   const handleStandardOptionToggle = (option: string) => {
@@ -48,154 +48,194 @@ export default function Step3VehicleOptions({ data, onChange, onNext, onBack }: 
     onChange({ customOptions: newCustomOptions });
   };
 
-  const filteredStandardOptions = STANDARD_OPTIONS.filter((option) =>
-    option.toLowerCase().includes(standardSearch.toLowerCase())
-  );
-
-  const filteredSpecialOptions = SPECIAL_OPTIONS.filter((option) =>
-    option.toLowerCase().includes(specialSearch.toLowerCase())
-  );
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onNext();
   };
 
+  // Get selected options for summary
+  const selectedStandardOptions = Object.entries(data.standardOptions)
+    .filter(([_, enabled]) => enabled)
+    .map(([name]) => name);
+  
+  const selectedSpecialOptions = Object.entries(data.specialOptions)
+    .filter(([_, enabled]) => enabled)
+    .map(([name]) => name);
+
   return (
-    <div className="bg-white p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Vehicle Options</h2>
+    <div className="bg-white p-6 rounded-lg">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Vehicle Options</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Standard Vehicle Options */}
-          <div>
-            <Label className="text-base font-semibold">Standard Vehicle options</Label>
-            <div className="mt-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  value={standardSearch}
-                  onChange={(e) => setStandardSearch(e.target.value)}
-                  placeholder="Search option..."
-                  className="pl-9"
-                />
-              </div>
+          {/* Left side - Tabs */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="standard" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="standard">Standard Options</TabsTrigger>
+                <TabsTrigger value="special">Special Options</TabsTrigger>
+                <TabsTrigger value="custom">Custom Options</TabsTrigger>
+              </TabsList>
 
-              <div className="mt-4 space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                {filteredStandardOptions.map((option) => (
-                  <div key={option} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                    <span className="text-sm text-gray-700">{option}</span>
-                    <Switch
-                      checked={data.standardOptions[option] || false}
-                      onCheckedChange={() => handleStandardOptionToggle(option)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Special Vehicle Options */}
-          <div>
-            <Label className="text-base font-semibold">Special Vehicle options</Label>
-            <div className="mt-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  value={specialSearch}
-                  onChange={(e) => setSpecialSearch(e.target.value)}
-                  placeholder="Search option..."
-                  className="pl-9"
-                />
-              </div>
-
-              <div className="mt-4 space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                {filteredSpecialOptions.map((option) => (
-                  <div key={option} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                    <span className="text-sm text-gray-700">{option}</span>
-                    <Switch
-                      checked={data.specialOptions[option] || false}
-                      onCheckedChange={() => handleSpecialOptionToggle(option)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Manual Add Vehicle Options */}
-          <div>
-            <Label className="text-base font-semibold">Manuel Add Vehicle options</Label>
-            <div className="mt-3">
-              <Label htmlFor="customOption" className="text-sm">Options Name</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  id="customOption"
-                  value={customOptionInput}
-                  onChange={(e) => setCustomOptionInput(e.target.value)}
-                  placeholder="Enter option name"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddCustomOption();
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomOption}
-                  className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2 whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add
-                </button>
-              </div>
-
-              {/* Custom Options List */}
-              <div className="mt-4 space-y-2">
-                {data.customOptions.map((option, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 border rounded-lg bg-gray-50"
-                  >
-                    <span className="text-sm text-gray-700">{option}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCustomOption(index)}
-                      className="text-red-500 hover:text-red-700"
+              {/* Standard Options Tab */}
+              <TabsContent value="standard">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                  {STANDARD_OPTIONS.map((option) => (
+                    <div
+                      key={option}
+                      className="flex border p-2 rounded-lg items-center gap-3"
                     >
-                      <X className="w-4 h-4" />
-                    </button>
+                      <Switch
+                        id={`standard-${option}`}
+                        checked={data.standardOptions[option] || false}
+                        onCheckedChange={() => handleStandardOptionToggle(option)}
+                      />
+                      <Label htmlFor={`standard-${option}`} className="text-sm font-normal cursor-pointer">
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Special Options Tab */}
+              <TabsContent value="special">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                  {SPECIAL_OPTIONS.map((option) => (
+                    <div
+                      key={option}
+                      className="flex border p-2 rounded-lg  items-center gap-3"
+                    >
+                      <Switch
+                        id={`special-${option}`}
+                        checked={data.specialOptions[option] || false}
+                        onCheckedChange={() => handleSpecialOptionToggle(option)}
+                      />
+                      <Label htmlFor={`special-${option}`} className="text-sm font-normal cursor-pointer">
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Custom Options Tab */}
+              <TabsContent value="custom" className="space-y-4">
+                <div>
+                  <Label htmlFor="customOption" className="text-sm font-medium mb-2 block">
+                    Manual Add Vehicle options
+                  </Label>
+                  <Label htmlFor="customOption" className="text-sm font-normal text-gray-600 mb-3 block">
+                    Options Name
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="customOption"
+                      value={customOptionInput}
+                      onChange={(e) => setCustomOptionInput(e.target.value)}
+                      placeholder="Enter option name"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomOption();
+                        }
+                      }}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddCustomOption}
+                      className="gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add
+                    </Button>
                   </div>
-                ))}
+                </div>
+
+                {/* Custom Options List */}
+                <div className="space-y-3 mt-6">
+                  {data.customOptions.map((option, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center  p-4 bg-white border rounded-lg"
+                    >
+                      <div className="flex items-center justify-start gap-3 flex-1">
+                        <Switch checked={true} disabled />
+                        <Label className="text-sm font-normal">{option}</Label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveCustomOption(index)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Right side - Selected Options Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white border rounded-lg p-6  top-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Selected Options Summary</h3>
+
+              {/* Standard Options Summary */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Standard</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedStandardOptions.length > 0 ? (
+                    selectedStandardOptions.map((option) => (
+                      <span
+                        key={option}
+                        className="px-3 py-1 bg-gray-100 text-gray-800 text-xs rounded-md border"
+                      >
+                        {option}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-400">No options selected</span>
+                  )}
+                </div>
               </div>
 
-              {/* Selected Options Display */}
-              {(Object.values(data.standardOptions).some((v) => v) ||
-                Object.values(data.specialOptions).some((v) => v) ||
-                data.customOptions.length > 0) && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Selected Options Summary</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">Standard:</span>{' '}
-                      {Object.entries(data.standardOptions)
-                        .filter(([_, enabled]) => enabled)
-                        .map(([name]) => name)
-                        .join(', ') || 'None'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Special:</span>{' '}
-                      {Object.entries(data.specialOptions)
-                        .filter(([_, enabled]) => enabled)
-                        .map(([name]) => name)
-                        .join(', ') || 'None'}
-                    </div>
-                    {data.customOptions.length > 0 && (
-                      <div>
-                        <span className="font-medium">Custom:</span> {data.customOptions.join(', ')}
-                      </div>
-                    )}
+              {/* Special Options Summary */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Special</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedSpecialOptions.length > 0 ? (
+                    selectedSpecialOptions.map((option) => (
+                      <span
+                        key={option}
+                        className="px-3 py-1 bg-gray-100 text-gray-800 text-xs rounded-md border"
+                      >
+                        {option}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-400">No options selected</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Custom Options Summary */}
+              {data.customOptions.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Custome</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {data.customOptions.map((option, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-gray-100 text-gray-800 text-xs rounded-md border"
+                      >
+                        {option}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -204,20 +244,21 @@ export default function Step3VehicleOptions({ data, onChange, onNext, onBack }: 
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6">
-          <button
+        <div className="flex justify-start gap-4 pt-6 mt-6 border-t">
+          <Button
             type="button"
+            variant="outline"
             onClick={onBack}
-            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-8"
           >
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="px-8 bg-black text-white hover:bg-gray-800"
           >
             Next
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import { SellerDetailsData } from '@/types/vehicle-form.types';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface Step2SellerDetailsProps {
   data: SellerDetailsData;
@@ -82,7 +83,7 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
   };
 
   return (
-    <div className="bg-white  p-6">
+    <div className="bg-white max-w-4xl p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Seller Details</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -92,33 +93,35 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             <Label htmlFor="firstName">
               First Name <span className="text-red-500">*</span>
             </Label>
-            <div className="relative flex items-center">
+            <div className="relative flex items-center mt-1">
               {/* Title Dropdown */}
               <div className="relative" ref={dropdownRef}>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="h-[40px] px-3 border border-r-0 border-gray-300 rounded-l-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-1 min-w-[80px]"
+                  className="h-9 px-3 rounded-r-none border-r-0 flex items-center gap-1 min-w-[80px]"
                 >
                   <span className="text-sm">{data.title || 'Mr.'}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                </button>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
                 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
                     {titles.map((title) => (
-                      <button
+                      <Button
                         key={title}
                         type="button"
+                        variant="ghost"
                         onClick={() => {
                           onChange({ title });
                           setIsDropdownOpen(false);
                         }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
+                        className="w-full justify-start text-sm first:rounded-t-lg last:rounded-b-lg h-9"
                       >
                         {title}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
@@ -127,6 +130,7 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
               {/* First Name Input */}
               <Input
                 id="firstName"
+                type="text"
                 value={data.firstName}
                 onChange={(e) => onChange({ firstName: e.target.value })}
                 className="flex-1 rounded-l-none border-l-0"
@@ -142,8 +146,10 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             </Label>
             <Input
               id="lastName"
+              type="text"
               value={data.lastName}
               onChange={(e) => onChange({ lastName: e.target.value })}
+              className="mt-1"
               placeholder="Doe"
               required
             />
@@ -155,8 +161,10 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
           <Label htmlFor="address">Address</Label>
           <Input
             id="address"
+            type="text"
             value={data.address}
             onChange={(e) => onChange({ address: e.target.value })}
+            className="mt-1"
             placeholder="Ex: No1, Petta, Colombo 1"
           />
         </div>
@@ -167,8 +175,10 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             <Label htmlFor="city">City</Label>
             <Input
               id="city"
+              type="text"
               value={data.city}
               onChange={(e) => onChange({ city: e.target.value })}
+              className="mt-1"
               placeholder="Colombo 1"
             />
           </div>
@@ -177,8 +187,10 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             <Label htmlFor="nicNumber">NIC Number</Label>
             <Input
               id="nicNumber"
+              type="text"
               value={data.nicNumber}
               onChange={(e) => onChange({ nicNumber: e.target.value })}
+              className="mt-1"
               placeholder="Ex: 870690920v"
             />
           </div>
@@ -192,8 +204,10 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             </Label>
             <Input
               id="mobileNumber"
+              type="text"
               value={data.mobileNumber}
               onChange={(e) => onChange({ mobileNumber: formatMobileNumber(e.target.value) })}
+              className="mt-1"
               placeholder="+94"
               required
             />
@@ -203,8 +217,10 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             <Label htmlFor="landPhoneNumber">Land Phone Number</Label>
             <Input
               id="landPhoneNumber"
+              type="text"
               value={data.landPhoneNumber}
               onChange={(e) => onChange({ landPhoneNumber: formatLandPhone(e.target.value) })}
+              className="mt-1"
               placeholder="+94"
             />
           </div>
@@ -218,25 +234,26 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
             type="email"
             value={data.emailAddress}
             onChange={(e) => onChange({ emailAddress: e.target.value })}
+            className="mt-1"
             placeholder="Ex: john.doe@gmail.com"
           />
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6">
-          <button
+        <div className="flex justify-start gap-4 pt-6">
+          <Button
             type="button"
+            variant="outline"
             onClick={onBack}
-            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="bg-black text-white hover:bg-gray-800"
           >
             Next
-          </button>
+          </Button>
         </div>
       </form>
     </div>

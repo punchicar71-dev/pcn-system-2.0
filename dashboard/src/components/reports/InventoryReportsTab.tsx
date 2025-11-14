@@ -43,7 +43,7 @@ interface AgingBracket {
 
 export default function InventoryReportsTab() {
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'overview' | 'aging' | 'turnover' | 'brand' | 'type'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'brand' | 'type'>('overview')
   
   // Data states
   const [stockList, setStockList] = useState<VehicleStock[]>([])
@@ -57,6 +57,10 @@ export default function InventoryReportsTab() {
   const [typeCounts, setTypeCounts] = useState<TypeCount[]>([])
   const [agingData, setAgingData] = useState<AgingBracket[]>([])
   const [turnoverRate, setTurnoverRate] = useState<number>(0)
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
 
   const supabase = createClient()
 
@@ -294,16 +298,6 @@ export default function InventoryReportsTab() {
             Inventory Available
           </button>
           <button
-            onClick={() => setActiveView('aging')}
-            className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
-              activeView === 'aging'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Inventory Aging
-          </button>
-          <button
             onClick={() => setActiveView('brand')}
             className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
               activeView === 'brand'
@@ -356,7 +350,9 @@ export default function InventoryReportsTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {stockList.map((vehicle) => (
+                  {stockList
+                    .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
+                    .map((vehicle) => (
                     <tr key={vehicle.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{vehicle.vehicle_number}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{vehicle.brand}</td>
@@ -388,75 +384,66 @@ export default function InventoryReportsTab() {
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
-      )}
-
-      {activeView === 'aging' && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Inventory Aging Report</h3>
-            <p className="text-sm text-gray-500">Shows how long vehicles have been in stock</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Chart */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-sm font-medium text-gray-900 mb-4">Aging Distribution</h4>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={agingData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="bracket" tick={{ fontSize: 12, fill: '#6b7280' }} />
-                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+            
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Rows per page:</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
               </div>
-            </div>
-
-            {/* Summary Cards */}
-            <div className="space-y-4">
-              {agingData.map((bracket, index) => (
-                <div key={bracket.bracket} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{bracket.bracket}</h4>
-                    <span className="text-2xl font-bold text-blue-600">{bracket.count}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        index === 0 ? 'bg-green-500' :
-                        index === 1 ? 'bg-yellow-500' :
-                        index === 2 ? 'bg-orange-500' :
-                        'bg-red-500'
-                      }`}
-                      style={{ width: `${bracket.percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">{bracket.percentage}% of inventory</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Slow-moving vehicles alert */}
-          {agingData[3]?.count > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <Clock className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-red-900">Slow-Moving Inventory Alert</h4>
-                  <p className="text-sm text-red-700 mt-1">
-                    You have {agingData[3].count} vehicle(s) in stock for over 90 days. Consider promotional pricing or special offers.
-                  </p>
+              
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-700">
+                  {stockList.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1}-
+                  {Math.min(currentPage * rowsPerPage, stockList.length)} of {stockList.length}
+                </span>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    First
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(stockList.length / rowsPerPage), prev + 1))}
+                    disabled={currentPage === Math.ceil(stockList.length / rowsPerPage)}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(Math.ceil(stockList.length / rowsPerPage))}
+                    disabled={currentPage === Math.ceil(stockList.length / rowsPerPage)}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Last
+                  </button>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
