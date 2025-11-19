@@ -456,11 +456,11 @@ export default function SalesAgentsReportTab() {
     <div className="space-y-6 max-w-7xl">
       {/* Agent Stats Cards */}
       <div className="flex  gap-4">
-        <div className=" flex w-[380px] bg-gray-50 items-center border gap-4 rounded-lg p-4">
+        <div className=" flex w-[380px] bg-gray-50 items-center justify-between border gap-4 rounded-lg p-4">
           <p className="text-sm font-semibold text-gray-600 ">Office Sale Agent</p>
           <p className="text-[12px] font-semibold  px-4 py-1 rounded-full text-green-600   bg-green-100">{getOfficeAgentStats()} Active</p>
         </div>
-        <div className=" flex w-[380px] bg-gray-50 items-center border gap-4 rounded-lg p-4">
+        <div className=" flex w-[380px] bg-gray-50 items-center justify-between border gap-4 rounded-lg p-4">
           <p className="text-sm font-semibold text-gray-600 ">Vehicle Showroom Agent</p>
           <p className="text-[12px] font-semibold px-4 py-1 rounded-full text-green-600   bg-green-100">{getShowroomAgentStats()} Active</p>
         </div>

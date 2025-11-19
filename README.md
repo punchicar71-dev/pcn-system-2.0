@@ -2,36 +2,76 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: November 19, 2025 | Version: 2.0.20 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: November 19, 2025 | Version: 2.0.21 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - November 19, 2025 (System Maintenance & Updates)
+## 📢 LATEST UPDATE - November 19, 2025 (Dashboard Analytics Enhancement)
 
-### 🔧 System Maintenance and Documentation Updates
+### � Enhanced Dashboard with Dual-Line Sales Chart & Inventory Tracking
 
-**Routine maintenance and system improvements!**
+**Major Feature: Advanced analytics with sales and inventory visualization!**
 
 #### What's New:
 
-1. **📝 Documentation Updates**:
-   - Updated README with latest system status
-   - Refreshed project documentation
-   - Version bump to 2.0.20
-   - Updated maintenance timestamp
+1. **� Dual-Line Chart Visualization**:
+   - Added **Inventory Available** data line (blue) tracking real-time inventory levels
+   - **Sold-Out Vehicles** data line (green) showing sales over time
+   - Both metrics displayed simultaneously for comprehensive insights
+   - Smooth gradient fills with distinct colors for easy differentiation
 
-2. **🔄 System Status**:
-   - All core features operational
-   - Dashboard, Web, and API services running smoothly
-   - Docker containers optimized and running
-   - Production environment stable
+2. **📅 Enhanced Date Filtering**:
+   - **Default: 30 days** view for optimal data visibility
+   - Quick filter options: 7 days, 30 days, 90 days, 365 days
+   - Dynamic date range selection with instant chart updates
+   - All dates generated from historical data to current date (Nov 19, 2025)
 
-3. **✅ Current System Health**:
-   - Reports module: Fully functional with enhanced UI
-   - User management: Complete with CRUD operations
-   - Vehicle management: Active and optimized
-   - SMS/OTP systems: Operational with Text.lk integration
-   - Authentication: Secure and reliable
+3. **� Accurate Inventory Calculation**:
+   - Real-time inventory tracking: Total Vehicles - Sold Vehicles
+   - Cumulative inventory calculation for each date
+   - Prevents duplicate counting with unique vehicle ID tracking
+   - Daily snapshots showing exact inventory levels over time
+   - Matches "Available Vehicles" card count for data consistency
+
+4. **🎨 Visual Improvements**:
+   - Professional color scheme: Blue (#3b82f6) for inventory, Green (#22c55e) for sales
+   - Area charts with opacity gradients for better readability
+   - Interactive tooltips showing both metrics on hover
+   - Responsive chart legend with clear labeling
+   - Smooth transitions between date ranges
+
+5. **🐛 Bug Fixes & Optimizations**:
+   - Fixed date handling to always show current date (Nov 19, 2025)
+   - Corrected inventory calculation to use all historical data
+   - Improved data fetching efficiency with proper date filtering
+   - Added debug logging for inventory verification
+
+#### Technical Implementation:
+
+**Updated Components:**
+- `dashboard/src/app/(dashboard)/dashboard/page.tsx` - Enhanced data fetching & inventory calculation ✅
+- `dashboard/src/components/charts/ChartAreaInteractive.tsx` - Dual-line chart with new filters ✅
+
+**Key Features:**
+- Dual data streams: Sales and Inventory tracked independently
+- Date-accurate calculations with proper timezone handling
+- Cumulative tracking using Set for unique vehicle IDs
+- All dates populated from 365 days ago to today
+
+#### Data Flow:
+
+**Inventory Calculation:**
+```
+For each date:
+1. Count all vehicles created up to that date
+2. Track unique sold vehicle IDs (using Set to prevent duplicates)
+3. Inventory = Total Vehicles Created - Unique Sold Vehicles
+```
+
+**Chart Display:**
+- Blue area (top): Inventory Available - shows stock levels
+- Green area (bottom): Sold-Out Vehicles - shows daily sales
+- Both lines update dynamically based on selected date range
 
 ---
 

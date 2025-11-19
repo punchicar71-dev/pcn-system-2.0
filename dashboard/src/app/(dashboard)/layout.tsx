@@ -387,15 +387,6 @@ export default function DashboardLayout({
                       <span className="text-sm font-medium">My Profile</span>
                     </button>
                     
-                    {/* Password Change */}
-                    <Link
-                      href="/settings"
-                      className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <Key className="w-4 h-4" />
-                      <span className="text-sm font-medium">Password Change</span>
-                    </Link>
                     
                     {/* Divider */}
                     <div className="my-1 border-t border-gray-200"></div>

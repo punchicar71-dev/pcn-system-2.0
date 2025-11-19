@@ -17,6 +17,7 @@ interface VehicleStats {
 interface SalesData {
   date: string
   vehicles: number
+  inventory: number
 }
 
 interface ActiveUser {
@@ -180,13 +181,33 @@ export default function DashboardPage() {
       // Fetch sold vehicles from pending_vehicle_sales table
       const { data: salesData, error } = await supabase
         .from('pending_vehicle_sales')
-        .select('updated_at')
+        .select('updated_at, created_at')
         .eq('status', 'sold')
         .gte('updated_at', startDate.toISOString())
         .order('updated_at', { ascending: true })
 
-      if (!error && salesData) {
-        // Group sales by date
+      // Fetch ALL vehicles (not filtered by date) to calculate true inventory
+      const { data: allVehicles, error: inventoryError } = await supabase
+        .from('vehicles')
+        .select('created_at, status, id')
+        .order('created_at', { ascending: true })
+
+      // Fetch ALL historical sales with vehicle_id (not filtered by date) 
+      const { data: allSales, error: allSalesError } = await supabase
+        .from('pending_vehicle_sales')
+        .select('updated_at, vehicle_id, created_at')
+        .eq('status', 'sold')
+        .order('updated_at', { ascending: true })
+
+      if (!error && salesData && !inventoryError && allVehicles && !allSalesError && allSales) {
+        console.log('Total vehicles in DB:', allVehicles.length)
+        console.log('Total sales (all time):', allSales.length)
+        console.log('Vehicles by status:', {
+          'In Sale': allVehicles.filter(v => v.status === 'In Sale').length,
+          'Other': allVehicles.filter(v => v.status !== 'In Sale').length
+        })
+
+        // Group sales by date for the chart display
         const salesByDate: { [key: string]: number } = {}
         
         salesData.forEach((sale) => {
@@ -196,13 +217,74 @@ export default function DashboardPage() {
           salesByDate[dateKey] = (salesByDate[dateKey] || 0) + 1
         })
 
+        // Calculate actual inventory for each day
+        const inventoryByDate: { [key: string]: number } = {}
+        
+        // Generate all dates in range
+        const allDates = new Set<string>()
+        const currentDate = new Date(startDate)
+        const today = new Date()
+        today.setHours(23, 59, 59, 999)
+        
+        while (currentDate <= today) {
+          const dateKey = currentDate.toISOString().split('T')[0]
+          allDates.add(dateKey)
+          currentDate.setDate(currentDate.getDate() + 1)
+        }
+
+        // Build a set of sold vehicle IDs with their sale dates for quick lookup
+        const soldVehiclesByDate: { [key: string]: Set<string> } = {}
+        allSales.forEach(sale => {
+          const saleDate = new Date(sale.updated_at).toISOString().split('T')[0]
+          if (!soldVehiclesByDate[saleDate]) {
+            soldVehiclesByDate[saleDate] = new Set()
+          }
+          soldVehiclesByDate[saleDate].add(sale.vehicle_id)
+        })
+
+        // Calculate inventory for each date
+        const sortedDates = Array.from(allDates).sort()
+        const soldVehiclesTracking = new Set<string>()
+        
+        sortedDates.forEach((date) => {
+          const dateObj = new Date(date + 'T23:59:59.999Z')
+          
+          // Count vehicles added up to and including this date
+          const totalVehiclesAdded = allVehicles.filter(v => 
+            new Date(v.created_at) <= dateObj
+          ).length
+          
+          // Track vehicles sold up to and including this date
+          if (soldVehiclesByDate[date]) {
+            soldVehiclesByDate[date].forEach(vehicleId => {
+              soldVehiclesTracking.add(vehicleId)
+            })
+          }
+          
+          // Available inventory = total added - total sold
+          const availableInventory = Math.max(0, totalVehiclesAdded - soldVehiclesTracking.size)
+          inventoryByDate[date] = availableInventory
+        })
+
+        // Get today's date for logging
+        const todayKey = new Date().toISOString().split('T')[0]
+        console.log('Inventory calculation check:', {
+          today: todayKey,
+          todayInventory: inventoryByDate[todayKey],
+          totalVehicles: allVehicles.length,
+          totalSold: allSales.length,
+          calculatedInventory: allVehicles.length - allSales.length,
+          inSaleStatus: allVehicles.filter(v => v.status === 'In Sale').length
+        })
+
         // Convert to chart data format - sorted by date
-        const chartDataArray: SalesData[] = Object.entries(salesByDate)
-          .map(([date, vehicles]) => ({
+        const chartDataArray: SalesData[] = Array.from(allDates)
+          .sort()
+          .map((date) => ({
             date,
-            vehicles
+            vehicles: salesByDate[date] || 0,
+            inventory: inventoryByDate[date] || 0
           }))
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
         setChartData(chartDataArray)
 

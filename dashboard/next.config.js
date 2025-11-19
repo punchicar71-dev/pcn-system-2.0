@@ -31,7 +31,7 @@ const nextConfig = {
   // Suppress dynamic route warnings during build
   onDemandEntries: {
     maxInactiveAge: 60 * 1000,
-    maxSize: 50,
+    pagesBufferLength: 50,
   },
   // Ignore build errors for known issues
   typescript: {

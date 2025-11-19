@@ -2,7 +2,7 @@
 
 import { BarChart3 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import InventoryReportsTab from '@/components/reports/InventoryReportsTab'
+import SummaryReportsTab from '@/components/reports/SummaryReportsTab'
 import FinancialReportsTab from '@/components/reports/FinancialReportsTab'
 import SalesAgentsReportTab from '@/components/reports/SalesAgentsReportTab'
 
@@ -13,15 +13,15 @@ export default function ReportsPage() {
       
 
       {/* Tabs */}
-      <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className=" px-2">
-          <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
+      <Tabs defaultValue="summary" className="w-full">
+        <TabsList className=" ">
+          <TabsTrigger value="summary">Summary</TabsTrigger>
           <TabsTrigger value="financial">Financial Reports</TabsTrigger>
           <TabsTrigger value="salesAgents">Sales Agents Report</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="inventory" className="mt-6">
-          <InventoryReportsTab />
+        <TabsContent value="summary" className="mt-6">
+          <SummaryReportsTab />
         </TabsContent>
 
         <TabsContent value="financial" className="mt-6">

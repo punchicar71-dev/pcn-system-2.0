@@ -29,6 +29,7 @@ import {
 interface ChartDataItem {
   date: string
   vehicles: number
+  inventory: number
 }
 
 interface ChartAreaInteractiveProps {
@@ -38,23 +39,31 @@ interface ChartAreaInteractiveProps {
 
 const chartConfig = {
   vehicles: {
-    label: "Vehicles Sold",
-    color: "hsl(var(--chart-1))",
+    label: "Sold-Out Vehicles",
+    color: "hsl(142, 76%, 36%)",
+  },
+  inventory: {
+    label: "Inventory Available",
+    color: "hsl(221, 83%, 53%)",
   },
 } satisfies ChartConfig
 
 export function ChartAreaInteractive({ data, loading = false }: ChartAreaInteractiveProps) {
-  const [timeRange, setTimeRange] = React.useState("90d")
+  const [timeRange, setTimeRange] = React.useState("30d")
 
   const filteredData = React.useMemo(() => {
     if (data.length === 0) return []
     
     const now = new Date()
-    let daysToSubtract = 90
-    if (timeRange === "30d") {
-      daysToSubtract = 30
-    } else if (timeRange === "7d") {
+    let daysToSubtract = 30
+    if (timeRange === "7d") {
       daysToSubtract = 7
+    } else if (timeRange === "30d") {
+      daysToSubtract = 30
+    } else if (timeRange === "90d") {
+      daysToSubtract = 90
+    } else if (timeRange === "365d") {
+      daysToSubtract = 365
     }
     
     const startDate = new Date(now)
@@ -68,8 +77,8 @@ export function ChartAreaInteractive({ data, loading = false }: ChartAreaInterac
   }, [data, timeRange])
 
   return (
-    <Card className="pt-0">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+    <Card className="pt-0 rounded-lg">
+      <CardHeader className="flex items-center gap-2 space-y-0 py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
           <CardTitle>Total Sales</CardTitle>
           <CardDescription>
@@ -81,17 +90,20 @@ export function ChartAreaInteractive({ data, loading = false }: ChartAreaInterac
             className="w-[160px] rounded-lg sm:ml-auto"
             aria-label="Select a value"
           >
-            <SelectValue placeholder="Last 3 months" />
+            <SelectValue placeholder="Last 30 days" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
-              Last 3 months
+            <SelectItem value="7d" className="rounded-lg">
+              Last 7 days
             </SelectItem>
             <SelectItem value="30d" className="rounded-lg">
               Last 30 days
             </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
-              Last 7 days
+            <SelectItem value="90d" className="rounded-lg">
+              Last 90 days
+            </SelectItem>
+            <SelectItem value="365d" className="rounded-lg">
+              Last 365 days
             </SelectItem>
           </SelectContent>
         </Select>
@@ -117,6 +129,18 @@ export function ChartAreaInteractive({ data, loading = false }: ChartAreaInterac
                   <stop
                     offset="95%"
                     stopColor="var(--color-vehicles)"
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+                <linearGradient id="fillInventory" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-inventory)"
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-inventory)"
                     stopOpacity={0.1}
                   />
                 </linearGradient>
@@ -152,11 +176,18 @@ export function ChartAreaInteractive({ data, loading = false }: ChartAreaInterac
                 }
               />
               <Area
+                dataKey="inventory"
+                type="natural"
+                fill="url(#fillInventory)"
+                stroke="var(--color-inventory)"
+                strokeWidth={2}
+              />
+              <Area
                 dataKey="vehicles"
                 type="natural"
                 fill="url(#fillVehicles)"
                 stroke="var(--color-vehicles)"
-                stackId="a"
+                strokeWidth={2}
               />
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>

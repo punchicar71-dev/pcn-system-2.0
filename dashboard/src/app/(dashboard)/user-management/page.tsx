@@ -413,7 +413,7 @@ export default function UserManagementPage() {
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+        <h1 className="text-[18px] font-bold text-gray-900">User Management</h1>
         
         <button 
           onClick={() => setShowAddUserModal(true)}
