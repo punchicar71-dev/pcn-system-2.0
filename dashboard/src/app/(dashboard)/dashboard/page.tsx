@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { createClient } from '@supabase/supabase-js'
 import Image from 'next/image'
+import { ChartAreaInteractive } from '@/components/charts/ChartAreaInteractive'
 
 interface VehicleStats {
   total: number
@@ -29,7 +29,6 @@ interface ActiveUser {
 }
 
 export default function DashboardPage() {
-  const [dateRange, setDateRange] = useState('Past Week')
   const [availableVehicles, setAvailableVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
   const [pendingVehicles, setPendingVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
   const [soldVehicles, setSoldVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
@@ -93,7 +92,7 @@ export default function DashboardPage() {
       supabase.removeChannel(salesChannel)
       clearInterval(interval)
     }
-  }, [dateRange])
+  }, [])
 
   const fetchDashboardData = async () => {
     try {
@@ -173,12 +172,9 @@ export default function DashboardPage() {
 
   const fetchChartData = async () => {
     try {
-      let daysAgo = 7 // Default to past week
-      if (dateRange === 'Past Month') daysAgo = 30
-      if (dateRange === 'Past Year') daysAgo = 365
-
+      // Fetch all sold vehicles (we'll filter by date range in the component)
       const startDate = new Date()
-      startDate.setDate(startDate.getDate() - daysAgo)
+      startDate.setDate(startDate.getDate() - 365) // Get last year of data
       startDate.setHours(0, 0, 0, 0)
 
       // Fetch sold vehicles from pending_vehicle_sales table
@@ -195,15 +191,18 @@ export default function DashboardPage() {
         
         salesData.forEach((sale) => {
           const date = new Date(sale.updated_at)
-          const dateKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          // Use ISO date format (YYYY-MM-DD) for better sorting and filtering
+          const dateKey = date.toISOString().split('T')[0]
           salesByDate[dateKey] = (salesByDate[dateKey] || 0) + 1
         })
 
-        // Convert to chart data format
-        const chartDataArray: SalesData[] = Object.entries(salesByDate).map(([date, vehicles]) => ({
-          date,
-          vehicles
-        }))
+        // Convert to chart data format - sorted by date
+        const chartDataArray: SalesData[] = Object.entries(salesByDate)
+          .map(([date, vehicles]) => ({
+            date,
+            vehicles
+          }))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
         setChartData(chartDataArray)
 
@@ -410,74 +409,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Total Sell Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Total Sell</h3>
-                <p className="text-sm text-gray-500">This chart displays the total sold-out vehicles for all categories.</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Date Range</span>
-                <select 
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option>Past Week</option>
-                  <option>Past Month</option>
-                  <option>Past Year</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="h-[350px]">
-              {loading || chartData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  Loading chart data...
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorVehicles" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
-                      stroke="#9ca3af"
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12, fill: '#6b7280' }}
-                      stroke="#9ca3af"
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#6366f1',
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: 'white',
-                        padding: '8px 12px'
-                      }}
-                      labelStyle={{ color: 'white', fontWeight: 'bold' }}
-                      formatter={(value) => [`${value} Vehicles`, 'Total Sell']}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="vehicles" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={2}
-                      fill="url(#colorVehicles)"
-                      activeDot={{ r: 6, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
+          <ChartAreaInteractive data={chartData} loading={loading} />
         </div>
 
         {/* Right Section - Active Users */}
