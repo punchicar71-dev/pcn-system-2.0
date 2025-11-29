@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Menu, X, Phone, Mail, Globe } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,9 +35,9 @@ export default function Header() {
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="bg-black text-white py-2.5">
-        <div className=" max-w-7xl mx-auto  flex justify-between items-center text-sm">
+      {/* Top Bar - Hidden on Mobile */}
+      <div className="hidden md:block bg-black text-white py-2.5">
+        <div className=" max-w-7xl mx-auto sm:px-6 md:px-8 lg:px-0 flex justify-between items-center text-sm">
           <div className="flex items-center gap-6">
             <span className="text-xs text-gray-400 ">
               Open Everyday! <span className="font-medium ml-2 text-xs text-white ">09:00AM – 06:00PM</span>
@@ -68,7 +70,7 @@ export default function Header() {
           ? 'bg-black/70 backdrop-blur-md shadow-lg' 
           : 'bg-transparent'
       }`}>
-      <div className=" max-w-7xl mb-[-90px] mx-auto  py-3">
+      <div className=" max-w-7xl mb-[-90px] mx-auto sm:px-6 md:px-8 lg:px-0 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
@@ -91,8 +93,8 @@ export default function Header() {
                 key={item.name}
                 href={item.href}
                 className={`px-4 py-2 rounded-md font-base transition-colors ${
-                  item.name === 'Home'
-                    ? 'text-[#F5A623]'
+                  pathname === item.href
+                    ? 'text-[#FDF898]'
                     : 'text-white hover:text-[#F5A623]'
                 }`}
               >
@@ -110,43 +112,67 @@ export default function Header() {
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+      </div>
+      </header>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <nav className="lg:hidden mt-4 pb-4 border-t border-slate-700 pt-4 space-y-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`block py-2 px-4 rounded-md font-medium transition-colors ${
-                  item.name === 'Home'
-                    ? 'text-[#F5A623] bg-slate-800'
-                    : 'text-white hover:text-[#F5A623] hover:bg-slate-800'
-                }`}
+      {/* Mobile Navigation Overlay */}
+      {isMenuOpen && (
+        <>
+          {/* Backdrop with blur */}
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          
+          {/* Menu Panel */}
+          <nav className="lg:hidden fixed top-0 right-0 h-full w-80 bg-black z-50 shadow-2xl overflow-y-auto">
+            {/* Close Button */}
+            <div className="flex justify-end p-4">
+              <button
                 onClick={() => setIsMenuOpen(false)}
+                className="p-2 hover:bg-slate-800 rounded-md transition-colors text-white"
+                aria-label="Close menu"
               >
-                {item.name}
-              </Link>
-            ))}
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Menu Items */}
+            <div className="px-6 py-4 space-y-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`block py-3 px-4 rounded-md font-medium transition-colors ${
+                    pathname === item.href
+                      ? 'text-[#FDF898] bg-slate-800'
+                      : 'text-white hover:text-[#F5A623] hover:bg-slate-800'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+
             {/* Mobile Contact Info */}
-            <div className="pt-4 mt-4 border-t border-slate-700 space-y-2">
-              <a href="tel:+94112413865" className="flex items-center gap-2 text-sm text-white hover:text-[#F5A623]">
-                <Phone size={16} />
+            <div className="px-6 py-4 mt-4 border-t border-slate-700 space-y-3">
+              <a href="tel:+94112413865" className="flex items-center gap-3 text-sm text-white hover:text-[#F5A623] py-2">
+                <Phone size={18} />
                 <span>0112 413 865</span>
               </a>
-              <a href="tel:+94112413866" className="flex items-center gap-2 text-sm text-white hover:text-[#F5A623]">
-                <Phone size={16} />
+              <a href="tel:+94112413866" className="flex items-center gap-3 text-sm text-white hover:text-[#F5A623] py-2">
+                <Phone size={18} />
                 <span>0112 413 866</span>
               </a>
-              <a href="mailto:sales@punchicar.lk" className="flex items-center gap-2 text-sm text-white hover:text-[#F5A623]">
-                <Mail size={16} />
+              <a href="mailto:sales@punchicar.lk" className="flex items-center gap-3 text-sm text-white hover:text-[#F5A623] py-2">
+                <Mail size={18} />
                 <span>sales@punchicar.lk</span>
               </a>
             </div>
           </nav>
-        )}
-      </div>
-      </header>
+        </>
+      )}
     </>
   );
 }
