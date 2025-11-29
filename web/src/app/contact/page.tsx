@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { 
   MapPin, 
   Phone, 
@@ -10,8 +11,12 @@ import {
   Facebook,
   Instagram,
   Youtube,
-  MessageCircle
+  MessageCircle,
+  MapPinned,
+  Clock4
 } from 'lucide-react';
+import RelatedVehicleCard, { RelatedVehicle } from '@/components/RelatedVehicleCard';
+import { Separator } from '@/components/ui/separator';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -22,11 +27,40 @@ export default function ContactPage() {
     message: '',
   });
 
+  const [latestVehicles, setLatestVehicles] = useState<RelatedVehicle[]>([]);
+  const [isLoadingVehicles, setIsLoadingVehicles] = useState(true);
+
+  useEffect(() => {
+    // Fetch latest 3 vehicles
+    const fetchLatestVehicles = async () => {
+      try {
+        setIsLoadingVehicles(true);
+        const response = await fetch('/api/vehicles?limit=3&sort=newest');
+        if (response.ok) {
+          const data = await response.json();
+          setLatestVehicles(data.vehicles || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch latest vehicles:', error);
+      } finally {
+        setIsLoadingVehicles(false);
+      }
+    };
+
+    fetchLatestVehicles();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
     console.log('Form submitted:', formData);
     alert('Thank you for your message! We will get back to you soon.');
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: '',
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -39,329 +73,116 @@ export default function ContactPage() {
   const contactInfo = [
     {
       icon: MapPin,
-      title: 'Visit Our Showroom',
+      title: 'Address',
       details: ['Vehicle Park, Malabe', 'Sri Lanka'],
-      link: 'https://maps.google.com',
-      linkText: 'Get Directions',
     },
     {
       icon: Phone,
-      title: 'Call Us',
-      details: ['+94 11 234 5678', '+94 77 123 4567'],
-      link: 'tel:+94112345678',
-      linkText: 'Call Now',
+      title: 'Phone',
+      details: ['+94 112 413 865', '+94 112 413 866'],
     },
     {
       icon: Mail,
-      title: 'Email Us',
-      details: ['info@punchicar.lk', 'sales@punchicar.lk'],
-      link: 'mailto:info@punchicar.lk',
-      linkText: 'Send Email',
+      title: 'Email',
+      details: ['sales@punchicar.lk', 'support@punchicar.lk'],
     },
     {
       icon: Clock,
-      title: 'Business Hours',
-      details: ['Monday - Sunday', '9:00 AM - 6:00 PM'],
-      link: null,
-      linkText: null,
-    },
-  ];
-
-  const departments = [
-    {
-      name: 'Sales Department',
-      phone: '+94 11 234 5678',
-      email: 'sales@punchicar.lk',
-      description: 'New vehicle inquiries and purchases',
-    },
-    {
-      name: 'Service Department',
-      phone: '+94 11 234 5679',
-      email: 'service@punchicar.lk',
-      description: 'Vehicle maintenance and repairs',
-    },
-    {
-      name: 'Finance Department',
-      phone: '+94 11 234 5680',
-      email: 'finance@punchicar.lk',
-      description: 'Financing and leasing inquiries',
-    },
-    {
-      name: 'Customer Support',
-      phone: '+94 11 234 5681',
-      email: 'support@punchicar.lk',
-      description: 'General inquiries and support',
+      title: 'Sales Hours',
+      details: ['09:00AM - 06:00PM', 'Open Everyday'],
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-800 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">Get in Touch</h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-            Have questions? We're here to help. Reach out to us through any of the channels below 
-            or visit our showroom in Malabe.
-          </p>
-        </div>
-      </section>
-
-      {/* Contact Info Cards */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {contactInfo.map((info, index) => {
-              const Icon = info.icon;
-              return (
-                <div key={index} className="bg-slate-50 p-6 rounded-xl border-2 border-slate-200 hover:border-yellow-500 transition">
-                  <div className="bg-yellow-100 w-14 h-14 rounded-full flex items-center justify-center mb-4">
-                    <Icon className="text-yellow-600" size={28} />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-3">{info.title}</h3>
-                  <div className="space-y-1 mb-4">
-                    {info.details.map((detail, idx) => (
-                      <p key={idx} className="text-slate-600">{detail}</p>
-                    ))}
-                  </div>
-                  {info.link && (
-                    <a
-                      href={info.link}
-                      className="text-yellow-600 hover:text-yellow-700 font-semibold inline-flex items-center gap-2"
-                    >
-                      {info.linkText} →
-                    </a>
-                  )}
-                </div>
-              );
-            })}
+    <div className="min-h-screen bg-white">
+      {/* Hero Section with Image */}
+      <section className="relative h-80 overflow-hidden ">
+        <Image
+          src="/vehicle_page_hero.png"
+          alt="Contact Hero"
+          fill
+          className="object-cover w-full h-full"
+          priority
+        />
+        <div className="absolute inset-0  flex items-center pt-20 justify-center">
+          <div className="text-center text-white">
+            <h1 className="text-[42px] font-semibold mb-4">Contact Us</h1>
+            <p className="text-[16px] font-base w-[600px]" >Have questions? We're here to help. Reach out to us through any of the channels below or visit our showroom in Malabe.</p>
           </div>
         </div>
       </section>
 
-      {/* Main Content - Form and Map */}
-      <section className="py-16 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div>
-              <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-3xl font-bold text-slate-900 mb-6">Send us a Message</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      required
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-                      placeholder="Enter your full name"
-                    />
-                  </div>
+      {/* Contact Details Section */}
+      <section className=" max-w-7xl  mx-auto border rounded-[12px]  bg-white border-gray-200  my-12  ">
+        <div className=" flex flex-col ">
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-                        placeholder="your@email.com"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-2">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        required
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-                        placeholder="+94 77 123 4567"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-semibold text-slate-700 mb-2">
-                      Subject *
-                    </label>
-                    <select
-                      id="subject"
-                      name="subject"
-                      required
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-                    >
-                      <option value="">Select a subject</option>
-                      <option value="vehicle-inquiry">Vehicle Inquiry</option>
-                      <option value="test-drive">Schedule Test Drive</option>
-                      <option value="financing">Financing Options</option>
-                      <option value="service">Service & Maintenance</option>
-                      <option value="trade-in">Trade-In Valuation</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-semibold text-slate-700 mb-2">
-                      Message *
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      required
-                      value={formData.message}
-                      onChange={handleChange}
-                      rows={6}
-                      className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none resize-none"
-                      placeholder="Tell us how we can help you..."
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-yellow-500 text-black py-4 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2"
-                  >
-                    <Send size={20} />
-                    Send Message
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Map and Additional Info */}
-            <div className="space-y-8">
-              {/* Map Placeholder */}
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className="h-96 bg-slate-200 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="text-slate-400 mx-auto mb-4" size={64} />
-                    <p className="text-slate-600 font-semibold">Google Maps Integration</p>
-                    <p className="text-sm text-slate-500">Vehicle Park, Malabe, Sri Lanka</p>
-                  </div>
+           {/* Details Section */}
+          <div className="flex  gap-8">
+            {/* Left - Contact Details Cards */}
+            <div className="flex-1 p-6">
+              <h2 className="text-[20px] font-bold text-gray-900 mb-8">Contact Details</h2>
+              <div className="flex flex-col space-y-6">
+                <div className="flex gap-4 ">
+                  <div className='flex items-center gap-2'> <MapPin className='h-4 w-4 text-green-500' />Address: </div>
+                  <div className='text-[16px] font-sinhala'>මාලඹේ පුංචි කාර් නිවස, ස්ලිට් කැම්පස් අසල, ඉසුරුපුර පාර, මාලඹේ.</div>
                 </div>
-                <div className="p-6">
-                  <h3 className="font-bold text-lg text-slate-900 mb-2">Find Us Here</h3>
-                  <p className="text-slate-600 mb-4">
-                    We're conveniently located at Vehicle Park in Malabe with easy access and 
-                    ample parking space.
-                  </p>
-                  <a
-                    href="https://maps.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-yellow-600 hover:text-yellow-700 font-semibold inline-flex items-center gap-2"
-                  >
-                    Open in Google Maps →
-                  </a>
-                </div>
-              </div>
-
-              {/* Social Media */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="font-bold text-lg text-slate-900 mb-4">Connect With Us</h3>
-                <p className="text-slate-600 mb-4">
-                  Follow us on social media for the latest updates, new arrivals, and special offers.
-                </p>
                 <div className="flex gap-4">
-                  <a
-                    href="#"
-                    className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition"
-                  >
-                    <Facebook size={24} />
-                  </a>
-                  <a
-                    href="#"
-                    className="bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition"
-                  >
-                    <Instagram size={24} />
-                  </a>
-                  <a
-                    href="#"
-                    className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition"
-                  >
-                    <Youtube size={24} />
-                  </a>
-                  <a
-                    href="#"
-                    className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 transition"
-                  >
-                    <MessageCircle size={24} />
-                  </a>
+                  <div className='flex items-center gap-2'> <MapPinned  className='h-4 w-4 text-green-500' />Mail Address: </div>
+                  <div className='text-[16px] font-sinhala'>46/KL, ගැමුණුපුර, කොතලාවල, කඩුවෙල.</div>
                 </div>
+                <div className="flex gap-4">
+                  <div className='flex items-center gap-2'> <Phone className='h-4 w-4 text-green-500' />Phone: </div>
+                  <div className='text-[16px]'>+94 117 275 275</div>
+                </div>
+                <div className="flex gap-4">
+                  <div className='flex items-center gap-2'> <Clock4 className='h-4 w-4 text-green-500' />Sales Hours: </div>
+                  <div className='text-[16px] font-sinhala'>සෑම දිනකම විවෘතයි! 09:00AM – 06:00PM</div>
+                </div>
+                <p className="text-gray-700 bg-gray-100 p-6 rounded-lg leading-relaxed font-sinhala">
+                  පුංචි කාර් නිවස තිබෙන තැන මෙන්න. මාලඹේ ස්ලිට් කැමිපස් අසල. අලුත් KIA ප්‍රදර්ශනාගාරය අසල. අධිවේගි මාර්ගයෙන් මාතර කොට්ටාව දෙසින් එනවා නම් කොතලාවල පිටවීමෙන් වමට කිලෝමීටරයයි. කඩවතින් නම් කඩුවෙලින් පිටවී කඩුවෙල නගරය හරහා කි.මි.4යි.
+                </p>
+              </div>
+            </div>
+
+             <Separator orientation="vertical" className='h-auto' />
+
+            {/* Right - Contact Image */}
+            <div className="flex-1 w-auto p-6">
+              <div className="bg-white rounded-lg shadow-md overflow-hidden ">
+                <Image
+                  src="/contact_img.png"
+                  alt="Contact"
+                  width={400}
+                  height={500}
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
           </div>
+
+          <Separator className="" />
+
+          {/* Map */}
+            <div className="bg-white rounded-lg p-6 shadow-md overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1114.0313144356653!2d79.97871655192556!3d6.915182739800654!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae256d611ab3bfd%3A0x3b97c89625742ba!2sPunchi%20Car%20Niwasa!5e0!3m2!1sen!2slk!4v1764309422847!5m2!1sen!2slk"
+                width="100%"
+                height="550"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+
+
+
         </div>
       </section>
 
-      {/* Departments */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Our Departments</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Contact the right department for faster assistance
-            </p>
-          </div>
+      
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {departments.map((dept, index) => (
-              <div key={index} className="bg-slate-50 p-6 rounded-xl border-2 border-slate-200">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{dept.name}</h3>
-                <p className="text-slate-600 mb-4">{dept.description}</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Phone size={18} className="text-yellow-600" />
-                    <a href={`tel:${dept.phone}`} className="hover:text-yellow-600">
-                      {dept.phone}
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Mail size={18} className="text-yellow-600" />
-                    <a href={`mailto:${dept.email}`} className="hover:text-yellow-600">
-                      {dept.email}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Link */}
-      <section className="py-16 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Have Questions?</h2>
-          <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
-            Check our Help Guide for answers to frequently asked questions
-          </p>
-          <a
-            href="/help-guide"
-            className="inline-block bg-yellow-500 text-black px-8 py-4 rounded-lg font-semibold hover:bg-yellow-600 transition"
-          >
-            Visit Help Center
-          </a>
-        </div>
-      </section>
+      
     </div>
   );
 }

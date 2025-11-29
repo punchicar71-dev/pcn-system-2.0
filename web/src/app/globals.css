@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,4 +67,19 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Sinhala font support using system fonts */
+.font-sinhala {
+  font-family: 'Iskoola Pota', 'Noto Sans Sinhala', 'Segoe UI', system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-sinhala-bold {
+  font-family: 'Iskoola Pota', 'Noto Sans Sinhala', 'Segoe UI', system-ui, sans-serif;
+  font-weight: 700;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

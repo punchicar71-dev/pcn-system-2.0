@@ -35,7 +35,7 @@ export default function Header() {
     <>
       {/* Top Bar */}
       <div className="bg-black text-white py-2.5">
-        <div className="container max-w-[1200px] mx-auto px-4 flex justify-between items-center text-sm">
+        <div className=" max-w-7xl mx-auto  flex justify-between items-center text-sm">
           <div className="flex items-center gap-6">
             <span className="text-xs text-gray-400 ">
               Open Everyday! <span className="font-medium ml-2 text-xs text-white ">09:00AM – 06:00PM</span>
@@ -65,10 +65,10 @@ export default function Header() {
       {/* Main Navigation - Sticky Header */}
       <header className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-black/50 backdrop-blur-md shadow-lg' 
+          ? 'bg-black/70 backdrop-blur-md shadow-lg' 
           : 'bg-transparent'
       }`}>
-      <div className="container max-w-[1200px] mb-[-90px] mx-auto px-4 py-3">
+      <div className=" max-w-7xl mb-[-90px] mx-auto  py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md font-base transition-colors ${
                   item.name === 'Home'
                     ? 'text-[#F5A623]'
                     : 'text-white hover:text-[#F5A623]'

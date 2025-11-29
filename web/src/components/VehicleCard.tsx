@@ -49,11 +49,9 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   };
 
   return (
-    <div className="bg-gray-50 rounded-[15px]  border border-gray-300 overflow-hidden hover:shadow-lg transition-shadow duration-200 relative">
+    <div className="bg-white rounded-[12px]  border border-gray-300 overflow-hidden hover:shadow-lg transition-shadow duration-200 relative">
       {/* Availability Badge */}
-      <div className="absolute top-3 right-3 z-10 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ">
-        Available
-      </div>
+      
 
       {/* Vehicle Card with horizontal layout */}
       <div className="flex">
@@ -74,7 +72,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
                       key={index}
                       src={imageUrl}
                       alt={`${vehicle.name} - Image ${index + 1}`}
-                      className={`absolute w-full h-full object-cover rounded-[10px] transition-opacity duration-500 ${
+                      className={`absolute w-full h-full object-cover rounded-[8px] transition-opacity duration-500 ${
                         index === currentImageIndex ? 'opacity-100' : 'opacity-0'
                       }`}
                     />
@@ -144,13 +142,6 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           {allImages.length === 1 && (
             <div className="absolute bottom-2 left-1/2  transform -translate-x-1/2 flex space-x-1 z-20">
               <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-            </div>
-          )}
-
-          {/* Image Counter */}
-          {allImages.length > 1 && (
-            <div className="absolute top-3  left-3 z-20 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-semibold">
-              {currentImageIndex + 1} / {allImages.length}
             </div>
           )}
         </div>

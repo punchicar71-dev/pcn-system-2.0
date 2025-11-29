@@ -22,9 +22,10 @@ interface SellingInfoProps {
   onChange: (field: string, value: any) => void;
   onBack: () => void;
   onSubmit: () => void;
+  disabled?: boolean; // 🔒 New: Disable form when vehicle is locked
 }
 
-export default function SellingInfo({ formData, onChange, onBack, onSubmit }: SellingInfoProps) {
+export default function SellingInfo({ formData, onChange, onBack, onSubmit, disabled = false }: SellingInfoProps) {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [salesAgents, setSalesAgents] = useState<any[]>([]);
   const [leasingCompanies, setLeasingCompanies] = useState<any[]>([]);
@@ -197,7 +198,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                   className="pl-10 pr-4"
                   placeholder="Search by Vehicle Number"
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || disabled}
                 />
                 {isLoading && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -243,6 +244,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 onChange={(e) => onChange('sellingAmount', e.target.value)}
                 placeholder="Rs"
                 required
+                disabled={disabled}
               />
             </div>
 
@@ -256,6 +258,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 value={formData.advanceAmount}
                 onChange={(e) => onChange('advanceAmount', e.target.value)}
                 placeholder="Rs"
+                disabled={disabled}
               />
             </div>
 
@@ -283,6 +286,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                 value={formData.paymentType}
                 onValueChange={(value) => onChange('paymentType', value)}
                 required
+                disabled={disabled}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select option..." />
@@ -304,6 +308,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
                   value={formData.leasingCompany}
                   onValueChange={(value) => onChange('leasingCompany', value)}
                   required
+                  disabled={disabled}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select leasing company..." />
@@ -327,6 +332,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               <Select
                 value={formData.inHouseSalesAgent}
                 onValueChange={(value) => onChange('inHouseSalesAgent', value)}
+                disabled={disabled}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select option..." />
@@ -349,6 +355,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
               <Select
                 value={formData.thirdPartySalesAgent}
                 onValueChange={(value) => onChange('thirdPartySalesAgent', value)}
+                disabled={disabled}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select option..." />
@@ -444,6 +451,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
             onClick={onBack}
             variant="outline"
             className="px-8 py-3 font-medium"
+            disabled={disabled}
           >
             Back
           </Button>
@@ -451,7 +459,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit }: Se
             type="submit"
             variant="default"
             className="px-8 py-3 font-medium"
-            disabled={!formData.selectedVehicle}
+            disabled={!formData.selectedVehicle || disabled}
           >
             Sell Vehicle
           </Button>

@@ -5,6 +5,60 @@ import Link from 'next/link';
 import VehicleCard from '../../components/VehicleCard';
 import BrandLogoMarquee from '../../components/BrandLogoMarquee';
 import { VehicleCardData, VehicleBrand } from '@/lib/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Vehicle Card Skeleton Component
+const VehicleCardSkeleton = () => (
+  <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="flex gap-4">
+      {/* Image Skeleton */}
+      <Skeleton className="w-[280px] h-[180px] rounded-lg flex-shrink-0" />
+      
+      {/* Content Skeleton */}
+      <div className="flex-1 space-y-3">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        
+        <div className="flex gap-4">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        
+        <div className="flex items-center justify-between pt-2">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-10 w-28 rounded-full" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Filter Section Skeleton Component
+const FilterSkeleton = () => (
+  <div className="space-y-6 p-6">
+    {[1, 2, 3, 4].map((item) => (
+      <div key={item} className="space-y-3">
+        <Skeleton className="h-5 w-32" />
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-8 w-20 rounded-full" />
+          ))}
+        </div>
+        {item < 4 && <hr className="border-gray-200 mt-6" />}
+      </div>
+    ))}
+  </div>
+);
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<VehicleCardData[]>([]);
@@ -23,9 +77,31 @@ export default function VehiclesPage() {
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('default');
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   
   // Debounce timer ref
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sort vehicles function
+  const sortVehicles = (vehicleList: VehicleCardData[], sortOption: string) => {
+    const sorted = [...vehicleList];
+    
+    switch (sortOption) {
+      case 'price-asc':
+        return sorted.sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return sorted.sort((a, b) => b.price - a.price);
+      case 'year-desc':
+        return sorted.sort((a, b) => b.year - a.year);
+      case 'year-asc':
+        return sorted.sort((a, b) => a.year - b.year);
+      case 'default':
+      default:
+        return sorted;
+    }
+  };
 
   // Fetch vehicles from API
   const fetchVehicles = async (isInitialLoad = false) => {
@@ -39,7 +115,7 @@ export default function VehiclesPage() {
       const params = new URLSearchParams();
       
       if (searchQuery) params.append('search', searchQuery);
-      if (selectedBrand) params.append('brand', selectedBrand);
+      if (selectedBrand) params.append('brand', selectedBrand); // Now sending brand ID
       if (selectedFuelType) params.append('fuel', selectedFuelType);
       if (selectedTransmission) params.append('transmission', selectedTransmission);
       if (minPrice) params.append('minPrice', minPrice);
@@ -52,7 +128,12 @@ export default function VehiclesPage() {
       }
       
       const data = await response.json();
-      setVehicles(data.vehicles || []);
+      let fetchedVehicles = data.vehicles || [];
+      
+      // Apply sorting
+      fetchedVehicles = sortVehicles(fetchedVehicles, sortBy);
+      
+      setVehicles(fetchedVehicles);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -120,6 +201,16 @@ export default function VehiclesPage() {
   useEffect(() => {
     fetchVehicles();
   }, [selectedBrand, selectedFuelType, selectedTransmission, searchQuery, minPrice, maxPrice, selectedYear, selectedCountry]);
+
+  // Apply sorting when sortBy changes
+  useEffect(() => {
+    setVehicles((prevVehicles) => sortVehicles(prevVehicles, sortBy));
+  }, [sortBy]);
+
+  // Reset to page 1 when filters or itemsPerPage change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedBrand, selectedFuelType, selectedTransmission, searchQuery, minPrice, maxPrice, selectedYear, selectedCountry, itemsPerPage]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,11 +293,74 @@ export default function VehiclesPage() {
     }))
   ];
 
+  // Pagination calculations
+  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentVehicles = vehicles.slice(startIndex, endIndex);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages + 2) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+      
+      // Adjust if we're near the start
+      if (currentPage <= 3) {
+        endPage = maxVisiblePages;
+      }
+      
+      // Adjust if we're near the end
+      if (currentPage >= totalPages - 2) {
+        startPage = totalPages - maxVisiblePages + 1;
+      }
+      
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pages.push(-1); // -1 represents ellipsis
+      }
+      
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis before last page if needed
+      if (endPage < totalPages - 1) {
+        pages.push(-2); // -2 represents ellipsis
+      }
+      
+      // Always show last page
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // Scroll to top of vehicle list
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section 
-        className="relative h-[400px] flex items-end pb-16 justify-center overflow-hidden"
+        className="relative h-[400px] flex items-end pb-20 justify-center overflow-hidden"
         style={{
           backgroundImage: "url('/vehicle_page_hero.png')",
           backgroundSize: 'cover',
@@ -237,32 +391,32 @@ export default function VehiclesPage() {
     
      
 
-<div className='max-w-[1200px] mx-auto  border-b '>
+<div className='max-w-7xl mx-auto   '>
 {/* Brand Logo Marquee */}
       <BrandLogoMarquee />
 </div>
       
 
       {/* Main Content */}
-      <div className="max-w-[1200px] mx-auto ">
-        <div className="flex border-b mb-10">
+      <div className="max-w-7xl border rounded-[15px] mx-auto mb-12 ">
+        <div className="flex ">
           {/* Filters Sidebar */}
-          <aside className="w-[300px] flex-shrink-0">
-            <div className=" border-r py-6 ">
-              <h2 className="text-[16px] font-semibold text-gray-800 mb-6">Advance filters</h2>
+          <aside className="w-[300px]  flex-shrink-0">
+            <div className=" h-auto  ">
+              <h2 className="text-[16px] font-semibold text-gray-800 p-6">Advance filters</h2>
 
-                <div className="space-y-8">
+                <div className="">
  <hr className="border-gray-200" />
                   {/* Vehicle Brand */}
-                  <div>
-                    <h3 className="text-[16px] font-normal text-gray-500 mb-6">Vehicle Brand</h3>
+                  <div className='p-6 space-y-4'>
+                    <h3 className="text-[16px] font-normal text-gray-500 ">Vehicle Brand</h3>
                     <div className="flex flex-wrap gap-2">
                       {brands.map((brand) => (
                         <button 
                           key={brand.id}
-                          onClick={() => setSelectedBrand(selectedBrand === brand.name ? '' : brand.name)}
+                          onClick={() => setSelectedBrand(selectedBrand === brand.id.toString() ? '' : brand.id.toString())}
                           className={`px-3 py-1.5 rounded-full text-[14px] font-semibold transition-colors ${
-                            selectedBrand === brand.name
+                            selectedBrand === brand.id.toString()
                               ? 'bg-yellow-500 text-black'
                               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                           }`}
@@ -277,7 +431,7 @@ export default function VehiclesPage() {
                   <hr className="border-gray-200" />
 
                   {/* Fuel Type */}
-                  <div>
+                  <div className='p-6'>
                     <h3 className="text-[16px] font-normal text-gray-500 mb-6">Fuel Type</h3>
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 ">
                       {['Petrol', 'Diesel', 'EV', 'Petrol + Hybrid', 'Diesel + Hybrid'].map((fuel) => (
@@ -306,7 +460,7 @@ export default function VehiclesPage() {
                   <hr className="border-gray-200" />
 
                   {/* Transmission */}
-                  <div>
+                  <div className='p-6'>
                     <h3 className="text-[16px] font-normal text-gray-500 mb-6">Transmission</h3>
                     <div className=" flex flex-wrap items-center gap-6">
                       {['Automatic', 'Manual', 'Auto'].map((trans) => (
@@ -335,11 +489,11 @@ export default function VehiclesPage() {
                   <hr className="border-gray-200" />
 
                   {/* Price Range */}
-                  <div className='max-w-[280px]'>
+                  <div className=' p-6'>
                     <h3 className="text-[16px]  font-normal text-gray-500 mb-6">Price Range</h3>
                     <div className="space-y-4">
                       {/* Price Input Fields */}
-                      <div className="flex  items-center gap-3">
+                      <div className="flex w-[280px] items-center gap-3">
                         <input
                           type="number"
                           placeholder="500000"
@@ -350,7 +504,7 @@ export default function VehiclesPage() {
                               setMinPrice(val);
                             }
                           }}
-                          className="flex border max-w-[120px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
+                          className="flex border w-[100px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
                         />
                         <span className="text-gray-500">-</span>
                         <input
@@ -476,7 +630,7 @@ export default function VehiclesPage() {
                   
 
                   {/* Country of Origin */}
-                  <div>
+                  <div className='p-6'> 
                     <h3 className="text-lg font-medium text-gray-800 mb-4">County of origin</h3>
                     <div className="flex flex-wrap gap-2">
                       {countries.map((country) => (
@@ -501,8 +655,8 @@ export default function VehiclesPage() {
 
             {/* Vehicle Results */}
 
-            <div className="flex-1 pt-6 ">
-              <div className="max-w-auto mx-auto pl-6 ">
+            <div className="flex-1 border-l ">
+              <div className="max-w-auto mx-auto p-6 ">
           {/* Search Header */}
           <div className="text-start mb-6">
             <h2 className="text-[16px] font-semibold text-gray-900 mb-2">Find the best vehicle for you</h2>
@@ -516,7 +670,7 @@ export default function VehiclesPage() {
                 placeholder="Search vehicles by brand or model..."
                 onChange={(e) => debouncedSearch(e.target.value)}
                 defaultValue={searchQuery}
-                className="w-full border border-gray-300 rounded-full px-4 py-2 pr-12 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all"
+                className="w-full border border-gray-300 rounded-full px-4 py-2 pr-12 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
               />
               {searchQuery && (
                 <button
@@ -563,24 +717,31 @@ export default function VehiclesPage() {
           </form>
 
           {/* Sort and Results */}
-          <div className="flex justify-between  items-center pb-4">
-            <div className='flex gap-4 items-center'>
-              <span className="text-gray-600 text-sm">Sort by: </span>
-              <select className=" text-sm  ">
-                <option>5 per page</option>
-                <option>10 per page</option>
-                <option>20 per page</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-                <option>Year: Newest First</option>
-              </select>
+          <div className="flex justify-between  items-center ">
+            <div className='flex gap-6 items-center'>
+              
+              <div className='flex gap-2 items-center'>
+                <span className="text-gray-600 text-sm">Show: </span>
+                <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                  <SelectTrigger className="w-auto py-0 font-semibold border-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 Per Page</SelectItem>
+                    <SelectItem value="10">10 Per Page</SelectItem>
+                    <SelectItem value="25">25 Per Page</SelectItem>
+                    <SelectItem value="50">50 Per Page</SelectItem>
+                    <SelectItem value="100">100 Per Page</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="text-gray-600 text-[14px] font-semibold">
               {isSearching ? (
                 <span className="text-yellow-600">Searching...</span>
               ) : (
                 <span>
-                  {vehicles.length} {vehicles.length === 1 ? 'Vehicle' : 'Vehicles'} Available
+                  Showing {startIndex + 1}-{Math.min(endIndex, vehicles.length)} of {vehicles.length} {vehicles.length === 1 ? 'Vehicle' : 'Vehicles'}
                 </span>
               )}
             </div>
@@ -589,32 +750,22 @@ export default function VehiclesPage() {
              
              
           {/* Separator */}
-                  <hr className="border-gray-200 py-4" />
+                  <hr className="border-gray-200 " />
 
           {/* vehicle data */}
              
-             <div className='pl-6'>
+             <div className='p-6 bg-gray-100'>
               {loading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mb-4">
-                      <svg className="w-6 h-6 animate-spin text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <div className="text-gray-500">Loading vehicles...</div>
-                  </div>
+                <div className="space-y-4">
+                  {[...Array(itemsPerPage)].map((_, index) => (
+                    <VehicleCardSkeleton key={index} />
+                  ))}
                 </div>
               ) : isSearching ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mb-4">
-                      <svg className="w-6 h-6 animate-spin text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <div className="text-gray-500">Searching vehicles...</div>
-                  </div>
+                <div className="space-y-4">
+                  {[...Array(itemsPerPage)].map((_, index) => (
+                    <VehicleCardSkeleton key={index} />
+                  ))}
                 </div>
               ) : error ? (
                 <div className="flex justify-center items-center py-12">
@@ -653,42 +804,58 @@ export default function VehiclesPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {vehicles.map((vehicle) => (
+                  {currentVehicles.map((vehicle) => (
                     <VehicleCard key={vehicle.id} vehicle={vehicle} />
                   ))}
                 </div>
               )}
 
               {/* Pagination */}
-              <div className="mt-8 flex justify-center">
-                <div className="flex items-center gap-1">
-                  <button className="px-3 py-2 text-gray-500 hover:text-gray-700 transition text-sm">
-                    Previous
-                  </button>
-                  <button className="w-8 h-8 bg-gray-900 text-white rounded-full font-semibold text-sm">
-                    1
-                  </button>
-                  <button className="w-8 h-8 text-gray-600 hover:bg-gray-100 rounded-full transition text-sm">
-                    2
-                  </button>
-                  <button className="w-8 h-8 text-gray-600 hover:bg-gray-100 rounded-full transition text-sm">
-                    3
-                  </button>
-                  <button className="w-8 h-8 text-gray-600 hover:bg-gray-100 rounded-full transition text-sm">
-                    4
-                  </button>
-                  <button className="w-8 h-8 text-gray-600 hover:bg-gray-100 rounded-full transition text-sm">
-                    5
-                  </button>
-                  <span className="px-2 text-gray-500 text-sm">...</span>
-                  <button className="w-8 h-8 text-gray-600 hover:bg-gray-100 rounded-full transition text-sm">
-                    11
-                  </button>
-                  <button className="px-3 py-2 text-gray-500 hover:text-gray-700 transition text-sm">
-                    Next
-                  </button>
+              {!loading && !isSearching && vehicles.length > 0 && totalPages > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-gray-500 hover:text-gray-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    
+                    {getPageNumbers().map((page, index) => {
+                      if (page === -1 || page === -2) {
+                        return (
+                          <span key={`ellipsis-${index}`} className="px-2 text-gray-500 text-sm">
+                            ...
+                          </span>
+                        );
+                      }
+                      
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`w-8 h-8 rounded-full font-semibold text-sm transition ${
+                            currentPage === page
+                              ? 'bg-gray-900 text-white'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                    
+                    <button 
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 text-gray-500 hover:text-gray-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

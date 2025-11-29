@@ -1,13 +1,15 @@
 'use client';
 
 import { DollarSign } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SellVehicleStepIndicator from '@/components/sell-vehicle/SellVehicleStepIndicator';
 import CustomerDetails from '@/components/sell-vehicle/CustomerDetails';
 import SellingInfo from '@/components/sell-vehicle/SellingInfo';
 import Confirmation from '@/components/sell-vehicle/Confirmation';
 import { createClient } from '@/lib/supabase-client';
 import { sendSellVehicleConfirmationSMS } from '@/lib/vehicle-sms-service';
+import { useVehicleLock } from '@/hooks/use-vehicle-lock';
+import { VehicleLockWarning } from '@/components/ui/vehicle-lock-warning';
 
 export default function SellVehiclePage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -37,6 +39,13 @@ export default function SellVehiclePage() {
     thirdPartySalesAgent: '',
   });
 
+  // 🔒 Vehicle locking to prevent concurrent edits
+  const { isLocked, lockedBy, hasMyLock, acquireLock, releaseLock } = useVehicleLock(
+    sellingData.selectedVehicle?.id || null,
+    'selling',
+    currentStep === 2 // Only enable locking on step 2 (selling info)
+  );
+
   const handleCustomerDataChange = (field: string, value: string) => {
     setCustomerData((prev) => ({ ...prev, [field]: value }));
   };
@@ -49,6 +58,13 @@ export default function SellVehiclePage() {
     setCompletedSteps([1]);
     setCurrentStep(2);
   };
+
+  // 🔒 Acquire lock when vehicle is selected and we're on step 2
+  useEffect(() => {
+    if (sellingData.selectedVehicle?.id && currentStep === 2) {
+      acquireLock();
+    }
+  }, [sellingData.selectedVehicle?.id, currentStep, acquireLock]);
 
   const handleBackFromSellingInfo = () => {
     setCurrentStep(1);
@@ -199,6 +215,11 @@ export default function SellVehiclePage() {
         // Don't block the sale confirmation - continue with the flow
       }
 
+      // 🔒 Release lock after successful sale
+      if (sellingData.selectedVehicle?.id) {
+        await releaseLock();
+      }
+
       // Success - move to confirmation step
       setCompletedSteps([1, 2]);
       setCurrentStep(3);
@@ -208,6 +229,9 @@ export default function SellVehiclePage() {
     }
   };
 
+  // Determine if form should be disabled (locked by another user)
+  const isFormDisabled = isLocked && !hasMyLock;
+
   return (
     <div className="min-h-screen bg-white">
       
@@ -215,6 +239,15 @@ export default function SellVehiclePage() {
       <SellVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />
 
       <div className="max-w-7xl  ">
+        {/* 🔒 Show lock warning on step 2 if vehicle is locked */}
+        {currentStep === 2 && isFormDisabled && (
+          <VehicleLockWarning
+            isLocked={isLocked}
+            lockedBy={lockedBy}
+            lockType="selling"
+          />
+        )}
+
         {currentStep === 1 && (
           <CustomerDetails
             formData={customerData}
@@ -229,6 +262,7 @@ export default function SellVehiclePage() {
             onChange={handleSellingDataChange}
             onBack={handleBackFromSellingInfo}
             onSubmit={handleSubmitSale}
+            disabled={isFormDisabled}
           />
         )}
 
