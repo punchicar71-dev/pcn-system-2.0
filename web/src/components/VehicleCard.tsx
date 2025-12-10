@@ -176,19 +176,19 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             <div className="flex gap-8 ">
               <div>
                 <p className="text-gray-500 text-xs mb-1">Fuel Type:</p>
-                <p className="text-blue-600 text-[16px] font-medium">{vehicle.fuelType}</p>
+                <p className="text-[#C2185B] text-[16px] font-medium">{vehicle.fuelType}</p>
               </div>
               <Separator orientation="vertical" />
               <div>
                 <p className="text-gray-500 text-xs mb-1">Mileage:</p>
-                <p className="text-blue-600 text-[16px] font-medium">{vehicle.mileage?.toLocaleString()} km</p>
+                <p className="text-[#C2185B] text-[16px] font-medium">{vehicle.mileage?.toLocaleString()} km</p>
               </div>
             </div>
             
             {/* View Details Button */}
             <Link
               href={`/vehicles/${vehicle.id}`}
-              className="px-4 py-3 flex bg-gray-900 item-center text-white font-medium rounded-full  hover:bg-yellow-500 hover:text-black transition-colors duration-200 text-sm"
+              className="px-4 py-3 flex bg-[#E4002B] item-center text-white font-medium rounded-[8px]  hover:bg-red-700  transition-colors duration-200 text-sm"
             >
               View Details
             </Link>

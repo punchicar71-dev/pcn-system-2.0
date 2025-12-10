@@ -179,23 +179,23 @@ export default function VehicleDetailPage() {
         className="relative bg-cover h-96 bg-center  pt-10 bg-no-repeat"
         style={{ backgroundImage: "url('/detail_bg.png')" }}
       >
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 "></div>
         
-        <div className="relative  max-w-7xl mx-auto pt-16 ">
+        <div className="relative  max-w-7xl  mx-auto pt-20 ">
           {/* Breadcrumb */}
           <div className="mb-4">
             <Breadcrumb>
-              <BreadcrumbList className="text-white/90">
+              <BreadcrumbList className="text-black/90">
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/" className="text-white/80 hover:text-white flex gap-2 items-center"><House className='h-4 w-4' />Home</BreadcrumbLink>
+                  <BreadcrumbLink href="/" className="text-black/80 hover:text-black flex gap-2 items-center"><House className='h-4 w-4' />Home</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-white/60" />
+                <BreadcrumbSeparator className="text-black/60" />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/vehicles" className="text-white/80 hover:text-white">All Vehicles</BreadcrumbLink>
+                  <BreadcrumbLink href="/vehicles" className="text-black/80 hover:text-black">All Vehicles</BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-white/60" />
+                <BreadcrumbSeparator className="text-black/60" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-white font-medium">
+                  <BreadcrumbPage className="text-black font-medium">
                     {vehicle.brand.name} {vehicle.model.name}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
@@ -204,7 +204,7 @@ export default function VehicleDetailPage() {
           </div>
 
           {/* Two Column Flex Layout */}
-          <div className="flex bg-white rounded-t-[15px] border  flex-col max-w-7xl lg:flex-row gap-2">
+          <div className="flex bg-white rounded-t-[12px] border  flex-col max-w-7xl lg:flex-row gap-2">
             {/* Left Column - Gallery */}
             <div className="flex-1 p-4">
               {/* Main Image with Overlay Buttons */}
@@ -348,7 +348,7 @@ export default function VehicleDetailPage() {
       </div>
 
       {/* Middle Content Area */}
-      <div className="max-w-7xl border mx-auto mt-72 ">
+      <div className="max-w-7xl border px-4  mx-auto mt-[315px]">
         <div className="flex flex-col lg:flex-row ">
           {/* Left Column - 70% - Features & Service */}
           <div className="flex-1 border-r lg:w-[70%]">

@@ -360,31 +360,32 @@ export default function VehiclesPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section 
-        className="relative h-[400px] flex items-end pb-20 justify-center overflow-hidden"
+        className="relative h-[400px] flex items-center overflow-hidden"
         style={{
-          backgroundImage: "url('/vehicle_page_hero.png')",
+          backgroundImage: "url('/vehicle_hero.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
       >
-       
-        
-        {/* Content */}
-        <div className="relative z-10 text-center text-white px-4">
-          <p className="text-sm font-medium tracking-[0.2em] uppercase mb-3 opacity-90">
-            ALL VEHICLE
-          </p>
-          <h1 className="text-5xl font-semibold mb-4 tracking-tight">
-            Punch Car Niwasa
-          </h1>
-          <div className="flex items-center justify-center gap-2 text-lg">
-            <span className="font-normal">Vehicle Park ,</span>
-            <span className="font-bold text-yellow-400">Malabe</span>
+        {/* Content - Left Aligned */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full ">
+          <div className="text-left text-black max-w-xl mt-[100px]">
+            <h1 className="text-[40px] font-bold tracking-tight font-sinhala">
+              මාලඹේ පුංචි කාර් නිවස
+            </h1>
+            {/* Subheading - Red */}
+              <h2 className="text-[28px] md:text-[28px] lg:text-[28px] font-bold mb-8 text-[#E4002B] font-sinhala">
+                වාහන උද්‍යානය
+              </h2>
+            <p className="text-lg mb-6 font-sinhala leading-relaxed">
+              වාහන ප්‍රදර්ශනාගාරයේ විකිණීමට ඇති සියලුම<br />
+              වාහන මෙතනින් බලාගත හැක
+            </p>
+            <p className="text-base font-normal">
+              Now Available <span className="font-bold text-red-600">{vehicles.length} Vehicles</span> in our vehicle park
+            </p>
           </div>
-          <p className="mt-6 text-base font-light">
-            Now Available <span className="font-bold text-yellow-400">{vehicles.length} vehicles</span> in our vehicle park
-          </p>
         </div>
       </section>
 
@@ -398,7 +399,7 @@ export default function VehiclesPage() {
       
 
       {/* Main Content */}
-      <div className="max-w-7xl border rounded-[15px] mx-auto mb-12 ">
+      <div className="max-w-7xl border rounded-[12px] mx-auto mb-12 ">
         <div className="flex ">
           {/* Filters Sidebar */}
           <aside className="w-[300px]  flex-shrink-0">
@@ -417,7 +418,7 @@ export default function VehiclesPage() {
                           onClick={() => setSelectedBrand(selectedBrand === brand.id.toString() ? '' : brand.id.toString())}
                           className={`px-3 py-1.5 rounded-full text-[14px] font-semibold transition-colors ${
                             selectedBrand === brand.id.toString()
-                              ? 'bg-yellow-500 text-black'
+                              ? 'bg-gray-800 text-white'
                               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                           }`}
                         >
@@ -670,7 +671,7 @@ export default function VehiclesPage() {
                 placeholder="Search vehicles by brand or model..."
                 onChange={(e) => debouncedSearch(e.target.value)}
                 defaultValue={searchQuery}
-                className="w-full border border-gray-300 rounded-full px-4 py-2 pr-12 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
+                className="w-full border border-gray-300 bg-gray-50 rounded-[8px] px-4 py-2 pr-12 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
               />
               {searchQuery && (
                 <button
@@ -754,7 +755,7 @@ export default function VehiclesPage() {
 
           {/* vehicle data */}
              
-             <div className='p-6 bg-gray-100'>
+             <div className='p-6 '>
               {loading ? (
                 <div className="space-y-4">
                   {[...Array(itemsPerPage)].map((_, index) => (

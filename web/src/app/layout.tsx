@@ -10,6 +10,9 @@ const notoSansSinhala = Noto_Sans_Sinhala({ subsets: ["sinhala"], weight: ["400"
 export const metadata: Metadata = {
   title: "Punchi Car Niwasa - Vehicle Park, Malabe",
   description: "Choose from 400 vehicles in one place. Quality used cars from Japan with comprehensive inspection.",
+  icons: {
+    icon: "/logo_icon.png",
+  },
 };
 
 export default function RootLayout({
