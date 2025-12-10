@@ -109,7 +109,7 @@ export default function Footer() {
               />
               <button
                 type="submit"
-                className="w-full md:w-auto bg-gray-900 hover:bg-gray-700 text-white font-medium text-[14px] lg:text-[15px] py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-medium text-[14px] lg:text-[15px] py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 {submitted ? '✓ Submitted' : 'Submit'}  <Send className='h-4 w-4' />
               </button>
@@ -132,11 +132,11 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="bg-black text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="bg-red-600 text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-4">
           <div className="flex flex-col sm:flex-col md:flex-row lg:flex-row justify-center sm:justify-between items-center gap-2 sm:gap-4 text-xs sm:text-sm text-center sm:text-left">
-            <p className="font-medium text-[11px] sm:text-[13px]">&copy; Copyright 2024 Punchi Car Niwasa</p>
-            <p className="text-gray-300 text-[11px] sm:text-[13px]">Design & Developed by asankaherath.com</p>
+            <p className="text-white text-[11px] sm:text-[13px]">&copy; Copyright 2024 Punchi Car Niwasa</p>
+            <p className="text-white text-[11px] sm:text-[13px]">Design & Developed by asankaherath.com</p>
           </div>
         </div>
       </div>

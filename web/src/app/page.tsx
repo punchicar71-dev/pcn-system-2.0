@@ -1,266 +1,325 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { Car, Shield, Award, Wrench, CheckCircle, Search } from 'lucide-react';
-import UploadSection from '@/components/UploadSection';
+import { Button } from '@/components/ui/button';
+import BrandLogoMarquee from '@/components/BrandLogoMarquee';
+import LatestVehicleCard from '@/components/LatestVehicleCard';
+import { VehicleCardData } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 
 export default function HomePage() {
+  const [latestVehicles, setLatestVehicles] = useState<VehicleCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLatestVehicles = async () => {
+      try {
+        const response = await fetch('/api/vehicles?limit=4&sortBy=latest');
+        if (!response.ok) throw new Error('Failed to fetch vehicles');
+        const data = await response.json();
+        setLatestVehicles(data.vehicles || []);
+      } catch (error) {
+        console.error('Error fetching latest vehicles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestVehicles();
+  }, []);
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with Background Image */}
-      <section className="relative h-[600px] md:h-[700px]">
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative h-full min-h-[600px]  w-full overflow-hidden">
         {/* Background Image */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 w-full h-full">
           <Image
-            src="/hero_image.png"
+            src="/hero_home_image.png"
             alt="Punchi Car Niwasa Vehicle Park"
             fill
-            className="object-cover"
+            className="object-cover object-center md:object-center object-left"
             priority
+            quality={100}
           />
-          {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-black/50"></div>
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 h-full flex flex-col justify-center">
-          <div className="max-w-3xl text-white">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              Punch Car Niwasa
-            </h1>
-            <p className="text-2xl md:text-3xl lg:text-4xl mb-4">
-              Vehicle Park <span className="text-[#F5A623]">, Malabe</span>
-            </p>
-            <p className="text-lg md:text-xl text-slate-200 mb-12">
-              When choosing a vehicle from a dealership with 400 options
-            </p>
+        {/* Content Overlay */}
+        <div className="relative z-10 h-full w-full">
+          <div className="max-w-7xl mx-auto px-6 md:px-4 flex h-full min-h-[600px] items-center justify-center md:justify-start mt-[50px]">
+            <div className="max-w-2xl text-center md:text-left">
+              {/* Main Heading - Sinhala */}
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight font-sinhala">
+                <span className="text-black">මාලඹේ පුංචි කාර් නිවස</span>
+              </h1>
+              
+              {/* Subheading - Red */}
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 text-[#E4002B] font-sinhala">
+                වාහන උද්‍යානය
+              </h2>
 
-            {/* Search Box */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-2xl">
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-6">
-                Find the best vehicle for you
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input
-                  type="text"
-                  placeholder="Search vehicles"
-                  className="border border-slate-300 rounded-lg px-4 py-3 text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-[#F5A623] focus:border-transparent outline-none"
-                />
-                <select className="border border-slate-300 rounded-lg px-4 py-3 text-slate-900 focus:ring-2 focus:ring-[#F5A623] focus:border-transparent outline-none">
-                  <option>Select Brands</option>
-                  <option>Toyota</option>
-                  <option>Honda</option>
-                  <option>Nissan</option>
-                  <option>Mazda</option>
-                  <option>Suzuki</option>
-                  <option>BMW</option>
-                  <option>Mercedes</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Model (Ex : Corolla)"
-                  className="border border-slate-300 rounded-lg px-4 py-3 text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-[#F5A623] focus:border-transparent outline-none"
-                />
-                <button className="bg-[#F5A623] text-black px-6 py-3 rounded-lg font-bold hover:bg-[#E09615] transition flex items-center justify-center gap-2">
-                  <Search size={20} />
-                  Search
-                </button>
+              {/* Description Text */}
+              <div className="space-y-4 mb-8 text-black font-sinhala">
+                <p className="text-[16px] md:text-[18px] leading-relaxed">
+                  තෝරා ගැනිමට වාහන 400ක් එකම උද්‍යානයක. මහ පාරෙන් මීටර් 600ක් ඇතුළත
+                  මනරම් හරිත කලාපයක පිහිටි දැවැන්ත වාහන උද්‍යානය.
+                </p>
+                <p className="text-[16px] md:text-md leading-relaxed font-medium">
+                  මාලඹේ පුංචි කාර් නිවස, ස්ලිට් කැම්පස් අසල, ඉසුරුපුර පාර, මාලඹේ.
+                </p>
+              </div>
+
+              {/* Opening Hours */}
+              <div className="mb-8">
+                <p className="text-[16px] md:text-[18px] text-gray-700">
+                  Open Everyday! <span className="font-semibold text-black ml-2">09:00AM – 06:00PM</span>
+                </p>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex justify-center md:justify-start flex-wrap gap-4">
+                <Button 
+                  asChild
+                  className="bg-[#E4002B] text-white px-8 py-6  rounded-lg font-semibold text-[16px] hover:bg-[#C4001B] transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <Link href="/vehicles">
+                    View Vehicles
+                  </Link>
+                </Button>
+                <Button 
+                  asChild
+                  variant="outline"
+                  className="bg-white text-black px-8 py-6  rounded-lg font-semibold text-[16px] hover:bg-gray-100 transition-all duration-300  hover:shadow-xl border border-gray-300"
+                >
+                  <Link href="/contact">
+                    Contact Us
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Brand Logos Section */}
-      <section className="py-8 bg-white border-t border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-8 md:gap-12 flex-wrap opacity-70 hover:opacity-100 transition-opacity">
-            <div className="text-2xl font-bold text-slate-600">BMW</div>
-            <div className="text-2xl font-bold text-slate-600">CHERY</div>
-            <div className="text-2xl font-bold text-slate-600">CHEVROLET</div>
-            <div className="text-2xl font-bold text-slate-600">HONDA</div>
-            <div className="text-2xl font-bold text-slate-600">ISUZU</div>
-            <div className="text-2xl font-bold text-slate-600">Jeep</div>
-            <div className="text-2xl font-bold text-slate-600">JAGUAR</div>
-            <div className="text-2xl font-bold text-slate-600">Land Rover</div>
-            <div className="text-2xl font-bold text-slate-600">LEXUS</div>
-            <div className="text-2xl font-bold text-slate-600">MAYBACH</div>
-            <div className="text-2xl font-bold text-slate-600">Mazda</div>
-            <div className="text-2xl font-bold text-slate-600">MITSUBISHI</div>
-            <div className="text-2xl font-bold text-slate-600">Mercedes-Benz</div>
-            <div className="text-2xl font-bold text-slate-600">MINI</div>
-          </div>
-        </div>
-      </section>
+
+      <div className='max-w-7xl mx-auto'>
+        {/* Brand Logo Marquee */}
+        <BrandLogoMarquee />
+      </div>
 
       {/* Latest Vehicles Section */}
-      <section className="py-16 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-2">Latest vehicles</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow text-center">
-              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Car className="text-[#F5A623]" size={32} />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-slate-900">400+ Vehicles</h3>
-              <p className="text-slate-600">
-                Largest selection of quality Japanese used vehicles in one location
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow text-center">
-              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="text-[#F5A623]" size={32} />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-slate-900">Quality Assured</h3>
-              <p className="text-slate-600">
-                Every vehicle undergoes comprehensive inspection and comes with warranty
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow text-center">
-              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Award className="text-[#F5A623]" size={32} />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-slate-900">Trusted Dealer</h3>
-              <p className="text-slate-600">
-                Years of experience and thousands of satisfied customers
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow text-center">
-              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wrench className="text-[#F5A623]" size={32} />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-slate-900">After Sales Service</h3>
-              <p className="text-slate-600">
-                Complete support and maintenance services for your vehicle
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Vehicles */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-2">Featured Vehicles</h2>
-              <p className="text-slate-600">Check out our latest arrivals</p>
-            </div>
-            <Link
-              href="/vehicles"
-              className="text-[#F5A623] hover:text-[#E09615] font-semibold flex items-center gap-2"
-            >
-              View All
-              <span>→</span>
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Section Header */}
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-[24px] md:text-[24px] font-semibold text-gray-900">
+             Showroom New Arrivals
+            </h2>
+            <Link href="/vehicles">
+              <Button 
+                variant="outline" 
+                className=" border border-red-300 text-red-500 hover:bg-[#E4002B] hover:text-white px-6 py-5 rounded-lg font-semibold text-[16px] transition-all duration-300"
+              >
+                View All
+                <ArrowUpRight className="ml-2 w-5 h-5" />
+              </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group">
-                <div className="relative h-48 bg-slate-200">
-                  <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-                    <Car size={64} />
-                  </div>
-                  <div className="absolute top-3 right-3 bg-[#F5A623] text-black px-3 py-1 rounded-full text-sm font-semibold">
-                    New Arrival
+
+          {/* Vehicle Cards Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white rounded-[12px] border border-gray-300 overflow-hidden">
+                  <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+                  <div className="">
+                    <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-[#F5A623] transition">
-                    Toyota Aqua 2020
-                  </h3>
-                  <div className="flex items-center justify-between text-sm text-slate-600 mb-3">
-                    <span>Hybrid</span>
-                    <span>•</span>
-                    <span>Auto</span>
-                    <span>•</span>
-                    <span>50,000 km</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-slate-900">Rs 4.5M</span>
-                    <Link
-                      href="/vehicles"
-                      className="text-[#F5A623] hover:text-[#E09615] font-semibold"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
+              ))}
+            </div>
+          ) : latestVehicles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {latestVehicles.map((vehicle) => (
+                <LatestVehicleCard key={vehicle.id} vehicle={vehicle} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">No vehicles available at the moment.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* About Section with Video */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* Left Side - Text Content (40%) */}
+            <div className="w-full lg:w-[40%] space-y-6 font-sinhala">
+              <h2 className="text-[28px] md:text-[32px] font-bold text-gray-900 leading-tight">
+                සිරිලක වාහන ඉසුරු පුරය.
+              </h2>
+
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700">
+                පුංචි කාර් නිවස යනු ලංකාවේ එකම තැනක වාහන අලුත්ම 400කට ආසන්න සංග්‍රහයක් තිබෙන අයුරින් විශාලතම වාහන එකතුවයි.
+
+සියලු ගනුදෙනු ස්පීකර් ෆෝන් හරහා විවෘතව සිද්ධ වන අතර, ගැණුම්කරුටද එය සෘජුව ඇසීමට හැක. අත්තිකාරම් මුදල ගත් පසුව එම මිල තත්‍ක්ෂණිකව සනාථ කර, වාහනයේ හිමිකරුට ස්වයංක්‍රීය SMS පණිවිඩයක් යවයි.
+              </p>
+
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700">
+                වාහනය ගැණුම්කරු වෙත ලැබෙන්නේ එම වාහනයේ අයිතිකරුගේම මිලටයි. ඉතින් 
+                පුංචි කාර් නිවසේ වාහනවල මිලත් අඩුයි.
+              </p>
+
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-medium">
+               <span className='font-bold text-black'>පුංචි කාර් නිවස.</span> ලංකාවේ සුවිශාලතම වාහන එකතුව....
+              </p>
+            </div>
+
+            {/* Right Side - Video (60%) */}
+            <div className="w-full lg:w-[60%]">
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full rounded-2xl shadow-lg"
+                  src="https://www.youtube.com/embed/Q0bq5oPjEvc"
+                  title="Punchi Car Niwasa"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Upload Section Component */}
-      <UploadSection />
+      {/* Buy & Sell Vehicle Section */}
+      <section className="pb-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Side - Buy Vehicle Card (50%) */}
+            <div className="bg-gray-100 rounded-2xl p-8 lg:p-10">
+              {/* Icon */}
+              <div className="mb-6">
+                <Image
+                  src="/buy_vehicle.png"
+                  alt="Buy Vehicle"
+                  width={80}
+                  height={80}
+                  className=" w-20"
+                />
+              </div>
 
-      {/* Services Overview */}
-      <section className="py-16 bg-slate-900 text-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Our Services</h2>
-            <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-              Complete automotive solutions for all your vehicle needs
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-slate-800 p-6 rounded-xl hover:bg-slate-700 transition">
-              <CheckCircle className="text-[#F5A623] mb-4" size={40} />
-              <h3 className="text-xl font-semibold mb-3">Vehicle Inspection</h3>
-              <p className="text-slate-300">
-                Comprehensive multi-point inspection for all vehicles before sale
+              {/* Title */}
+              <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+                වාහනයක් ගන්නද?
+              </h2>
+
+              {/* Description */}
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-8 font-sinhala">
+                අපේ වාහන අංගනයට පිවිසෙන්න පහත click කරන්න. තෝරා ගැනිමට වාහන 400කට 
+                ආසන්න ප්‍රමාණයක් දැන් ඔබ ඉදිරියේ. මෙම සියලුම වාහන අප වාහන අංගනයේ මේ 
+                මොහොතේ ප්‍රදර්ශනය කෙරෙනවා. මෙම සියලුම වාහන පරික්ෂාවකින් පසුව තෝරාගත් 
+                හොදම වාහන පමණයි. පිවිසෙන්න.
               </p>
+
+              {/* Button */}
+              <Button 
+                asChild
+                className="bg-[#E4002B] text-white px-8 py-6 rounded-lg font-semibold text-[16px] hover:bg-[#C4001B] transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <Link href="/vehicles">
+                  Available Vehicles
+                </Link>
+              </Button>
             </div>
-            <div className="bg-slate-800 p-6 rounded-xl hover:bg-slate-700 transition">
-              <CheckCircle className="text-[#F5A623] mb-4" size={40} />
-              <h3 className="text-xl font-semibold mb-3">Financing Options</h3>
-              <p className="text-slate-300">
-                Flexible payment plans and leasing options available
+
+            {/* Right Side - Sell Vehicle Card (50%) */}
+            <div className="bg-gray-100 rounded-2xl p-8 lg:p-10">
+              {/* Icon */}
+              <div className="mb-6">
+                <Image
+                  src="/sell_vehicle.png"
+                  alt="Sell Vehicle"
+                  width={80}
+                  height={80}
+                  className="object-contain "
+                />
+              </div>
+
+              {/* Title */}
+              <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+                වාහනයක් විකුණන්නද?
+              </h2>
+
+              {/* Description */}
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-6 font-sinhala">
+                ලියාපදිංචි සහතිකයේ පිටපත් දෙකක් සමග වාහනය රැගෙන එන්න පුංචි කාර් නිවසට.
+                වාහනය හොඳ නම් ලියකියවිලිත් නිරවුල් නම් අපි ඔබේ වාහනය විකිණීමට භාර ගන්නවා.
               </p>
+
+              {/* Contact Information */}
+              <div className="space-y-4 mb-6">
+                <p className="text-[16px] md:text-[18px] text-gray-900">
+                  <span className="font-normal text-gray-700 pr-2">Hotline : </span>
+                  <span className="font-semibold">0112 413 865</span>
+                  <span className="mx-2">|</span>
+                  <span className="font-semibold">0112 413 866</span>
+                </p>
+
+                <p className="text-[16px] md:text-[18px] text-gray-900">
+                  <span className="font-normal text-gray-700 pr-2">Open Everyday! </span>
+                  <span className="font-semibold">09:00AM – 06:00PM</span>
+                </p>
+              </div>
             </div>
-            <div className="bg-slate-800 p-6 rounded-xl hover:bg-slate-700 transition">
-              <CheckCircle className="text-[#F5A623] mb-4" size={40} />
-              <h3 className="text-xl font-semibold mb-3">Trade-In Service</h3>
-              <p className="text-slate-300">
-                Get the best value for your current vehicle with our trade-in program
-              </p>
-            </div>
-          </div>
-          <div className="text-center mt-8">
-            <Link
-              href="/services"
-              className="inline-block bg-[#F5A623] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#E09615] transition"
-            >
-              Learn More About Our Services
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-[#F5A623]">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold text-slate-900 mb-4">
-            Ready to Find Your Perfect Vehicle?
-          </h2>
-          <p className="text-lg text-slate-800 mb-8 max-w-2xl mx-auto">
-            Visit our showroom today or browse our online inventory. Our team is ready to help you find the perfect vehicle.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/vehicles"
-              className="bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold hover:bg-slate-800 transition"
-            >
-              Browse Inventory
-            </Link>
-            <Link
-              href="/contact"
-              className="bg-white text-slate-900 px-8 py-4 rounded-lg font-semibold hover:bg-slate-100 transition"
-            >
-              Schedule a Visit
-            </Link>
+      {/* 400 Vehicles Content Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-8 items-center">
+            {/* Left Side - Text Content (50%) */}
+            <div className="w-full lg:w-[50%] space-y-6 font-sinhala">
+              <h2 className="text-[28px] md:text-[28px] font-bold text-gray-900 leading-tight">
+                තෝරා ගැනිමට වාහන 400ක් එකම උද්‍යානයක.
+              </h2>
+
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700">
+                වාහනයක් ගන්නකොට වාහනය වගේම ලියකියවිලි ගැනත් හොඳටම බලන්න ඕනෑ. ව්‍යාජ 
+                ලියකියවිලි සහිත වාහනයකට අහුවුනොත් ඔක්කොම ඉවරයි. ඉතින් වාහනයක 
+                ලියකියවිලි බලන්න ඕනෑ මනා දැනුමක් ඇතිවයි.
+              </p>
+
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700">
+                ලියාපදිංචි සහතිකය දිහා බැලුවට එය නිරවුල් එකක්දැයි කියන්න බැහැ. පුංචි කාර් 
+                නිවස වාහන උද්‍යානයේදි මෙම ලියකියවිලි පරික්ෂාව නිවැරදිවම කරගන්න පුලුවන්. 
+                ඒ සදහා තාක්ෂණික උපකරණත් ආධාර කරන්නවා.
+              </p>
+            </div>
+
+            {/* Right Side - Image (50%) */}
+            <div className="w-full lg:w-[50%]">
+              <div className="relative w-full h-[300px] md:h-[300px] rounded-2xl overflow-hidden shadow-lg">
+                <Image
+                  src="/showroom_image.png"
+                  alt="Punchi Car Niwasa Showroom"
+                  fill
+                  className="object-cover"
+                  quality={100}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>

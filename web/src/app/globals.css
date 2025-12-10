@@ -69,17 +69,9 @@
   }
 }
 
-/* Sinhala font support using system fonts */
+/* Sinhala font support using Google Fonts */
 .font-sinhala {
-  font-family: 'Iskoola Pota', 'Noto Sans Sinhala', 'Segoe UI', system-ui, sans-serif;
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.font-sinhala-bold {
-  font-family: 'Iskoola Pota', 'Noto Sans Sinhala', 'Segoe UI', system-ui, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-sinhala), 'Noto Sans Sinhala', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

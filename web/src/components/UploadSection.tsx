@@ -129,9 +129,6 @@ export default function UploadSection() {
             <Upload size={20} />
             Start Selling Your Vehicle
           </Link>
-          <p className="mt-4 text-slate-600">
-            Questions? <Link href="/help-guide" className="text-[#F5A623] hover:text-[#E09615] font-semibold">View our Help Guide</Link>
-          </p>
         </div>
       </div>
     </section>
