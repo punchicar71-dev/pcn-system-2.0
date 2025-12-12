@@ -2,11 +2,60 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.29 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.30 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 12, 2025 (360° Panorama Viewer Implementation)
+## 📢 LATEST UPDATE - December 12, 2025 (UI/UX Improvements & Code Cleanup)
+
+### 🎨 Enhanced User Experience & Cleaner Codebase
+
+**Major Update: Improved modals, better feedback mechanisms, and cleaner console output!**
+
+#### What's New:
+
+1. **🗑️ Vehicle Deletion Improvements**:
+   - Added success popup notification after vehicle deletion
+   - Replaced browser alerts with styled SuccessPopup component
+   - Cleaner user feedback with auto-closing notifications (3 seconds)
+   - Removed excessive console.log statements for cleaner production logs
+
+2. **↩️ Return to Inventory Modal**:
+   - New `ReturnToInventoryModal` component for pending vehicle sales
+   - Replaced delete confirmation with "Return to Inventory" functionality
+   - Updated icon from Trash to Undo for better visual clarity
+   - Improved button styling with border for visibility
+
+3. **💫 Sell Vehicle Page Enhancements**:
+   - Added loading spinner during sale submission
+   - "Processing..." text with animated Loader2 icon
+   - Button disabled state during submission to prevent double-clicks
+   - New `isSubmitting` prop for better state management
+
+4. **🖼️ Dashboard Branding**:
+   - Added favicon and app icons (logo.png)
+   - Icons for desktop shortcuts, mobile bookmarks, and Apple devices
+   - Consistent branding across all platforms
+
+5. **🧹 Code Cleanup**:
+   - Removed debug console.log statements from production code
+   - Cleaner error handling without verbose logging
+   - Better code organization in inventory and sales modules
+
+#### Updated Files:
+
+- `dashboard/src/app/(dashboard)/inventory/page.tsx` - Delete success popup ✅
+- `dashboard/src/app/(dashboard)/sales-transactions/page.tsx` - Return to Inventory modal ✅
+- `dashboard/src/app/(dashboard)/sell-vehicle/page.tsx` - Submission loading state ✅
+- `dashboard/src/app/layout.tsx` - Favicon and icons ✅
+- `dashboard/src/components/sell-vehicle/SellingInfo.tsx` - Loading spinner UI ✅
+- `dashboard/src/components/sales-transactions/ReturnToInventoryModal.tsx` - New component ✅
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx` - Undo icon ✅
+- `dashboard/src/components/inventory/VehicleDetailModal.tsx` - Removed debug logs ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - December 12, 2025 (360° Panorama Viewer Implementation)
 
 ### 🌐 Professional 360° Vehicle Interior View with Pannellum
 

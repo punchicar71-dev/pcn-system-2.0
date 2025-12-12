@@ -1,6 +1,6 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase-client';
@@ -23,9 +23,10 @@ interface SellingInfoProps {
   onBack: () => void;
   onSubmit: () => void;
   disabled?: boolean; // 🔒 New: Disable form when vehicle is locked
+  isSubmitting?: boolean; // Show spinner during submission
 }
 
-export default function SellingInfo({ formData, onChange, onBack, onSubmit, disabled = false }: SellingInfoProps) {
+export default function SellingInfo({ formData, onChange, onBack, onSubmit, disabled = false, isSubmitting = false }: SellingInfoProps) {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [salesAgents, setSalesAgents] = useState<any[]>([]);
   const [leasingCompanies, setLeasingCompanies] = useState<any[]>([]);
@@ -172,7 +173,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
   };
 
   return (
-    <div className="bg-white  p-6">
+    <div className="bg-white z-6 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Setup Selling information</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -459,9 +460,16 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
             type="submit"
             variant="default"
             className="px-8 py-3 font-medium"
-            disabled={!formData.selectedVehicle || disabled}
+            disabled={!formData.selectedVehicle || disabled || isSubmitting}
           >
-            Sell Vehicle
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Sell Vehicle'
+            )}
           </Button>
         </div>
       </form>

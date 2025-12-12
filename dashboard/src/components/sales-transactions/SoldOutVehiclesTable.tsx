@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Eye, Printer, ChevronLeft, ChevronRight, Trash2, Download } from 'lucide-react';
+import { Search, Eye, Printer, ChevronLeft, ChevronRight, Undo2, Download, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import { format } from 'date-fns';

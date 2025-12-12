@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Eye, Trash2, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { Search, Eye, Trash2, ChevronLeft, ChevronRight, Printer, Undo2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 
@@ -238,9 +238,9 @@ export default function PendingVehiclesTable({
                         </button>
                         <button
                           onClick={() => onDelete(sale.id)}
-                          className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-600 border border-red-300 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Undo2 className="w-5 h-5" />
                         </button>
                       </div>
                     </td>

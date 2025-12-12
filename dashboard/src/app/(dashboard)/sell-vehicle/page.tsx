@@ -14,7 +14,8 @@ import { VehicleLockWarning } from '@/components/ui/vehicle-lock-warning';
 export default function SellVehiclePage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [createdSaleId, setCreatedSaleId] = useState<string>('');
+  const [createdSaleId, setCreatedSaleId] = useState<string>('');  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [customerData, setCustomerData] = useState({
     title: 'Mr.',
@@ -71,6 +72,7 @@ export default function SellVehiclePage() {
   };
 
   const handleSubmitSale = async () => {
+    setIsSubmitting(true);
     try {
       const supabase = createClient();
       
@@ -226,6 +228,8 @@ export default function SellVehiclePage() {
     } catch (error) {
       console.error('Error creating sale:', error);
       alert('An error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -263,6 +267,7 @@ export default function SellVehiclePage() {
             onBack={handleBackFromSellingInfo}
             onSubmit={handleSubmitSale}
             disabled={isFormDisabled}
+            isSubmitting={isSubmitting}
           />
         )}
 

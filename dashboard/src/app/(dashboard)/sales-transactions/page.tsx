@@ -6,7 +6,7 @@ import PendingVehiclesTable from '@/components/sales-transactions/PendingVehicle
 import SoldOutVehiclesTable from '@/components/sales-transactions/SoldOutVehiclesTable';
 import PendingVehicleModal from '@/components/sales-transactions/PendingVehicleModal';
 import SoldOutVehicleModal from '@/components/sales-transactions/SoldOutVehicleModal';
-import DeleteConfirmModal from '@/components/sales-transactions/DeleteConfirmModal';
+import ReturnToInventoryModal from '@/components/sales-transactions/ReturnToInventoryModal';
 import SoldOutConfirmModal from '@/components/sales-transactions/SoldOutConfirmModal';
 import PrintDocumentModal from '@/components/sales-transactions/PrintDocumentModal';
 import { createClient } from '@/lib/supabase-client';
@@ -190,7 +190,6 @@ export default function SalesTransactionsPage() {
         // Don't block sold out process if notification fails
       }
 
-      alert('Vehicle marked as sold successfully');
       setIsSoldOutModalOpen(false);
       // Trigger refresh
       setRefreshKey(prev => prev + 1);
@@ -253,7 +252,6 @@ export default function SalesTransactionsPage() {
         // Continue anyway - sale was deleted
       }
 
-      alert('Sale deleted successfully');
       setIsDeleteModalOpen(false);
       // Trigger refresh
       setRefreshKey(prev => prev + 1);
@@ -318,8 +316,8 @@ export default function SalesTransactionsPage() {
         saleId={selectedSaleId}
       />
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
+      {/* Return To Inventory Confirmation Modal - for Pending tab */}
+      <ReturnToInventoryModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}

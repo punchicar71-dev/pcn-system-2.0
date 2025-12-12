@@ -294,7 +294,6 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
                   </div>
                 ) : viewMode === '360' && image360.length > 0 ? (
                   <div className="rounded-lg overflow-hidden border bg-black">
-                    {console.log('Rendering PanoramaViewer with URL:', image360[0]?.image_url)}
                     <PanoramaViewer
                       imageUrl={image360[0].image_url}
                       height="600px"
