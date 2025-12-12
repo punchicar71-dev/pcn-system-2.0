@@ -2,11 +2,74 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.27 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.28 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 12, 2025 (Complete UI/UX Overhaul)
+## 📢 LATEST UPDATE - December 12, 2025 (Vehicle Detail & Related Cards Enhancement)
+
+### 🎨 Enhanced Vehicle Display & User Experience
+
+**Major Feature: Improved vehicle detail page hero section and optimized related vehicle cards!**
+
+#### What's New:
+
+1. **🖼️ Vehicle Detail Page Hero Section**:
+   - Redesigned hero section with improved height responsiveness
+   - Updated hero background from `detail_bg.png` to `vehicle_hero.png` for consistency
+   - Enhanced breadcrumb positioning with better z-index layering
+   - Improved spacing and padding for all screen sizes
+   - Better visual hierarchy with optimized negative margins
+   - Left-aligned background positioning for better image display
+
+2. **🚗 Related Vehicle Card Optimization**:
+   - Removed navigation arrows for cleaner, simpler card design
+   - Enhanced responsive layout with improved width calculations
+   - Added "Time Badge" showing days since listing (Today, 1 day ago, X days ago)
+   - Better card spacing with `lg:w-[calc(33.333%-1rem)]` for perfect 3-column grid
+   - Optimized image height: `h-[180px] sm:h-[200px]` for better proportions
+   - Improved hover effects with smooth shadow transitions
+   - Centered cards on mobile with `max-w-md mx-auto`
+   - Enhanced badge styling with responsive text sizes
+
+3. **📱 Responsive Design Improvements**:
+   - Better mobile-to-desktop transitions
+   - Optimized padding and spacing across all breakpoints
+   - Improved image aspect ratios for vehicle photos
+   - Enhanced touch-friendly interface on mobile devices
+
+4. **✨ UI/UX Enhancements**:
+   - Cleaner, more minimalist card design
+   - Better information hierarchy
+   - Improved visual consistency across pages
+   - Enhanced readability with optimized typography
+   - Smoother transitions and hover states
+
+#### Technical Implementation:
+
+**Updated Files:**
+- `web/src/app/vehicles/[vehicleId]/page.tsx` - Hero section redesign and layout optimization ✅
+- `web/src/components/RelatedVehicleCard.tsx` - Simplified design with time badges ✅
+- `web/public/about_hero.png` - Updated hero image ✅
+- `web/public/service_page.png` - Updated service page hero ✅
+
+**Key Features:**
+- Unified hero section design across vehicle pages
+- Time-based listing information for better context
+- Responsive grid layout for related vehicles
+- Mobile-first design approach
+- Improved performance with optimized images
+
+**User Benefits:**
+- Faster visual scanning of vehicle information
+- Clear indication of listing recency
+- Better mobile browsing experience
+- More professional and modern appearance
+- Consistent design language throughout the site
+
+---
+
+## 📢 PREVIOUS UPDATE - December 12, 2025 (Complete UI/UX Overhaul)
 
 ### 🎨 Major Website-Wide Redesign
 

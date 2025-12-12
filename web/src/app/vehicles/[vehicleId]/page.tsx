@@ -174,40 +174,44 @@ export default function VehicleDetailPage() {
 
   return (
     <div className="min-h-screen bg-white bg-gray-50">
-      {/* Hero Section with Background */}
-      <div 
-        className="relative bg-cover h-64 sm:h-80 md:h-96 bg-center pt-6 sm:pt-10 bg-no-repeat"
-        style={{ backgroundImage: "url('/detail_bg.png')" }}
-      >
-        <div className="absolute inset-0"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 md:pt-20">
-          {/* Breadcrumb */}
-          <div className="mb-3 sm:mb-4">
-            <Breadcrumb>
-              <BreadcrumbList className="text-black/90 text-xs sm:text-sm">
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/" className="text-black/80 hover:text-black flex gap-1 sm:gap-2 items-center"><House className='h-3 w-3 sm:h-4 sm:w-4' /><span className="hidden sm:inline">Home</span></BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-black/60" />
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/vehicles" className="text-black/80 hover:text-black hidden sm:inline">All Vehicles</BreadcrumbLink>
-                  <BreadcrumbLink href="/vehicles" className="text-black/80 hover:text-black sm:hidden">Vehicles</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-black/60" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="text-black font-medium truncate max-w-[120px] sm:max-w-none">
-                    {vehicle.brand.name} {vehicle.model.name}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
 
-          {/* Two Column Flex Layout */}
-          <div className="flex bg-white rounded-t-[12px] border flex-col max-w-7xl lg:flex-row gap-0 sm:gap-2">
+    <section 
+        className="relative h-[200px] sm:h-[240px] md:h-[280px] lg:h-[320px] flex items-center overflow-hidden"
+        style={{
+          backgroundImage: "url('/vehicle_hero.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'left center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >   </section>
+
+      {/* Breadcrumb */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-0 -mt-32 sm:-mt-40 md:-mt-44 lg:-mt-[200px] xl:-mt-[200px] relative z-10 pt-6 pb-4">
+        <Breadcrumb>
+          <BreadcrumbList className="text-gray-700 text-xs sm:text-sm">
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/" className="text-gray-600 hover:text-gray-900 flex gap-1 sm:gap-2 items-center"><House className='h-3 w-3 sm:h-4 sm:w-4' /><span className="hidden sm:inline">Home</span></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="text-gray-400" />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/vehicles" className="text-gray-600 hover:text-gray-900 hidden sm:inline">All Vehicles</BreadcrumbLink>
+              <BreadcrumbLink href="/vehicles" className="text-gray-600 hover:text-gray-900 sm:hidden">Vehicles</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="text-gray-400" />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-gray-900 font-medium truncate max-w-[120px] sm:max-w-none">
+                {vehicle.brand.name} {vehicle.model.name}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
+      {/* Two Column Flex Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-0 relative z-10">
+        <div className="flex bg-white rounded-t-[12px] border flex-col lg:flex-row gap-0 sm:gap-2">
             {/* Left Column - Gallery */}
-            <div className="flex-1 p-3 sm:p-4">
+            <div className="flex-1 p-2 sm:p-2">
               {/* Main Image with Overlay Buttons */}
               <div className="relative">
                 {viewMode === 'gallery' && vehicleImages.length > 0 ? (
@@ -287,9 +291,6 @@ export default function VehicleDetailPage() {
 
             {/* Right Column - Details */}
             <div className="flex-1 p-4 sm:p-6 bg-white space-y-4 sm:space-y-6 rounded-lg">
-             
-
-         
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[32px] font-semibold text-gray-900 mt-2 sm:mt-4">
                 {vehicle.brand.name} {vehicle.model.name} NXT
               </h1>
@@ -302,41 +303,77 @@ export default function VehicleDetailPage() {
               </div>
 
               {/* Specs Flex 2x4 */}
-              <div className="flex flex-wrap gap-y-3 sm:gap-y-4 gap-x-4 sm:gap-x-8 py-4 sm:py-8">
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Body :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.body_type}</p>
+              <div className="border-t border-gray-200 pt-4 sm:pt-8 pb-4 sm:pb-8">
+                {/* Mobile - Clean Single Column View */}
+                <div className="flex flex-col gap-3  lg:hidden">
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Body :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.body_type}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Engine :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.engine_capacity || 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Year :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.manufacture_year}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Country :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.country.name}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Fuel type :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.fuel_type}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Transmission :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.transmission}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Exterior Color :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.exterior_color || 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Registered :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.registered_year || vehicle.manufacture_year}</p>
+                  </div>
                 </div>
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Fuel type :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.fuel_type}</p>
-                </div>
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Engine :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.engine_capacity || 'N/A'}</p>
-                </div>
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Transmission :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.transmission}</p>
-                </div>
-               
 
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Year :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.manufacture_year}</p>
-                </div>
-                
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Exterior Color :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.exterior_color || 'N/A'}</p>
-                </div>
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Country :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.country.name}</p>
-                </div>
-                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
-                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Registered :</p>
-                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.registered_year || vehicle.manufacture_year}</p>
+                {/* Desktop - Two Column Grid View */}
+                <div className="sm:hidden  lg:grid lg:grid-cols-2  gap-x-16 gap-y-4">
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Body :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.body_type}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Fuel type :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.fuel_type}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Engine :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.engine_capacity || 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Transmission :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.transmission}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Year :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.manufacture_year}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Exterior Color :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.exterior_color || 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Country :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.country.name}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-base text-gray-600 w-[140px]">Registered :</p>
+                    <p className="text-base font-semibold text-gray-900">{vehicle.registered_year || vehicle.manufacture_year}</p>
+                  </div>
                 </div>
               </div>
 
@@ -347,20 +384,9 @@ export default function VehicleDetailPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Mobile Sticky CTA Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50 lg:hidden">
-        <a 
-          href="tel:0117275275" 
-          className="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-3 px-4 rounded-lg transition"
-        >
-          Call Now: 0117 275 275
-        </a>
-      </div>
 
       {/* Middle Content Area */}
-      <div className="max-w-7xl border px-3 sm:px-4 mx-auto mt-[120px] sm:mt-[200px] md:mt-[280px] lg:mt-[315px] mb-20 lg:mb-0">
+      <div className="max-w-7xl border border-t-0 mx-auto px-4 sm:px-6 lg:px-4 xl:px-0 mb-8 lg:mb-0">
         <div className="flex flex-col lg:flex-row">
           {/* Left Column - 70% - Features & Service */}
           <div className="flex-1 lg:border-r lg:w-[70%]">
@@ -447,7 +473,7 @@ Telephone : <a href="tel:0117275275" className='font-bold text-green-600 hover:u
                     Leasing Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2.5 sm:top-3 text-xs sm:text-sm text-gray-500 z-10">LKR</span>
+                    <span className="absolute left-3 top-2.5 sm:top-3 text-xs sm:text-sm text-gray-500 ">LKR</span>
                     <Input
                       type="text"
                       value={leasingAmount}
@@ -503,29 +529,27 @@ Telephone : <a href="tel:0117275275" className='font-bold text-green-600 hover:u
       </div>
 
       {/* Related Vehicles Section */}
-      <div className="bg-white">
-        <div className="max-w-7xl border rounded-b-[15px] mx-auto p-4 sm:p-6 mb-12">
-          <h2 className="text-lg sm:text-xl md:text-[20px] font-semibold text-gray-900 mb-4 sm:mb-6 md:mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-0 mb-8 sm:mb-12">
+        <div className="border rounded-b-[15px] p-3 sm:p-4 md:p-6 bg-white">
+          <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">
             Related Vehicles from {vehicle.brand.name}
           </h2>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0">
-            {relatedVehicles.length > 0 ? (
-              relatedVehicles.map((relatedVehicle) => (
-                <div key={relatedVehicle.id} className="min-w-full sm:min-w-0 sm:flex-1">
-                  <RelatedVehicleCard vehicle={relatedVehicle} />
-                </div>
-              ))
-            ) : (
-              <div className="w-full text-center py-8 sm:py-12">
-                <p className="text-gray-500 text-base sm:text-lg mb-2">
-                  No other {vehicle.brand.name} vehicles available at the moment
-                </p>
-                <p className="text-gray-400 text-xs sm:text-sm">
-                  Check back soon for more vehicles from this brand
-                </p>
-              </div>
-            )}
-          </div>
+          {relatedVehicles.length > 0 ? (
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 md:gap-6">
+              {relatedVehicles.map((relatedVehicle) => (
+                <RelatedVehicleCard key={relatedVehicle.id} vehicle={relatedVehicle} />
+              ))}
+            </div>
+          ) : (
+            <div className="w-full text-center py-8 sm:py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-sm sm:text-base md:text-lg mb-2 px-4">
+                No other {vehicle.brand.name} vehicles available at the moment
+              </p>
+              <p className="text-gray-400 text-xs sm:text-sm px-4">
+                Check back soon for more vehicles from this brand
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

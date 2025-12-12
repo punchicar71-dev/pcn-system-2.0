@@ -58,16 +58,21 @@ export default function RelatedVehicleCard({ vehicle }: RelatedVehicleCardProps)
   };
 
   return (
-    <Link href={`/vehicles/${vehicle.id}`}>
-      <div className="flex-1 w-[300px] bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition cursor-pointer">
+    <Link href={`/vehicles/${vehicle.id}`} className="block w-full lg:w-[calc(33.333%-1rem)]">
+      <div className="bg-white rounded-lg border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer max-w-md mx-auto lg:max-w-none">
         {/* Image Section with Auto-play Carousel */}
         <div 
-          className="relative h-48 bg-gray-200 overflow-hidden group"
+          className="relative h-[180px] sm:h-[200px] bg-gray-100 overflow-hidden group"
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
           {allImages.length > 0 ? (
             <>
+              {/* Time Badge */}
+              <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-20 bg-gray-100 text-gray-700 px-2 sm:px-3 py-0.5 sm:py-1 rounded text-xs sm:text-sm font-medium">
+                {vehicle.daysAgo === 0 ? 'Today' : vehicle.daysAgo === 1 ? '1 day a go' : `${vehicle.daysAgo} day a go`}
+              </div>
+
               {/* Images Container */}
               <div className="w-full h-full relative">
                 {allImages.map((imageUrl, index) => (
@@ -85,34 +90,9 @@ export default function RelatedVehicleCard({ vehicle }: RelatedVehicleCardProps)
                 ))}
               </div>
 
-              {/* Navigation Arrows - Show on hover */}
-              {allImages.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevImage}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 z-20 bg-black bg-opacity-50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-70"
-                    aria-label="Previous image"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-
-                  <button
-                    onClick={handleNextImage}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 bg-black bg-opacity-50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-70"
-                    aria-label="Next image"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </>
-              )}
-
               {/* Dot Indicators */}
               {allImages.length > 1 && (
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-20">
+                <div className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1 sm:space-x-1.5 z-20">
                   {allImages.map((_, index) => (
                     <button
                       key={index}
@@ -121,10 +101,10 @@ export default function RelatedVehicleCard({ vehicle }: RelatedVehicleCardProps)
                         e.stopPropagation();
                         setCurrentImageIndex(index);
                       }}
-                      className={`w-2 h-2 rounded-full transition-all ${
+                      className={`rounded-full transition-all ${
                         index === currentImageIndex
-                          ? 'bg-yellow-400 w-4'
-                          : 'bg-white opacity-60 hover:opacity-100'
+                          ? 'bg-yellow-400 w-5 sm:w-6 h-1.5 sm:h-2'
+                          : 'bg-white w-1.5 sm:w-2 h-1.5 sm:h-2'
                       }`}
                       aria-label={`Go to image ${index + 1}`}
                     />
@@ -134,39 +114,39 @@ export default function RelatedVehicleCard({ vehicle }: RelatedVehicleCardProps)
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-gray-400">Waiting For Images... </span>
+              <span className="text-gray-400 text-sm">Waiting For Images...</span>
             </div>
           )}
         </div>
 
         {/* Vehicle Details */}
-        <div className="p-4 ">
-          <h3 className="text-[24px] font-semibold text-gray-900">{vehicle.brand} {vehicle.model}</h3>
-          <p className="text-[20px] text-gray-600">{vehicle.year}</p>
-          <p className="text-[15px] text-gray-400 py-4">
-            {vehicle.daysAgo === 1 ? 'Today' : `${vehicle.daysAgo} days ago`}
+        <div className="p-3 sm:p-4">
+          {/* Title and Year */}
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-0.5 sm:mb-1 line-clamp-1">
+            {vehicle.brand} {vehicle.model}
+          </h3>
+          <p className="text-base sm:text-lg text-gray-600 mb-3 sm:mb-4">{vehicle.year}</p>
+
+          {/* Price */}
+          <p className="text-xl sm:text-2xl font-semibold text-green-600 mb-3 sm:mb-4">
+            Rs. {vehicle.price.toLocaleString().replace(/,/g, ' ')}
           </p>
-          <p className="text-[24px] font-semibold text-gray-900 mb-3">
-            Rs. {vehicle.price.toLocaleString()}
-          </p>
-          <div className="border-t border-gray-200 pt-3 flex text-sm mb-4">
-            <div className='w-[50%] justify-start'>
-              <p className="text-gray-600 font-base pb-2 text-xs">Fuel Type</p>
-              <p className="font-semibold text-gray-900">{vehicle.fuelType}</p>
+
+          {/* Specs Grid */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+            <div>
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1">Fuel Type</p>
+              <p className="text-xs sm:text-sm font-semibold text-red-500 line-clamp-1">{vehicle.fuelType}</p>
             </div>
-            
-            <div className='w-[50%] justify-start border-l border-gray-200 pl-4'>
-              <p className="text-gray-600 pb-2 font-base text-xs">Transmission</p>
-              <p className="font-semibold text-gray-900">{vehicle.transmission}</p>
+            <div>
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1">Transmission</p>
+              <p className="text-xs sm:text-sm font-semibold text-red-500 line-clamp-1">{vehicle.transmission}</p>
             </div>
           </div>
 
-          {/* View Detail Button */}
-          <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
-            <span>View Details</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+          {/* View Details Button */}
+          <button className="w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-md transition-colors duration-200 text-sm sm:text-base">
+            View Details
           </button>
         </div>
       </div>
@@ -176,39 +156,35 @@ export default function RelatedVehicleCard({ vehicle }: RelatedVehicleCardProps)
 
 export function RelatedVehicleCardSkeleton() {
   return (
-    <div className="flex-1 w-[300px] bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="bg-white rounded-lg border overflow-hidden">
       {/* Image Skeleton */}
-      <Skeleton className="h-48 w-full rounded-t-lg" />
+      <Skeleton className="h-[180px] sm:h-[200px] w-full" />
 
       {/* Details Skeleton */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {/* Title Skeleton */}
-        <Skeleton className="h-7 w-3/4 mb-2" />
+        <Skeleton className="h-5 sm:h-6 w-3/4 mb-1 sm:mb-2" />
         
         {/* Year Skeleton */}
-        <Skeleton className="h-6 w-1/3 mb-4" />
-        
-        {/* Days Ago Skeleton */}
-        <Skeleton className="h-4 w-1/2 mb-4" />
+        <Skeleton className="h-4 sm:h-5 w-1/4 mb-3 sm:mb-4" />
         
         {/* Price Skeleton */}
-        <Skeleton className="h-7 w-2/3 mb-3" />
+        <Skeleton className="h-6 sm:h-7 w-2/3 mb-3 sm:mb-4" />
         
         {/* Fuel Type and Transmission Skeleton */}
-        <div className="border-t border-gray-200 pt-3 flex text-sm mb-4">
-          <div className='w-[50%] justify-start'>
-            <Skeleton className="h-3 w-16 mb-2" />
-            <Skeleton className="h-5 w-20" />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <div>
+            <Skeleton className="h-2.5 sm:h-3 w-14 sm:w-16 mb-1 sm:mb-2" />
+            <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
           </div>
-          
-          <div className='w-[50%] justify-start border-l border-gray-200 pl-4'>
-            <Skeleton className="h-3 w-20 mb-2" />
-            <Skeleton className="h-5 w-24" />
+          <div>
+            <Skeleton className="h-2.5 sm:h-3 w-16 sm:w-20 mb-1 sm:mb-2" />
+            <Skeleton className="h-3 sm:h-4 w-12 sm:w-16" />
           </div>
         </div>
 
         {/* Button Skeleton */}
-        <Skeleton className="h-10 w-full rounded-lg" />
+        <Skeleton className="h-9 sm:h-10 w-full rounded-md" />
       </div>
     </div>
   );
