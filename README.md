@@ -2,11 +2,42 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.30 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.31 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 12, 2025 (UI/UX Improvements & Code Cleanup)
+## 📢 LATEST UPDATE - December 12, 2025 (Layout & Z-Index Fixes)
+
+### 🎨 Layout Improvements & Sticky Header Fix
+
+**Minor Update: Fixed z-index stacking issues and improved responsive layout!**
+
+#### What's New:
+
+1. **📌 Header Z-Index Fix**:
+   - Added `z-30` to sticky header for proper layering
+   - Header now stays above content when scrolling
+   - Fixed dropdown menus appearing behind other elements
+
+2. **📱 Sell Vehicle Page Responsive Layout**:
+   - Fixed Tailwind CSS class syntax (`flex-col` instead of `flex-col-2`)
+   - Improved responsive behavior with `lg:flex-row` for desktop
+   - Added `flex-shrink-0` to prevent content compression
+   - Better width handling with `w-full lg:w-[500px]` for form fields
+   - Vehicle details card now properly sized at `lg:w-[400px]`
+
+3. **🎨 Form Label Cleanup**:
+   - Removed unnecessary fixed widths from labels
+   - Cleaner form layout with proper spacing
+
+#### Updated Files:
+
+- `dashboard/src/app/(dashboard)/layout.tsx` - Header z-index fix ✅
+- `dashboard/src/components/sell-vehicle/SellingInfo.tsx` - Responsive layout improvements ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - December 12, 2025 (UI/UX Improvements & Code Cleanup)
 
 ### 🎨 Enhanced User Experience & Cleaner Codebase
 

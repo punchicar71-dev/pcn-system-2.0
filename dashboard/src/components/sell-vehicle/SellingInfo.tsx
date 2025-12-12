@@ -173,16 +173,16 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
   };
 
   return (
-    <div className="bg-white z-6 p-6">
+    <div className="bg-white z-10 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Setup Selling information</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex flex-col-2 lg:flex-cols-2 gap-10">
+        <div className="flex flex-col lg:flex-row gap-10">
           {/* Left Column - Form Fields */}
-          <div className="space-y-6  w-[500px] ">
+          <div className="space-y-6 w-full lg:w-[500px] flex-shrink-0">
             {/* Search Vehicle */}
             <div className="relative">
-              <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search Vehicle <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -280,7 +280,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
 
             {/* Payment Type */}
             <div>
-              <label className="block w-[400px] text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Payment Method <span className="text-red-500">*</span>
               </label>
               <Select
@@ -373,9 +373,9 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
           </div>
 
           {/* Right Column - Vehicle Details Card */}
-          <div>
+          <div className="w-full lg:w-[400px] flex-shrink-0">
             {formData.selectedVehicle ? (
-              <div className="bg-gray-100 mt-6 w-[400px] rounded-lg p-4  sticky top-32">
+              <div className="bg-gray-100 rounded-lg p-4 sticky top-32">
                 {/* Vehicle Image */}
                 {formData.selectedVehicle.images?.length > 0 && formData.selectedVehicle.images[0].image_url ? (
                   <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden bg-gray-200">
