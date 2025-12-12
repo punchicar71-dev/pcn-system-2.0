@@ -223,7 +223,7 @@ export default function DashboardLayout({
 
       {/* Sidebar - Dynamic width with smooth transition */}
       <aside 
-        className={`fixed inset-y-0 left-0 pt-3 bg-white border-r transition-all duration-300 ease-in-out z-10 ${
+        className={`fixed inset-y-0 z-40 left-0 pt-3 bg-white border-r transition-all duration-300 ease-in-out  ${
           isSidebarCollapsed ? 'w-[80px]' : 'w-[260px]'
         }`}
       >

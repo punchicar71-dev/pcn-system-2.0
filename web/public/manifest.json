@@ -1,0 +1,29 @@
+{
+  "name": "Punchi Car Niwasa",
+  "short_name": "PCN",
+  "description": "Sri Lanka's largest vehicle park with 400+ quality used cars. Buy & sell vehicles at Malabe Vehicle Park.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E4002B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["auto", "shopping", "business"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+}
