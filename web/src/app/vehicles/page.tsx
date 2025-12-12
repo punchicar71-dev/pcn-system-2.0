@@ -16,27 +16,36 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // Vehicle Card Skeleton Component
 const VehicleCardSkeleton = () => (
-  <div className="bg-white rounded-lg border border-gray-200 p-4">
-    <div className="flex gap-4">
+  <div className="bg-white rounded-[12px] border border-gray-200 overflow-hidden">
+    <div className="flex flex-col lg:flex-row">
       {/* Image Skeleton */}
-      <Skeleton className="w-[280px] h-[180px] rounded-lg flex-shrink-0" />
+      <Skeleton className="w-full lg:w-[340px] h-[250px] lg:h-[240px] flex-shrink-0" />
       
       {/* Content Skeleton */}
-      <div className="flex-1 space-y-3">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+      <div className="flex-1 p-5 lg:p-5 flex flex-col justify-between">
+        <div className="flex justify-between items-start mb-3 lg:mb-3">
+          <div className="flex-1 space-y-2.5">
+            <Skeleton className="h-7 lg:h-9 w-3/4" />
+            <Skeleton className="h-5 lg:h-7 w-1/4" />
+          </div>
+          <Skeleton className="h-4 lg:h-5 w-16 ml-3" />
         </div>
         
-        <div className="flex gap-4">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
-        </div>
+        <Skeleton className="h-8 lg:h-10 w-2/5 mb-5 lg:mb-6" />
         
-        <div className="flex items-center justify-between pt-2">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-10 w-28 rounded-full" />
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 lg:gap-6 mt-auto">
+          <div className="flex items-center gap-6 lg:gap-8">
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 lg:h-5 w-16" />
+              <Skeleton className="h-6 lg:h-7 w-20" />
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 lg:h-5 w-20" />
+              <Skeleton className="h-6 lg:h-7 w-16" />
+            </div>
+          </div>
+          
+          <Skeleton className="h-12 lg:h-[50px] w-full lg:w-40 rounded-lg" />
         </div>
       </div>
     </div>
@@ -80,6 +89,9 @@ export default function VehiclesPage() {
   const [sortBy, setSortBy] = useState<string>('default');
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  
+  // Mobile filter dropdown state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // Debounce timer ref
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -360,7 +372,7 @@ export default function VehiclesPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section 
-        className="relative h-[400px] flex items-center overflow-hidden"
+        className="relative h-[280px] sm:h-[340px] md:h-[380px] lg:h-[400px] flex items-center overflow-hidden"
         style={{
           backgroundImage: "url('/vehicle_hero.png')",
           backgroundSize: 'cover',
@@ -369,20 +381,20 @@ export default function VehiclesPage() {
         }}
       >
         {/* Content - Left Aligned */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full ">
-          <div className="text-left text-black max-w-xl mt-[100px]">
-            <h1 className="text-[40px] font-bold tracking-tight font-sinhala">
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="text-left text-black max-w-xl mt-12 sm:mt-16 md:mt-20 lg:mt-[100px]">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-bold tracking-tight font-sinhala">
               මාලඹේ පුංචි කාර් නිවස
             </h1>
             {/* Subheading - Red */}
-              <h2 className="text-[28px] md:text-[28px] lg:text-[28px] font-bold mb-8 text-[#E4002B] font-sinhala">
+              <h2 className="text-xl sm:text-2xl md:text-[26px] lg:text-[28px] font-bold mb-4 sm:mb-6 lg:mb-8 text-[#E4002B] font-sinhala">
                 වාහන උද්‍යානය
               </h2>
-            <p className="text-lg mb-6 font-sinhala leading-relaxed">
-              වාහන ප්‍රදර්ශනාගාරයේ විකිණීමට ඇති සියලුම<br />
+            <p className="text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 font-sinhala leading-relaxed">
+              වාහන ප්‍රදර්ශනාගාරයේ විකිණීමට ඇති සියලුම<br className="hidden sm:block" />
               වාහන මෙතනින් බලාගත හැක
             </p>
-            <p className="text-base font-normal">
+            <p className="text-xs sm:text-sm md:text-base font-normal">
               Now Available <span className="font-bold text-red-600">{vehicles.length} Vehicles</span> in our vehicle park
             </p>
           </div>
@@ -392,31 +404,50 @@ export default function VehiclesPage() {
     
      
 
-<div className='max-w-7xl mx-auto   '>
+<div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
 {/* Brand Logo Marquee */}
       <BrandLogoMarquee />
 </div>
       
 
       {/* Main Content */}
-      <div className="max-w-7xl border rounded-[12px] mx-auto mb-12 ">
-        <div className="flex ">
+      <div className="max-w-7xl border rounded-[12px] mx-auto mb-12 px-3 sm:px-4 lg:px-0">
+        <div className="flex flex-col lg:flex-row">
           {/* Filters Sidebar */}
-          <aside className="w-[300px]  flex-shrink-0">
-            <div className=" h-auto  ">
-              <h2 className="text-[16px] font-semibold text-gray-800 p-6">Advance filters</h2>
+          <aside className="w-full lg:w-[300px] flex-shrink-0">
+            <div className="h-auto">
+              {/* Filter Header with Toggle Button (Mobile/Tablet only) */}
+              <div className="flex items-center justify-between p-4 sm:p-4 lg:block">
+                <h2 className="text-sm sm:text-base lg:text-[16px] font-semibold text-gray-800">Advance filters</h2>
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="lg:hidden flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">
+                    {isFilterOpen ? 'Hide Filters' : 'Show Filters'}
+                  </span>
+                  <svg 
+                    className={`w-4 h-4 text-gray-600 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
 
-                <div className="">
+                <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block`}>
  <hr className="border-gray-200" />
                   {/* Vehicle Brand */}
-                  <div className='p-6 space-y-4'>
-                    <h3 className="text-[16px] font-normal text-gray-500 ">Vehicle Brand</h3>
+                  <div className='p-4 sm:p-4 space-y-3 sm:space-y-4'>
+                    <h3 className="text-sm sm:text-base lg:text-[16px] font-normal text-gray-500">Vehicle Brand</h3>
                     <div className="flex flex-wrap gap-2">
                       {brands.map((brand) => (
                         <button 
                           key={brand.id}
                           onClick={() => setSelectedBrand(selectedBrand === brand.id.toString() ? '' : brand.id.toString())}
-                          className={`px-3 py-1.5 rounded-full text-[14px] font-semibold transition-colors ${
+                          className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm lg:text-[14px] font-semibold transition-colors ${
                             selectedBrand === brand.id.toString()
                               ? 'bg-gray-800 text-white'
                               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -432,9 +463,9 @@ export default function VehiclesPage() {
                   <hr className="border-gray-200" />
 
                   {/* Fuel Type */}
-                  <div className='p-6'>
-                    <h3 className="text-[16px] font-normal text-gray-500 mb-6">Fuel Type</h3>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 ">
+                  <div className='p-4 sm:p-4'>
+                    <h3 className="text-sm sm:text-base lg:text-[16px] font-normal text-gray-500 mb-4 sm:mb-6">Fuel Type</h3>
+                    <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2 sm:gap-y-3">
                       {['Petrol', 'Diesel', 'EV', 'Petrol + Hybrid', 'Diesel + Hybrid'].map((fuel) => (
                         <label key={fuel} className="flex items-center gap-3 cursor-pointer">
                           <div className="relative">
@@ -451,7 +482,7 @@ export default function VehiclesPage() {
                               className="w-4 h-4 rounded border-2 border-gray-300 text-black focus:ring-0 focus:ring-offset-0 checked:bg-black checked:border-black"
                             />
                           </div>
-                          <span className="text-gray-900 text-[16px] pb-1 item-center font-medium">{fuel}</span>
+                          <span className="text-gray-900 text-sm sm:text-base lg:text-[16px] pb-1 item-center font-medium">{fuel}</span>
                         </label>
                       ))}
                     </div>
@@ -461,9 +492,9 @@ export default function VehiclesPage() {
                   <hr className="border-gray-200" />
 
                   {/* Transmission */}
-                  <div className='p-6'>
-                    <h3 className="text-[16px] font-normal text-gray-500 mb-6">Transmission</h3>
-                    <div className=" flex flex-wrap items-center gap-6">
+                  <div className='p-4 sm:p-4'>
+                    <h3 className="text-sm sm:text-base lg:text-[16px] font-normal text-gray-500 mb-4 sm:mb-6">Transmission</h3>
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                       {['Automatic', 'Manual', 'Auto'].map((trans) => (
                         <label key={trans} className="flex items-center gap-3 cursor-pointer">
                           <div className="relative">
@@ -480,7 +511,7 @@ export default function VehiclesPage() {
                               className="w-4 h-4 rounded border-2 border-gray-300 text-black focus:ring-0 focus:ring-offset-0 checked:bg-black checked:border-black"
                             />
                           </div>
-                          <span className="text-gray-900 text-[16px] pb-1 font-medium">{trans}</span>
+                          <span className="text-gray-900 text-sm sm:text-base lg:text-[16px] pb-1 item-center font-medium">{trans}</span>
                         </label>
                       ))}
                     </div>
@@ -490,8 +521,8 @@ export default function VehiclesPage() {
                   <hr className="border-gray-200" />
 
                   {/* Price Range */}
-                  <div className=' p-6'>
-                    <h3 className="text-[16px]  font-normal text-gray-500 mb-6">Price Range</h3>
+                  <div className='p-4 sm:p-4'>
+                    <h3 className="text-sm sm:text-base lg:text-[16px] font-normal text-gray-500 mb-4 sm:mb-6">Price Range</h3>
                     <div className="space-y-4">
                       {/* Price Input Fields */}
                       <div className="flex w-[280px] items-center gap-3">
@@ -631,8 +662,8 @@ export default function VehiclesPage() {
                   
 
                   {/* Country of Origin */}
-                  <div className='p-6'> 
-                    <h3 className="text-lg font-medium text-gray-800 mb-4">County of origin</h3>
+                  <div className='p-4 sm:p-4'> 
+                    <h3 className="text-sm sm:text-base lg:text-lg font-medium text-gray-800 mb-3 sm:mb-4">County of origin</h3>
                     <div className="flex flex-wrap gap-2">
                       {countries.map((country) => (
                         <button 
@@ -656,22 +687,22 @@ export default function VehiclesPage() {
 
             {/* Vehicle Results */}
 
-            <div className="flex-1 border-l ">
-              <div className="max-w-auto mx-auto p-6 ">
+            <div className="flex-1 lg:border-l">
+              <div className="max-w-auto mx-auto p-4 sm:p-4">
           {/* Search Header */}
-          <div className="text-start mb-6">
-            <h2 className="text-[16px] font-semibold text-gray-900 mb-2">Find the best vehicle for you</h2>
+          <div className="text-start mb-4 sm:mb-4">
+            <h2 className="text-sm sm:text-base lg:text-[16px] font-semibold text-gray-900 mb-2">Find the best vehicle for you</h2>
           </div>
           
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex items-center gap-4 mb-6">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Search vehicles by brand or model..."
+                placeholder="Search vehicles..."
                 onChange={(e) => debouncedSearch(e.target.value)}
                 defaultValue={searchQuery}
-                className="w-full border border-gray-300 bg-gray-50 rounded-[8px] px-4 py-2 pr-12 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
+                className="w-full border border-gray-300 bg-gray-50 rounded-[8px] px-3 sm:px-4 py-2.5 sm:py-2 pr-10 sm:pr-12 text-sm sm:text-base focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
               />
               {searchQuery && (
                 <button
@@ -698,8 +729,8 @@ export default function VehiclesPage() {
                 </div>
               )}
               {!isSearching && !searchQuery && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -710,7 +741,7 @@ export default function VehiclesPage() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors text-sm whitespace-nowrap"
+                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors text-xs sm:text-sm whitespace-nowrap"
               >
                 Clear Filters
               </button>
@@ -718,13 +749,13 @@ export default function VehiclesPage() {
           </form>
 
           {/* Sort and Results */}
-          <div className="flex justify-between  items-center ">
-            <div className='flex gap-6 items-center'>
+          <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 sm:items-center">
+            <div className='flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center'>
               
-              <div className='flex gap-2 items-center'>
-                <span className="text-gray-600 text-sm">Show: </span>
+              <div className='flex gap-0 items-center'>
+                <span className="text-gray-600 text-xs sm:text-sm">Show: </span>
                 <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                  <SelectTrigger className="w-auto py-0 font-semibold border-none">
+                  <SelectTrigger className="w-auto py-0 font-semibold border-none text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -737,7 +768,7 @@ export default function VehiclesPage() {
                 </Select>
               </div>
             </div>
-            <div className="text-gray-600 text-[14px] font-semibold">
+            <div className="text-gray-600 text-xs sm:text-[12px] lg:text-[14px] font-semibold">
               {isSearching ? (
                 <span className="text-yellow-600">Searching...</span>
               ) : (
@@ -751,11 +782,11 @@ export default function VehiclesPage() {
              
              
           {/* Separator */}
-                  <hr className="border-gray-200 " />
+                  <hr className="border-gray-200" />
 
           {/* vehicle data */}
              
-             <div className='p-6 '>
+             <div className='p-4 sm:p-4'>
               {loading ? (
                 <div className="space-y-4">
                   {[...Array(itemsPerPage)].map((_, index) => (
@@ -813,12 +844,12 @@ export default function VehiclesPage() {
 
               {/* Pagination */}
               {!loading && !isSearching && vehicles.length > 0 && totalPages > 1 && (
-                <div className="mt-8 flex justify-center">
+                <div className="mt-6 sm:mt-8 flex justify-center">
                   <div className="flex items-center gap-1">
                     <button 
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 text-gray-500 hover:text-gray-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-2 sm:px-3 py-1.5 sm:py-2 text-gray-500 hover:text-gray-700 transition text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
@@ -826,7 +857,7 @@ export default function VehiclesPage() {
                     {getPageNumbers().map((page, index) => {
                       if (page === -1 || page === -2) {
                         return (
-                          <span key={`ellipsis-${index}`} className="px-2 text-gray-500 text-sm">
+                          <span key={`ellipsis-${index}`} className="px-1 sm:px-2 text-gray-500 text-xs sm:text-sm">
                             ...
                           </span>
                         );
@@ -836,7 +867,7 @@ export default function VehiclesPage() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`w-8 h-8 rounded-full font-semibold text-sm transition ${
+                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full font-semibold text-xs sm:text-sm transition ${
                             currentPage === page
                               ? 'bg-gray-900 text-white'
                               : 'text-gray-600 hover:bg-gray-100'
@@ -850,7 +881,7 @@ export default function VehiclesPage() {
                     <button 
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-gray-500 hover:text-gray-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-2 sm:px-3 py-1.5 sm:py-2 text-gray-500 hover:text-gray-700 transition text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>

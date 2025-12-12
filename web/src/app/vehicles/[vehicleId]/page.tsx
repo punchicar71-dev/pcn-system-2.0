@@ -176,26 +176,27 @@ export default function VehicleDetailPage() {
     <div className="min-h-screen bg-white bg-gray-50">
       {/* Hero Section with Background */}
       <div 
-        className="relative bg-cover h-96 bg-center  pt-10 bg-no-repeat"
+        className="relative bg-cover h-64 sm:h-80 md:h-96 bg-center pt-6 sm:pt-10 bg-no-repeat"
         style={{ backgroundImage: "url('/detail_bg.png')" }}
       >
-        <div className="absolute inset-0 "></div>
+        <div className="absolute inset-0"></div>
         
-        <div className="relative  max-w-7xl  mx-auto pt-20 ">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 md:pt-20">
           {/* Breadcrumb */}
-          <div className="mb-4">
+          <div className="mb-3 sm:mb-4">
             <Breadcrumb>
-              <BreadcrumbList className="text-black/90">
+              <BreadcrumbList className="text-black/90 text-xs sm:text-sm">
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/" className="text-black/80 hover:text-black flex gap-2 items-center"><House className='h-4 w-4' />Home</BreadcrumbLink>
+                  <BreadcrumbLink href="/" className="text-black/80 hover:text-black flex gap-1 sm:gap-2 items-center"><House className='h-3 w-3 sm:h-4 sm:w-4' /><span className="hidden sm:inline">Home</span></BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="text-black/60" />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/vehicles" className="text-black/80 hover:text-black">All Vehicles</BreadcrumbLink>
+                  <BreadcrumbLink href="/vehicles" className="text-black/80 hover:text-black hidden sm:inline">All Vehicles</BreadcrumbLink>
+                  <BreadcrumbLink href="/vehicles" className="text-black/80 hover:text-black sm:hidden">Vehicles</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="text-black/60" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-black font-medium">
+                  <BreadcrumbPage className="text-black font-medium truncate max-w-[120px] sm:max-w-none">
                     {vehicle.brand.name} {vehicle.model.name}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
@@ -204,43 +205,43 @@ export default function VehicleDetailPage() {
           </div>
 
           {/* Two Column Flex Layout */}
-          <div className="flex bg-white rounded-t-[12px] border  flex-col max-w-7xl lg:flex-row gap-2">
+          <div className="flex bg-white rounded-t-[12px] border flex-col max-w-7xl lg:flex-row gap-0 sm:gap-2">
             {/* Left Column - Gallery */}
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-3 sm:p-4">
               {/* Main Image with Overlay Buttons */}
               <div className="relative">
                 {viewMode === 'gallery' && vehicleImages.length > 0 ? (
                   <img
                     src={vehicleImages[currentImageIndex]?.image_url}
                     alt={`${vehicle.brand.name} ${vehicle.model.name}`}
-                    className="w-full h-[400px] object-cover rounded-lg"
+                    className="w-full h-[240px] sm:h-[300px] md:h-[350px] lg:h-[400px] object-cover rounded-lg"
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder-car.jpg';
                     }}
                   />
                 ) : viewMode === '360' && vehicle.image_360 && vehicle.image_360.length > 0 ? (
-                  <div className="h-[400px] rounded-lg overflow-hidden">
+                  <div className="h-[240px] sm:h-[300px] md:h-[350px] lg:h-[400px] rounded-lg overflow-hidden">
                     <Image360Viewer 
                       images={vehicle.image_360.map(img => img.image_url)}
                       autoRotate={false}
                       autoRotateSpeed={50}
                       sensitivity={5}
-                      height="400px"
+                      height="100%"
                       showControls={true}
                     />
                   </div>
                 ) : (
-                  <div className="w-full h-[400px] bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400">No images available</span>
+                  <div className="w-full h-[240px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-400 text-sm">No images available</span>
                   </div>
                 )}
                 
                 {/* Overlay Buttons */}
-                <div className="absolute top-4 left-4 bg-white bg-opacity-25 rounded p-1 flex gap-2">
+                <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white bg-opacity-25 rounded p-0.5 sm:p-1 flex gap-1 sm:gap-2">
                   
                   <button 
                     onClick={() => setViewMode('gallery')}
-                    className={`px-4 py-2 bg-black/70 hover:bg-black/80 text-white text-sm font-medium rounded transition ${
+                    className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-black/70 hover:bg-black/80 text-white text-xs sm:text-sm font-medium rounded transition ${
                       viewMode === 'gallery' ? 'ring-2 ring-white' : ''
                     }`}
                   >
@@ -249,24 +250,25 @@ export default function VehicleDetailPage() {
                   <button 
                     onClick={() => setViewMode('360')}
                     disabled={!vehicle.image_360 || vehicle.image_360.length === 0}
-                    className={`px-4 py-2 bg-black/70 hover:bg-black/80 text-white text-sm font-medium rounded transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-black/70 hover:bg-black/80 text-white text-xs sm:text-sm font-medium rounded transition disabled:opacity-50 disabled:cursor-not-allowed ${
                       viewMode === '360' ? 'ring-2 ring-white' : ''
                     }`}
                   >
-                    360° View
+                    <span className="hidden sm:inline">360° View</span>
+                    <span className="sm:hidden">360°</span>
                   </button>
                 </div>
               </div>
 
               {/* Thumbnail Strip */}
               {vehicleImages.length > 1 && viewMode === 'gallery' && (
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
                   {vehicleImages.slice(0, 3).map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-1 h-24 rounded-lg overflow-hidden border-2 transition ${
-                        currentImageIndex === index ? 'border-white' : 'border-transparent'
+                      className={`flex-1 h-16 sm:h-20 md:h-24 rounded-lg overflow-hidden border-2 transition ${
+                        currentImageIndex === index ? 'border-gray-900' : 'border-transparent'
                       }`}
                     >
                       <img
@@ -284,90 +286,100 @@ export default function VehicleDetailPage() {
             </div>
 
             {/* Right Column - Details */}
-            <div className="flex-1 p-4 bg-white space-y-6 rounded-lg ">
+            <div className="flex-1 p-4 sm:p-6 bg-white space-y-4 sm:space-y-6 rounded-lg">
              
 
          
-              <h1 className="text-[32px] font-semibold text-gray-900 mt-4">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[32px] font-semibold text-gray-900 mt-2 sm:mt-4">
                 {vehicle.brand.name} {vehicle.model.name} NXT
               </h1>
-              <p className="text-[24px] text-gray-600 mt-1">{vehicle.manufacture_year}</p>
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-[24px] text-gray-600 mt-1">{vehicle.manufacture_year}</p>
               
-              <div className="my-6">
-                <p className="text-4xl font-semibold text-gray-900">
+              <div className="my-4 sm:my-6">
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-gray-900">
                   {formatPrice(vehicle.selling_amount)}
                 </p>
               </div>
 
               {/* Specs Flex 2x4 */}
-              <div className="flex flex-wrap gap-y-4 gap-x-8 py-8">
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Body :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.body_type}</p>
+              <div className="flex flex-wrap gap-y-3 sm:gap-y-4 gap-x-4 sm:gap-x-8 py-4 sm:py-8">
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Body :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.body_type}</p>
                 </div>
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Fuel type :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.fuel_type}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Fuel type :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.fuel_type}</p>
                 </div>
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Engine :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.engine_capacity || 'N/A'}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Engine :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.engine_capacity || 'N/A'}</p>
                 </div>
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Transmission :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.transmission}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Transmission :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.transmission}</p>
                 </div>
                
 
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Year :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.manufacture_year}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Year :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.manufacture_year}</p>
                 </div>
                 
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Exterior Color :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.exterior_color || 'N/A'}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Exterior Color :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.exterior_color || 'N/A'}</p>
                 </div>
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Country :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.country.name}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Country :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.country.name}</p>
                 </div>
-                <div className="w-[calc(50%-1rem)] flex gap-3">
-                  <p className="text-base w-auto font-regular text-gray-600 ">Registered :</p>
-                  <p className="text-base font-semibold text-gray-900">{vehicle.registered_year || vehicle.manufacture_year}</p>
+                <div className="w-full sm:w-[calc(50%-1rem)] flex gap-2 sm:gap-3">
+                  <p className="text-sm sm:text-base w-auto font-regular text-gray-600">Registered :</p>
+                  <p className="text-sm sm:text-base font-semibold text-gray-900">{vehicle.registered_year || vehicle.manufacture_year}</p>
                 </div>
               </div>
 
               {/* Contact Link */}
-              <p className="text-[20px]">
-                Get more info : <span className="text-green-600  font-semibold mt-6">0117 275 275</span> 
+              <p className="text-base sm:text-lg md:text-[20px]">
+                Get more info : <a href="tel:0117275275" className="text-green-600 font-semibold mt-4 sm:mt-6 hover:underline">0117 275 275</a> 
               </p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Mobile Sticky CTA Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50 lg:hidden">
+        <a 
+          href="tel:0117275275" 
+          className="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-3 px-4 rounded-lg transition"
+        >
+          Call Now: 0117 275 275
+        </a>
+      </div>
+
       {/* Middle Content Area */}
-      <div className="max-w-7xl border px-4  mx-auto mt-[315px]">
-        <div className="flex flex-col lg:flex-row ">
+      <div className="max-w-7xl border px-3 sm:px-4 mx-auto mt-[120px] sm:mt-[200px] md:mt-[280px] lg:mt-[315px] mb-20 lg:mb-0">
+        <div className="flex flex-col lg:flex-row">
           {/* Left Column - 70% - Features & Service */}
-          <div className="flex-1 border-r lg:w-[70%]">
+          <div className="flex-1 lg:border-r lg:w-[70%]">
             {/* Extra Features */}
             {(vehicle.options.length > 0 || vehicle.custom_options.length > 0) && (
-              <div className=" p-6  border-b">
-                <h2 className="text-[20px]  font-semibold text-gray-900 mb-6">Extra Features</h2>
-                <div className="flex flex-wrap gap-4">
+              <div className="p-4 sm:p-6 border-b">
+                <h2 className="text-lg sm:text-xl md:text-[20px] font-semibold text-gray-900 mb-4 sm:mb-6">Extra Features</h2>
+                <div className="flex flex-wrap gap-3 sm:gap-4">
                   {vehicle.options.map((option) => (
-                    <div key={option.id} className="flex items-center gap-2 w-[calc(33.333%-0.67rem)]">
-                      <CircleCheck  className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 text-sm">{option.name}</span>
+                    <div key={option.id} className="flex items-center gap-2 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.67rem)]">
+                      <CircleCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 text-xs sm:text-sm">{option.name}</span>
                     </div>
                     
                   ))}
                   {vehicle.custom_options.map((option) => (
-                    <div key={option.id} className="flex items-center gap-2 w-[calc(33.333%-0.67rem)]">
-                      <CircleCheck  className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 text-sm">{option.option_name}</span>
+                    <div key={option.id} className="flex items-center gap-2 w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.67rem)]">
+                      <CircleCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 text-xs sm:text-sm">{option.option_name}</span>
                     </div>
                   ))}
                 </div>
@@ -375,9 +387,9 @@ export default function VehicleDetailPage() {
             )}
 
             {/* Our Service */}
-            <div className="bg-white rounded-lg p-6 ">
-              <h2 className="text-[20px]  font-semibold text-gray-900 mb-4">Our Service</h2>
-              <div className="space-y-4 text-[16px] text-gray-700 leading-relaxed">
+            <div className="bg-white rounded-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl md:text-[20px] font-semibold text-gray-900 mb-3 sm:mb-4">Our Service</h2>
+              <div className="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-[16px] text-gray-700 leading-relaxed">
                 මෙම වාහනය ගන්නා විට ඔබට පුංචි කාර් නිවසේදීම AUTO MIRAJ සමාගමේ වාහන පරීක්ෂණ ඒකකය මගින් වාහනය සම්පුර්ණයෙන්ම පරීක්ෂා කර අංග සම්පුර්ණ තත්ව පරීක්ෂණ වාර්තාවක් ලබා ගත හැකිය.<br/><br/>
 වාහනය ගැනීමට ඔබ සුදානම් නම් මෙම වාහනයේ හිමිකරු සමග ඔබට පුංචි කාර් නිවසේදී කෙලින්ම දුරකතනයෙන් ගනුදෙනු කතා කරගත හැකිය.<br/><br/>
 වාහනයේ ලියවිලිවල නිරවද්‍යතාව අප කාර්ය මණ්ඩලය මගින් තාක්ෂණික උපකරණද භාවිතයෙන් පරීක්ෂා කර දෙනු ලැබේ.<br/><br/>
@@ -387,7 +399,7 @@ export default function VehicleDetailPage() {
 වැලිවේෂන් සහ රක්ෂණ සේවාවන් ද පුංචි කාර් නිවසේදීම.<br/><br/>
 වාහන පාකින්, ආපන ශාලා, ප්‍රධාන පාර දක්වා නොමිලේ ශට්ල් සේවා ආදී සියල්ලෙන් සපිරි සිරිලක වාහන උද්‍යානය.<br/><br/>
    <Separator className="my-4" />  
-   <p className='text-[18px] font-bold'> ගමන් මග</p>
+   <p className='text-base sm:text-lg font-bold'> ගමන් මග</p>
     <br/>
 
 අධිවේගී මාර්ගයේ මාතර කොට්ටාව දෙසින් නම් කොතලාවල පිටවීමෙන් බත්තරමුල්ල දෙසට එන්න. කිලෝමීටර් 1යි.
@@ -397,7 +409,7 @@ SLIIT කැම්පස් අසලින් ඉසුරුපුර පා�
 
 පුංචි කාර් නිවස වාහන උද්‍යානය, ඉසුරුපුර පාර, මාලඹේ.<br/><br/>
 
-Telephone : <span className='font-bold'>0117 275 275 | 0112 413 866</span>  <br/><br/> Email : <span className='font-bold'>sales@punchicar.lk</span> 
+Telephone : <a href="tel:0117275275" className='font-bold text-green-600 hover:underline'>0117 275 275</a> | <a href="tel:0112413866" className='font-bold text-green-600 hover:underline'>0112 413 866</a>  <br/><br/> Email : <a href="mailto:sales@punchicar.lk" className='font-bold text-blue-600 hover:underline'>sales@punchicar.lk</a> 
                 
               </div>
             </div>
@@ -405,20 +417,20 @@ Telephone : <span className='font-bold'>0117 275 275 | 0112 413 866</span>  <br/
 
           {/* Right Column - 30% - Leasing Calculator */}
           <div className="lg:w-[30%]">
-            <div className="bg-white rounded-lg p-6 shadow-sm  top-6">
-              <h3 className="text-[20px]  font-semibold text-gray-900 mb-2">Leasing Calculate</h3>
-              <p className="text-sm text-gray-600 mb-6">
+            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm lg:sticky lg:top-6">
+              <h3 className="text-lg sm:text-xl md:text-[20px] font-semibold text-gray-900 mb-2">Leasing Calculate</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
                 Every vehicle 30% downpayment get in the leasing
               </p>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Down Payment */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Down payment
                   </label>
                   <Select value={downPayment} onValueChange={setDownPayment}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10 sm:h-11">
                       <SelectValue placeholder="Select down payment" />
                     </SelectTrigger>
                     <SelectContent>
@@ -431,27 +443,27 @@ Telephone : <span className='font-bold'>0117 275 275 | 0112 413 866</span>  <br/
 
                 {/* Leasing Amount */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Leasing Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-gray-500 z-10">LKR</span>
+                    <span className="absolute left-3 top-2.5 sm:top-3 text-xs sm:text-sm text-gray-500 z-10">LKR</span>
                     <Input
                       type="text"
                       value={leasingAmount}
                       onChange={(e) => setLeasingAmount(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="pl-12"
+                      className="pl-12 h-10 sm:h-11 text-sm sm:text-base"
                     />
                   </div>
                 </div>
 
                 {/* Leasing Period */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Leasing period
                   </label>
                   <Select value={leasingPeriod} onValueChange={setLeasingPeriod}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10 sm:h-11">
                       <SelectValue placeholder="Select period" />
                     </SelectTrigger>
                     <SelectContent>
@@ -466,21 +478,21 @@ Telephone : <span className='font-bold'>0117 275 275 | 0112 413 866</span>  <br/
 
                 {/* Interest Rate */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Interest rate
                   </label>
                   <Input
                     type="text"
                     value={`${interestRate}%`}
                     readOnly
-                    className="bg-gray-50 text-gray-600"
+                    className="bg-gray-50 text-gray-600 h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
 
                 {/* Monthly Amount Result */}
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Monthly amount</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                <div className="pt-3 sm:pt-4 border-t border-gray-200">
+                  <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Monthly amount</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                     Rs. {calculateMonthlyAmount().toLocaleString()}
                   </p>
                 </div>
@@ -491,22 +503,24 @@ Telephone : <span className='font-bold'>0117 275 275 | 0112 413 866</span>  <br/
       </div>
 
       {/* Related Vehicles Section */}
-      <div className="bg-white  ">
-        <div className="max-w-7xl border rounded-b-[15px]  mx-auto p-6 mb-12">
-          <h2 className="text-[20px]  font-semibold text-gray-900 mb-8">
+      <div className="bg-white">
+        <div className="max-w-7xl border rounded-b-[15px] mx-auto p-4 sm:p-6 mb-12">
+          <h2 className="text-lg sm:text-xl md:text-[20px] font-semibold text-gray-900 mb-4 sm:mb-6 md:mb-8">
             Related Vehicles from {vehicle.brand.name}
           </h2>
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0">
             {relatedVehicles.length > 0 ? (
               relatedVehicles.map((relatedVehicle) => (
-                <RelatedVehicleCard key={relatedVehicle.id} vehicle={relatedVehicle} />
+                <div key={relatedVehicle.id} className="min-w-full sm:min-w-0 sm:flex-1">
+                  <RelatedVehicleCard vehicle={relatedVehicle} />
+                </div>
               ))
             ) : (
-              <div className="w-full text-center py-12">
-                <p className="text-gray-500 text-lg mb-2">
+              <div className="w-full text-center py-8 sm:py-12">
+                <p className="text-gray-500 text-base sm:text-lg mb-2">
                   No other {vehicle.brand.name} vehicles available at the moment
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-400 text-xs sm:text-sm">
                   Check back soon for more vehicles from this brand
                 </p>
               </div>
