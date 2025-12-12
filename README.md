@@ -2,11 +2,64 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.28 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.29 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 12, 2025 (Vehicle Detail & Related Cards Enhancement)
+## 📢 LATEST UPDATE - December 12, 2025 (360° Panorama Viewer Implementation)
+
+### 🌐 Professional 360° Vehicle Interior View with Pannellum
+
+**Major Feature: Replaced custom 360° viewer with Pannellum - a lightweight, free, and open-source panorama viewer!**
+
+#### What's New:
+
+1. **🖼️ Pannellum Integration**:
+   - Implemented professional-grade 360° panorama viewer using Pannellum library
+   - Equirectangular panorama support for immersive vehicle interior views
+   - Smooth mouse drag navigation for intuitive exploration
+   - Pinch-to-zoom on mobile devices for detailed viewing
+   - Full-screen mode for immersive experience
+   - Auto-load functionality for seamless user experience
+
+2. **🎮 Enhanced Viewer Controls**:
+   - Zoom controls for detailed inspection
+   - Full-screen toggle button
+   - Mouse scroll zoom support
+   - Touch-friendly draggable interface
+   - Configurable field of view (50° to 120°)
+
+3. **📱 Cross-Platform Support**:
+   - Dashboard: 600px height panorama viewer in Vehicle Detail Modal
+   - Public Website: Responsive height (240px-400px) based on screen size
+   - Loading spinner with "Loading 360° view..." indicator
+   - Error handling with user-friendly messages
+
+4. **⚡ Technical Improvements**:
+   - CDN-loaded Pannellum library (v2.5.6) - no npm dependencies
+   - Proper cleanup on component unmount
+   - Event listeners for load success and error states
+   - Console logging for debugging
+
+#### Updated Files:
+
+- `dashboard/src/components/ui/panorama-viewer.tsx` - New Pannellum viewer component ✅
+- `web/src/components/ui/panorama-viewer.tsx` - Public website panorama component ✅
+- `dashboard/src/components/inventory/VehicleDetailModal.tsx` - Integrated PanoramaViewer ✅
+- `web/src/app/vehicles/[vehicleId]/page.tsx` - Replaced Image360Viewer with PanoramaViewer ✅
+- `dashboard/src/components/vehicle/Step1VehicleDetails.tsx` - Vehicle upload support ✅
+
+#### Key Features:
+
+- **Immersive Experience**: Full 360° rotation with smooth transitions
+- **Professional Quality**: Industry-standard Pannellum library
+- **Mobile Optimized**: Touch controls and responsive design
+- **Fast Loading**: CDN delivery with lazy loading support
+- **Accessibility**: Keyboard navigation support
+
+---
+
+## 📢 PREVIOUS UPDATE - December 12, 2025 (Vehicle Detail & Related Cards Enhancement)
 
 ### 🎨 Enhanced Vehicle Display & User Experience
 

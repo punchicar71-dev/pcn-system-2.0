@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, CircleCheck, House  } from 'lucide-react';
-import Image360Viewer from '@/components/Image360Viewer';
+import PanoramaViewer from '@/components/ui/panorama-viewer';
 import RelatedVehicleCard, { RelatedVehicle } from '@/components/RelatedVehicleCard';
 import { Separator } from "@/components/ui/separator"
 import VehicleDetailSkeleton from '@/components/VehicleDetailSkeleton';
@@ -225,13 +225,10 @@ export default function VehicleDetailPage() {
                   />
                 ) : viewMode === '360' && vehicle.image_360 && vehicle.image_360.length > 0 ? (
                   <div className="h-[240px] sm:h-[300px] md:h-[350px] lg:h-[400px] rounded-lg overflow-hidden">
-                    <Image360Viewer 
-                      images={vehicle.image_360.map(img => img.image_url)}
-                      autoRotate={false}
-                      autoRotateSpeed={50}
-                      sensitivity={5}
+                    <PanoramaViewer 
+                      imageUrl={vehicle.image_360[0].image_url}
                       height="100%"
-                      showControls={true}
+                      className="rounded-lg"
                     />
                   </div>
                 ) : (

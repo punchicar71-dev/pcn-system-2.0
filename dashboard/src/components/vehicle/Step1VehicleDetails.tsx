@@ -372,7 +372,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
               <input
                 type="file"
                 multiple
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handle360ImageUpload}
                 className="hidden"
                 id="image-360"

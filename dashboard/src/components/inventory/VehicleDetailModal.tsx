@@ -15,6 +15,7 @@ import { Image as ImageIcon, Check, User, Phone, MapPin, Mail, CreditCard, Downl
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase-client'
 import Image360Viewer from '@/components/ui/360-viewer'
+import PanoramaViewer from '@/components/ui/panorama-viewer'
 
 interface VehicleImage {
   id: string
@@ -97,6 +98,9 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
       const gallery = imagesData?.filter(img => img.image_type === 'gallery') || []
       const img360 = imagesData?.filter(img => img.image_type === 'image_360') || []
       const cr = imagesData?.filter(img => img.image_type === 'cr_paper' || img.image_type === 'document') || []
+
+      console.log('360 Images found:', img360);
+      console.log('360 Image URLs:', img360.map(img => img.image_url));
 
       setGalleryImages(gallery)
       setImage360(img360)
@@ -289,11 +293,11 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
                     </Carousel>
                   </div>
                 ) : viewMode === '360' && image360.length > 0 ? (
-                  <div className="rounded-lg overflow-hidden border">
-                    <Image360Viewer
-                      images={image360.map(img => img.image_url)}
-                      autoRotate={false}
-                      height="400px"
+                  <div className="rounded-lg overflow-hidden border bg-black">
+                    {console.log('Rendering PanoramaViewer with URL:', image360[0]?.image_url)}
+                    <PanoramaViewer
+                      imageUrl={image360[0].image_url}
+                      height="600px"
                     />
                   </div>
                 ) : (
