@@ -1,245 +1,292 @@
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { 
-  Car, 
-  Shield, 
-  Wrench, 
-  FileText, 
-  DollarSign, 
-  Users, 
-  CheckCircle,
-  Phone,
-  Award,
-  Clock,
-  MapPin,
-  Settings
-} from 'lucide-react';
+import { CircleCheck } from 'lucide-react';
 
 export default function ServicesPage() {
-  const services = [
-    {
-      icon: Car,
-      title: 'Vehicle Sales',
-      description: 'Browse our extensive collection of 400+ quality used vehicles from Japan. Each vehicle is carefully selected and imported.',
-      features: [
-        'Wide selection of brands and models',
-        'Competitive pricing',
-        'Detailed vehicle history',
-        'Test drive available',
-      ],
-    },
-    {
-      icon: Shield,
-      title: 'Quality Inspection',
-      description: 'Every vehicle undergoes a comprehensive multi-point inspection before being offered for sale.',
-      features: [
-        'Professional mechanical inspection',
-        'Body and paint assessment',
-        'Interior condition check',
-        'Comprehensive test drive',
-      ],
-    },
-    {
-      icon: FileText,
-      title: 'Documentation Support',
-      description: 'Complete assistance with all paperwork and documentation required for vehicle purchase and registration.',
-      features: [
-        'Registration assistance',
-        'Transfer of ownership',
-        'Insurance coordination',
-        'DMT clearance support',
-      ],
-    },
-    {
-      icon: DollarSign,
-      title: 'Financing Options',
-      description: 'Flexible financing solutions tailored to your budget and requirements.',
-      features: [
-        'Bank loan arrangements',
-        'Leasing options available',
-        'Competitive interest rates',
-        'Quick approval process',
-      ],
-    },
-    {
-      icon: Users,
-      title: 'Trade-In Service',
-      description: 'Get the best value for your current vehicle with our fair and transparent trade-in program.',
-      features: [
-        'Free vehicle valuation',
-        'Instant trade-in quotes',
-        'Hassle-free process',
-        'Fair market value',
-      ],
-    },
-    {
-      icon: Wrench,
-      title: 'After-Sales Service',
-      description: 'Comprehensive maintenance and repair services to keep your vehicle in top condition.',
-      features: [
-        'Regular maintenance service',
-        'Genuine spare parts',
-        'Experienced technicians',
-        'Service warranty',
-      ],
-    },
-  ];
-
-  const benefits = [
-    {
-      icon: Award,
-      title: 'Quality Guarantee',
-      description: 'All vehicles come with warranty coverage for your peace of mind',
-    },
-    {
-      icon: Clock,
-      title: 'Fast Processing',
-      description: 'Quick turnaround time for documentation and delivery',
-    },
-    {
-      icon: MapPin,
-      title: 'Convenient Location',
-      description: 'Easy to access showroom at Vehicle Park, Malabe',
-    },
-    {
-      icon: Settings,
-      title: 'Professional Service',
-      description: 'Expert guidance throughout your vehicle buying journey',
-    },
-  ];
-
   return (
-    <div className="min-h-screen">
+    <div>
+
+
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-800 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">Our Services</h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-            Comprehensive automotive solutions designed to provide you with the best vehicle buying and ownership experience
-          </p>
-        </div>
-      </section>
-
-      {/* Main Services */}
-      <section className="py-16 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">What We Offer</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Complete range of services to support you from purchase to maintenance
+       <section 
+        className="relative h-[280px] sm:h-[340px] md:h-[380px] lg:h-[400px] flex items-center overflow-hidden"
+        style={{
+          backgroundImage: "url('/service_page.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Content - Left Aligned */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="text-left text-black max-w-xl mt-12 sm:mt-16 md:mt-20 lg:mt-[100px]">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] mb-4 font-bold tracking-tight font-sinhala">
+              මාලඹේ පුංචි කාර් නිවස
+            </h1>
+            {/* Subheading - Red */}
+              <h2 className="text-xl sm:text-2xl md:text-[26px] lg:text-[28px] font-bold mb-4 sm:mb-6 lg:mb-8 text-[#E4002B] font-sinhala">
+                වාහන උද්‍යානය
+              </h2>
+            <p className="text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 font-sinhala leading-relaxed">
+              අප විසින් අපගේ සේවාදයකයින් හට ලබාදෙන සේවාවන් <br className="hidden sm:block" />
+              සියල්ල පහතින් දැක්වේ.
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => {
-              const Icon = service.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow"
-                >
-                  <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                    <Icon className="text-yellow-600" size={32} />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">{service.title}</h3>
-                  <p className="text-slate-600 mb-6">{service.description}</p>
-                  <ul className="space-y-3">
-                    {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="text-green-500 flex-shrink-0 mt-1" size={18} />
-                        <span className="text-slate-700">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+            <p className="text-[16px] md:text-[18px] text-gray-700">
+                  Open Everyday! <span className="font-semibold text-black ml-2">09:00AM – 06:00PM</span>
+                </p>
+            
           </div>
         </div>
       </section>
 
-      {/* Why Choose Our Services */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Why Choose Us</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Experience the difference with our professional and customer-focused approach
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon;
-              return (
-                <div key={index} className="text-center">
-                  <div className="bg-yellow-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="text-yellow-600" size={36} />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{benefit.title}</h3>
-                  <p className="text-slate-600">{benefit.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
-      {/* Service Process */}
-      <section className="py-16 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">How It Works</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Simple and transparent process from selection to delivery
-            </p>
-          </div>
+      {/* Buy & Sell Vehicle Section */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Side - Buy Vehicle Card (50%) */}
+            <div className="bg-gray-100 rounded-2xl p-8 lg:p-10">
+              {/* Icon */}
+              <div className="mb-6">
+                <Image
+                  src="/buy_vehicle.png"
+                  alt="Buy Vehicle"
+                  width={80}
+                  height={80}
+                  className=" w-20"
+                />
+              </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[
-                { step: '01', title: 'Browse & Select', desc: 'Choose your perfect vehicle from our inventory' },
-                { step: '02', title: 'Inspection', desc: 'Review detailed inspection report and test drive' },
-                { step: '03', title: 'Documentation', desc: 'We handle all paperwork and financing' },
-                { step: '04', title: 'Delivery', desc: 'Get your vehicle delivered to your doorstep' },
-              ].map((item, index) => (
-                <div key={index} className="text-center">
-                  <div className="bg-yellow-500 text-black w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                    {item.step}
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
-                  <p className="text-sm text-slate-600">{item.desc}</p>
-                </div>
-              ))}
+              {/* Title */}
+              <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+                වාහනයක් ගන්නද?
+              </h2>
+
+              {/* Description */}
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-8 font-sinhala">
+                අපේ වාහන අංගනයට පිවිසෙන්න පහත click කරන්න. තෝරා ගැනිමට වාහන 400කට 
+                ආසන්න ප්‍රමාණයක් දැන් ඔබ ඉදිරියේ. මෙම සියලුම වාහන අප වාහන අංගනයේ මේ 
+                මොහොතේ ප්‍රදර්ශනය කෙරෙනවා. මෙම සියලුම වාහන පරික්ෂාවකින් පසුව තෝරාගත් 
+                හොදම වාහන පමණයි. පිවිසෙන්න.
+              </p>
+
+              {/* Button */}
+              <Button 
+                asChild
+                className="bg-[#E4002B] text-white px-8 py-6 rounded-lg font-semibold text-[16px] hover:bg-[#C4001B] transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <Link href="/vehicles">
+                  Available Vehicles
+                </Link>
+              </Button>
+            </div>
+
+            {/* Right Side - Sell Vehicle Card (50%) */}
+            <div className="bg-gray-100 rounded-2xl p-8 lg:p-10">
+              {/* Icon */}
+              <div className="mb-6">
+                <Image
+                  src="/sell_vehicle.png"
+                  alt="Sell Vehicle"
+                  width={80}
+                  height={80}
+                  className="object-contain "
+                />
+              </div>
+
+              {/* Title */}
+              <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+                වාහනයක් විකුණන්නද?
+              </h2>
+
+              {/* Description */}
+              <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-6 font-sinhala">
+                ලියාපදිංචි සහතිකයේ පිටපත් දෙකක් සමග වාහනය රැගෙන එන්න පුංචි කාර් නිවසට.
+                වාහනය හොඳ නම් ලියකියවිලිත් නිරවුල් නම් අපි ඔබේ වාහනය විකිණීමට භාර ගන්නවා.
+              </p>
+
+              {/* Contact Information */}
+              <div className="space-y-4 mb-6">
+                <p className="text-[16px] md:text-[18px] text-gray-900">
+                  <span className="font-normal text-gray-700 pr-2">Hotline : </span>
+                  <span className="font-semibold">0112 413 865</span>
+                  <span className="mx-2">|</span>
+                  <span className="font-semibold">0112 413 866</span>
+                </p>
+
+                <p className="text-[16px] md:text-[18px] text-gray-900">
+                  <span className="font-normal text-gray-700 pr-2">Open Everyday! </span>
+                  <span className="font-semibold">09:00AM – 06:00PM</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
-          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            Contact us today to learn more about our services or visit our showroom
+
+        <section className="pb-12 px-4 md:px-6 gap-y-12 flex flex-col lg:px-28 bg-white">
+
+        <div className="bg-gray-100 max-w-7xl mx-auto p-6 md:p-8 rounded-2xl">
+          <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+            ස්කෑනින් සේවාව
+          </h2>
+          <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-6 font-sinhala">
+            දැන් ඉස්සර වගේ නෙවෙයි. සියලුම වාහන පාලනය වෙන්නේ පරිගණකයක් මගින්. එම පද්ධතියේ දෝෂ තිබු‍ණොත් වාහනය අරන් හැමදාම වියදම් කරන්න තමයි වෙන්නෙ. එයා බෑග්ස්, ඒබීඑස් සෙන්සර්ස්, විද්‍යුත් පරිපථය මේ සියල්ලම ස්කෑන් පරික්ෂාවේදි සියුම්ව සුපරික්ෂණයට ලක් වෙනවා. වාහනයේ ස්කෑන් පරික්ෂාව පිළිබද විද්‍යුත් සටහන් ඔබ අතටම ලැබෙනවා.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 bg-yellow-500 text-black px-8 py-4 rounded-lg font-semibold hover:bg-yellow-600 transition"
-            >
-              <Phone size={20} />
-              Contact Us
-            </Link>
-            <Link
-              href="/vehicles"
-              className="inline-flex items-center gap-2 bg-white text-slate-900 px-8 py-4 rounded-lg font-semibold hover:bg-slate-100 transition"
-            >
-              <Car size={20} />
-              View Vehicles
-            </Link>
-          </div>
+          
         </div>
-      </section>
+
+        <div className="bg-gray-100 max-w-7xl  mx-auto p-6 md:p-8 rounded-2xl">
+          <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+            වාහනය ඔසවා පරික්ෂාව
+          </h2>
+          <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-6 font-sinhala">
+            ඉස්සර අපි ගියේ හැටට. දැන් අපේ වේගය සීයටත් එහා. ඉතින් හයියෙන් යන්න නම් හයිවේ යන්න නම් තමන් ගන්නා වාහනයේ චැසි පරික්ෂාව කරගන්න ඕනෑ. ඒ සදහා වාහනයක හොයිස්ට් මගින් ඔසවා පරික්ෂාව කෙරෙනවා. ඔබ ගන්නා වාහනයේ චැසිය අනතුරුවලට ලක්වෙලාද? චැසිය ඇදවෙලාද? අලුත්වැඩියා කරලද? පාහලාද? දිරලද? ඔයිල් ලීක් තිබෙනවාද? සයිලන්සරය බ්රේක් නළ පද්ධතිය, සම්ප් එක, ඉන්ධන ටැංකිය ආදියෙහි පෑස්සීම්, අනතුරු බිදිම්, තැලිම්, දිරුම් තිබෙනවාද? සියල්ල දැකිය හැක්කේ වාහනය ඔසවා බැලීමෙන්ම පමණයි.
+          </p> 
+        </div>
+
+
+        <div className="bg-gray-100 max-w-7xl mx-auto p-6 md:p-8 rounded-2xl">
+          <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+            හයිබ්‍රිඩ් පරික්ෂාව
+          </h2>
+          <ul className="space-y-4">
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                මෙම වාහනය ගන්නා විට ඔබට පුංචි කාර් නිවසේදීම AUTO MIRAJ සමාගමේ වාහන පරීක්ෂණ ඒකකය මගින් වාහනය සම්පුර්ණයෙන්ම පරීක්ෂා කර අංග සම්පුර්ණ තත්ව පරීක්ෂණ වාර්තාවක් ලබා ගත හැකිය.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                වාහනය ගැනීමට ඔබ සුදානම් නම් මෙම වාහනයේ හිමිකරු සමග ඔබට පුංචි කාර් නිවසේදී කෙලින්ම දුරකතනයෙන් ගනුදෙනු කතා කරගත හැකිය.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                වාහනයේ ලියවිලිවල නිරවද්‍යතාව අප කාර්ය මණ්ඩලය මගින් තාක්ෂණික උපකරණද භාවිතයෙන් පරීක්ෂා කර දෙනු ලැබේ.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                ලීසිං පහසුකම් සඳහා LB FINANCE, SINGER FINANCE, MERCANTILE INVESTMENT, PEOPLES LEASING යන දිවයිනේ ජනප්‍රිය ලීසිං සමාගම් කාර්යාල පුංචි කාර් නිවස වාහන උද්‍යාන පරිශ්‍රයේම පිහිටුවා ඇත.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                ඔබ ගන්න වාහනයට LABOUR FREE SERVICE 3ක් හිමි වේ.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                තෝරා ගැනීමට වාහන 400ක් එකම උද්‍යානයක.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                වැලිවේෂන් සහ රක්ෂණ සේවාවන් ද පුංචි කාර් නිවසේදීම
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                වාහන පාකින්, ආපන ශාලා, ප්‍රධාන පාර දක්වා නොමිලේ ශට්ල් සේවා ආදී සියල්ලෙන් සපිරි සිරිලක වාහන උද්‍යානය.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                තාක්ෂණික උපකරණ මගින් ලියකියවිලි පරික්ෂාව.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                ලීසිං සමාගම් හතරක් උද්‍යාන භුමිය තුළම.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                රක්ෂණ සේවා. වැලි‍වේෂන් සේවා.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                ආපන ශාලාව. පාරිභෝගික විවේකාගාරය.
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CircleCheck className="text-green-600 h-6 w-6 flex-shrink-0 mt-0.5" />
+              <span className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 font-sinhala">
+                ප්‍රධාන මාර්ගය දක්වා නොමිලේ ෂට්ල් සේවා.
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="bg-white border max-w-7xl  mx-auto p-6 md:p-8 rounded-2xl">
+          <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
+            ලීසිං සමාගම් 4ක් උද්‍යානය තුළම.
+          </h2>
+          <p className="text-[16px] md:text-[16px] leading-relaxed text-gray-700 mb-6 font-sinhala">
+            මෙම සියලු ලිසිං සමාගම්වල ශාඛා කාර්යාල දවස පුරාම පුංචි කාර් නිවස වාහන උද්‍යාන භූමිය තුළ විවෘතයි. වාහන උද්‍යානය තුළ දී ලීසිං හිතමිතුරන් ඔබ හමුවී ඔබට අවශ්‍ය සහාය ලබා දෙනු ඇති.
+          </p> 
+
+
+        <div className=' flex gap-8 items-center flex-wrap'>
+          <Image
+                  src="/lg1.png"
+                  alt="Buy Vehicle"
+                  width={80}
+                  height={80}
+                  className=" h-20 w-auto"
+                />
+                <Image
+                  src="/lg2.png"
+                  alt="Buy Vehicle"
+                  width={80}
+                  height={80}
+                  className=" h-12 w-auto"
+                />
+                <Image
+                  src="/lg3.png"
+                  alt="Buy Vehicle"
+                  width={80}
+                  height={80}
+                  className=" h-12 w-auto"
+                />
+                <Image
+                  src="/lg4.png"
+                  alt="Buy Vehicle"
+                  width={80}
+                  height={80}
+                  className=" h-16 w-auto"
+                />
+
+
+              </div>
+
+
+
+        </div>
+
+
+        </section>
+
+
+
+
     </div>
   );
 }

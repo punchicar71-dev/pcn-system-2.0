@@ -2,11 +2,76 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 10, 2025 | Version: 2.0.25 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.26 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 10, 2025 (UI/UX Enhancement & Branding Updates)
+## 📢 LATEST UPDATE - December 12, 2025 (Services Page Enhancement)
+
+### 🎯 Comprehensive Services Page Redesign
+
+**Major Feature: Complete overhaul of the Services page with enhanced content and partner integration!**
+
+#### What's New:
+
+1. **🖼️ Hero Section Redesign**:
+   - New hero background image (`service_page.png`)
+   - Left-aligned bilingual content layout
+   - Sinhala headings: "මාලඹේ පුංචි කාර් නිවස" and "වාහන උද්‍යානය"
+   - Opening hours prominently displayed: 09:00AM – 06:00PM
+   - Enhanced typography with Sinhala font support
+   - Responsive height adjustments for all screen sizes
+
+2. **🚗 Buy & Sell Vehicle Cards**:
+   - Side-by-side layout showcasing both services
+   - Custom icons for Buy Vehicle and Sell Vehicle
+   - Comprehensive service descriptions in Sinhala
+   - Contact information with dual hotlines (0112 413 865 | 0112 413 866)
+   - CTA button linking to Available Vehicles page
+   - Gray background cards with rounded corners for modern look
+
+3. **🔧 Service Offerings Section**:
+   - **Scanning Services** (ස්කෑනින් සේවාව): Complete diagnostic scanning information
+   - **Vehicle Lift Inspection** (වාහනය ඔසවා පරික්ෂාව): Chassis and undercarriage inspection details
+   - **Hybrid Inspection** (හයිබ්‍රිඩ් පරික්ෂාව): Comprehensive 13-point service checklist with checkmark icons
+   - Professional service descriptions with technical details
+
+4. **🤝 Leasing Partner Integration**:
+   - Dedicated section highlighting 4 leasing company partnerships
+   - Partner logos display: LB Finance, Singer Finance, Mercantile Investment, People's Leasing
+   - On-site leasing offices information
+   - Professional logo presentation with proper spacing
+
+5. **✨ UI/UX Enhancements**:
+   - CircleCheck icons from Lucide React for service features
+   - Responsive card layouts with proper padding
+   - Consistent gray background sections for content blocks
+   - Border styling for partner section
+   - Optimized spacing between sections
+   - Mobile-responsive design with flex wrapping
+
+#### Technical Implementation:
+
+**Updated Files:**
+- `web/src/app/services/page.tsx` - Complete page redesign ✅
+- `web/public/service_page.png` - Hero section background ✅
+- `web/public/buy_vehicle.png` - Buy vehicle icon ✅
+- `web/public/sell_vehicle.png` - Sell vehicle icon ✅
+- `web/public/lg1.png` - LB Finance logo ✅
+- `web/public/lg2.png` - Singer Finance logo ✅
+- `web/public/lg3.png` - Mercantile Investment logo ✅
+- `web/public/lg4.png` - People's Leasing logo ✅
+
+**Key Features:**
+- Bilingual content (English & Sinhala)
+- Professional service showcase
+- Partner integration display
+- Mobile-first responsive design
+- Clear call-to-action elements
+
+---
+
+## 📢 PREVIOUS UPDATE - December 10, 2025 (UI/UX Enhancement & Branding Updates)
 
 ### 🎨 Enhanced User Interface & Brand Identity
 
