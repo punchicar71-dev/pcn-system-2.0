@@ -70,7 +70,7 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
   };
 
   return (
-    <div className="bg-white max-w-4xl p-6">
+    <div className="bg-slate-50 max-w-4xl p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Vehicle Selling Details</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">

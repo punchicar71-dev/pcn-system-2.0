@@ -312,7 +312,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main content - offset by sidebar width with smooth transition */}
-      <main className={`transition-all duration-300 ease-in-out ${
+      <main className={`transition-all bg-slate-50 duration-300 ease-in-out ${
         isSidebarCollapsed ? 'ml-[80px]' : 'ml-[260px]'
       }`}>
         {/* Header - 50px height */}

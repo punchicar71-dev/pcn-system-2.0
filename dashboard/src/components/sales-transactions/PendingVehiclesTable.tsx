@@ -150,7 +150,7 @@ export default function PendingVehiclesTable({
     <div className="space-y-4">
       {/* Search Field */}
       
-      <div className="bg-white w-[400px] py-4">
+      <div className=" w-[400px] py-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
             Search Vehicle
           </label>

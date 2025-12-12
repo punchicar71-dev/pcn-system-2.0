@@ -48,14 +48,14 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
   };
 
   return (
-    <div className="bg-white  p-6">
+    <div className="bg-slate-50  p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">All Data Summary</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
           {/* Vehicle Details */}
-          <div className="border rounded-lg p-4">
+          <div className="border bg-white rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -118,7 +118,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
           </div>
 
           {/* Seller Details */}
-          <div className="border rounded-lg p-4">
+          <div className="border bg-white rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Seller Details</h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -162,7 +162,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
         {/* Right Column */}
         <div className="space-y-6">
           {/* Vehicle Options */}
-          <div className="border rounded-lg p-4">
+          <div className="border bg-white rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h3>
             <div className="flex flex-wrap gap-2">
               {[...getEnabledStandardOptions(), ...getEnabledSpecialOptions(), ...vehicleOptions.customOptions].map(
@@ -184,7 +184,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
           </div>
 
           {/* Vehicle Selling Details */}
-          <div className="border rounded-lg p-4">
+          <div className="border bg-white rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Selling Details</h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -230,7 +230,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
 
           {/* Special Notes */}
           {(specialNotes.tagNotes || specialNotes.specialNotePrint) && (
-            <div className="border rounded-lg p-4">
+            <div className="border bg-white rounded-lg p-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Special Notes</h3>
               {specialNotes.tagNotes && (
                 <div className="mb-3">

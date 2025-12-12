@@ -190,7 +190,7 @@ export default function LeasingCompanyTab() {
         </Button>
       </div>
 
-      <div className="border rounded-lg">
+      <div className="border bg-white rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>

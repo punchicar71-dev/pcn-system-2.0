@@ -494,7 +494,7 @@ export default function Step7Success({
   };
 
   return (
-    <div className=" w-full  bg-white pt-24 text-center">
+    <div className=" w-full  bg-slate-50 pt-24 text-center">
       {/* Success Animation */}
       <div className="mb-6 flex justify-center items-center">
         <Image 

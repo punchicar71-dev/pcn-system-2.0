@@ -173,7 +173,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
   };
 
   return (
-    <div className="bg-white z-10 p-6">
+    <div className="bg-slate-50 z-10 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Setup Selling information</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">

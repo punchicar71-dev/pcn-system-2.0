@@ -18,7 +18,7 @@ export default function Step5SpecialNotes({ data, onChange, onNext, onBack }: St
   };
 
   return (
-    <div className="bg-white  p-6">
+    <div className="bg-slate-50  p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Special Notes</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">

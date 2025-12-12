@@ -8,7 +8,7 @@ import SalesAgentsReportTab from '@/components/reports/SalesAgentsReportTab'
 
 export default function ReportsPage() {
   return (
-    <div className="space-y-6 bg-white p-6 ">
+    <div className="space-y-6 bg-slate-50 p-6 ">
       {/* Header */}
       
 

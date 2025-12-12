@@ -237,7 +237,7 @@ export default function SellVehiclePage() {
   const isFormDisabled = isLocked && !hasMyLock;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slte-50">
       
 
       <SellVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />

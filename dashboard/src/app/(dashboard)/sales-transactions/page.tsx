@@ -275,7 +275,7 @@ export default function SalesTransactionsPage() {
       
 
       {/* Tabs using shadcn - same style as Settings page */}
-      <div className="bg-white p-6 ">
+      <div className="bg-slate-50 p-6 ">
         <Tabs defaultValue="pending" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-[400px] grid-cols-2 max-w-md">
             <TabsTrigger value="pending">Pending Vehicles</TabsTrigger>

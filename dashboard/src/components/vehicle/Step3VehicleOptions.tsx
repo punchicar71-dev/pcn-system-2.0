@@ -63,7 +63,7 @@ export default function Step3VehicleOptions({ data, onChange, onNext, onBack }: 
     .map(([name]) => name);
 
   return (
-    <div className="bg-white p-6 rounded-lg">
+    <div className="bg-slate-50 p-6 rounded-lg">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Vehicle Options</h2>
 
       <form onSubmit={handleSubmit}>
@@ -83,7 +83,7 @@ export default function Step3VehicleOptions({ data, onChange, onNext, onBack }: 
                   {STANDARD_OPTIONS.map((option) => (
                     <div
                       key={option}
-                      className="flex border p-2 rounded-lg items-center gap-3"
+                      className="flex border bg-white p-2 rounded-lg items-center gap-3"
                     >
                       <Switch
                         id={`standard-${option}`}
@@ -104,7 +104,7 @@ export default function Step3VehicleOptions({ data, onChange, onNext, onBack }: 
                   {SPECIAL_OPTIONS.map((option) => (
                     <div
                       key={option}
-                      className="flex border p-2 rounded-lg  items-center gap-3"
+                      className="flex border bg-white p-2 rounded-lg  items-center gap-3"
                     >
                       <Switch
                         id={`special-${option}`}

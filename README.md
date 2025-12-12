@@ -2,11 +2,51 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.32 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.33 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 13, 2025 (SEO & Meta Tags Implementation)
+## 📢 LATEST UPDATE - December 13, 2025 (API Documentation & UI Improvements)
+
+### 📚 Swagger API Documentation & Dashboard UI Enhancements
+
+**Major Update: Added interactive API documentation and improved dashboard visual consistency!**
+
+#### What's New:
+
+1. **📖 Swagger API Documentation**:
+   - Integrated `swagger-jsdoc` and `swagger-ui-express` for interactive API docs
+   - Access API documentation at `/api-docs` endpoint
+   - JSON spec available at `/api-docs.json`
+   - Comprehensive schema definitions for Vehicle, Sale, User, and Error responses
+   - Tagged endpoints for Vehicles, Sales, Users, Analytics, and Upload
+
+2. **🎨 Dashboard UI Consistency**:
+   - Unified background color (`bg-slate-50`) across all dashboard pages
+   - Improved visual consistency for Add Vehicle, Sell Vehicle, Inventory pages
+   - Updated Settings, Reports, and Sales Transactions pages with consistent styling
+   - Enhanced form components (Input, Select, Tabs) with white backgrounds
+   - Better contrast and readability throughout the dashboard
+
+3. **📝 API Route Documentation**:
+   - Added JSDoc annotations to vehicle routes with OpenAPI specifications
+   - Documented all CRUD operations with request/response schemas
+   - Included parameter descriptions, authentication requirements, and error responses
+
+#### New Files:
+
+- `api/src/config/swagger.ts` - Swagger configuration with OpenAPI 3.0 spec ✅
+
+#### Modified Files:
+
+- `api/src/index.ts` - Added Swagger middleware ✅
+- `api/src/routes/vehicle.routes.ts` - Added API documentation ✅
+- Multiple dashboard components - Background color updates ✅
+- `dashboard/src/components/ui/*` - Component styling improvements ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - December 13, 2025 (SEO & Meta Tags Implementation)
 
 ### 🔍 Comprehensive SEO Optimization for Public Website
 

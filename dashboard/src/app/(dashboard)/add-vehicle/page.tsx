@@ -740,7 +740,7 @@ export default function AddVehiclePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50">
       <div className="w-full mx-auto">
         {/* Step Indicator */}
         {formState.currentStep < 7 && (

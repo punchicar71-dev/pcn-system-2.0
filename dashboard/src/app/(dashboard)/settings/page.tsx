@@ -10,7 +10,7 @@ import LeasingCompanyTab from '@/components/settings/LeasingCompanyTab'
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6 bg-white p-6 ">
+    <div className="space-y-6 bg-slate-50 p-6 ">
       
 
       <Tabs defaultValue="brands" className="w-full">

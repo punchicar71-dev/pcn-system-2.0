@@ -45,7 +45,7 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
   };
 
   return (
-    <div className="bg-white p-6">
+    <div className="bg-slate-50 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Seller Details</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
