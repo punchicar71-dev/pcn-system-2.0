@@ -372,18 +372,18 @@ export default function VehiclesPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section 
-        className="relative h-[280px] sm:h-[340px] md:h-[380px] lg:h-[400px] flex items-center overflow-hidden"
+        className="relative h-[320px] sm:h-[380px] md:h-[400px] lg:h-[450px] flex items-center overflow-hidden"
         style={{
           backgroundImage: "url('/vehicle_hero.png')",
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'left center',
           backgroundRepeat: 'no-repeat'
         }}
       >
         {/* Content - Left Aligned */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-4 xl:px-0">
           <div className="text-left text-black max-w-xl mt-12 sm:mt-16 md:mt-20 lg:mt-[100px]">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-bold tracking-tight font-sinhala">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl mb-3 lg:text-[40px] font-bold tracking-tight font-sinhala">
               මාලඹේ පුංචි කාර් නිවස
             </h1>
             {/* Subheading - Red */}
@@ -394,9 +394,13 @@ export default function VehiclesPage() {
               වාහන ප්‍රදර්ශනාගාරයේ විකිණීමට ඇති සියලුම<br className="hidden sm:block" />
               වාහන මෙතනින් බලාගත හැක
             </p>
+            <p className="text-[16px] md:text-[18px] mb-2 text-gray-700">
+                  Open Everyday! <span className="font-semibold text-black ml-2">09:00AM – 06:00PM</span>
+                </p>
             <p className="text-xs sm:text-sm md:text-base font-normal">
               Now Available <span className="font-bold text-red-600">{vehicles.length} Vehicles</span> in our vehicle park
             </p>
+            
           </div>
         </div>
       </section>

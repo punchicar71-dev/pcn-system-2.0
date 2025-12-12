@@ -2,11 +2,95 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.26 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 12, 2025 | Version: 2.0.27 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 12, 2025 (Services Page Enhancement)
+## 📢 LATEST UPDATE - December 12, 2025 (Complete UI/UX Overhaul)
+
+### 🎨 Major Website-Wide Redesign
+
+**Major Feature: Comprehensive redesign of all public pages with hero sections and enhanced Sinhala content!**
+
+#### What's New:
+
+1. **🖼️ Hero Section Implementation Across All Pages**:
+   - **About Page** (`about_hero.png`): New hero background with company overview
+   - **Contact Page** (`contact_hero.png`): Enhanced contact page hero section
+   - **FAQ Page** (`faq_hero.png`): Professional FAQ hero section
+   - **Vehicles Page**: Updated hero with improved vehicle showcase
+   - Left-aligned bilingual content layout across all pages
+   - Consistent design language and visual hierarchy
+   - Responsive height adjustments for all screen sizes
+
+2. **🔄 Footer Component Redesign**:
+   - Updated logo implementation using `logo_icon.png` instead of `black_logo.png`
+   - Enhanced Sinhala content: "තෝරා ගැනිමට වාහන 400ක් එකම උද්‍යානයක. මහ පාරෙන් මීටර් 600ක් ඇතුළත මනරම් හරිත කලාපයක පිහිටි දැවැන්ත වාහන උද්‍යානය"
+   - Logo as clickable link to homepage
+   - Improved responsive padding (xl:px-0 for larger screens)
+   - Better visual hierarchy with updated spacing
+   - Optimized mobile and desktop layouts
+
+3. **📄 About Page Transformation**:
+   - Complete page restructure with modern design
+   - Hero section with company introduction
+   - Enhanced content presentation
+   - Removed outdated documents section (`documents/page.tsx`)
+   - Streamlined information architecture
+
+4. **❓ FAQ Page Enhancement**:
+   - New hero section for better visual impact
+   - Improved question and answer layout
+   - Better content organization
+   - Enhanced user experience
+
+5. **📞 Contact Page Updates**:
+   - Professional hero section implementation
+   - Improved contact information display
+   - Enhanced visual appeal
+   - Better responsive design
+
+6. **🚗 Services Page Refinements**:
+   - Further optimizations to service offerings
+   - Enhanced leasing partner visibility
+   - Improved content flow
+
+7. **🎯 Navigation & Header Updates**:
+   - Enhanced header component for better navigation
+   - Improved mobile menu experience
+   - Consistent active page indication
+
+#### Technical Implementation:
+
+**New Image Assets:**
+- `web/public/about_hero.png` - About page hero background ✅
+- `web/public/contact_hero.png` - Contact page hero background ✅
+- `web/public/faq_hero.png` - FAQ page hero background ✅
+
+**Updated Files:**
+- `web/src/components/Footer.tsx` - Logo and content redesign ✅
+- `web/src/app/about/page.tsx` - Complete page overhaul ✅
+- `web/src/app/about/faqs/page.tsx` - Hero section and layout ✅
+- `web/src/app/contact/page.tsx` - Hero section implementation ✅
+- `web/src/app/services/page.tsx` - Additional refinements ✅
+- `web/src/app/vehicles/page.tsx` - Hero section updates ✅
+- `web/src/components/Header.tsx` - Navigation improvements ✅
+- `web/public/vehicle_hero.png` - Updated vehicle hero image ✅
+
+**Removed Files:**
+- `web/src/app/about/documents/page.tsx` - Streamlined architecture ✅
+
+**Key Features:**
+- Consistent hero sections across all pages
+- Enhanced Sinhala language content
+- Improved brand identity with logo updates
+- Mobile-first responsive design
+- Professional visual hierarchy
+- Unified design system
+
+---
+
+## 📢 PREVIOUS UPDATE - December 12, 2025 (Services Page Enhancement)
 
 ### 🎯 Comprehensive Services Page Redesign
 

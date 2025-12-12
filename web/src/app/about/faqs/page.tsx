@@ -162,31 +162,39 @@ TOYOTA • NISSAN • MAZDA • HONDA • MITSUBISHI • SUZUKI • PERODUA • 
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Hero Section */}
-        <section className="relative h-64 md:h-72 lg:h-80 overflow-hidden">
-                <Image
-                  src="/vehicle_page_hero.png"
-                  alt="Contact Hero"
-                  fill
-                  className="object-cover w-full h-full"
-                  priority
-                />
-                <div className="absolute inset-0 flex items-center pt-12 md:pt-16 lg:pt-20 justify-center px-4">
-                  <div className="text-center text-white">
-                    <h1 className="text-2xl md:text-3xl lg:text-[42px] font-semibold mb-2 md:mb-3 lg:mb-4">ඔබට ඇති ප්‍රශ්නවලට අපෙන් පිළිතුරු මෙන්න.</h1>
-                    <p className="text-sm md:text-base lg:text-[16px] font-base max-w-[90%]  lg:w-[600px] mx-auto">Find answers to common questions about buying vehicles, imports, and our services</p>
-                  </div>
-                </div>
-              </section>
+      
         
 
-
+ {/* Hero Section */}
+       <section 
+        className="relative h-[280px] sm:h-[380px] md:h-[400px] lg:h-[450px] flex items-center overflow-hidden bg-cover bg-no-repeat bg-[position:left] md:bg-center"
+        style={{
+          backgroundImage: "url('/faq_hero.png')",
+        }}
+      >
+        {/* Content - Center on mobile, Left on desktop */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-4 xl:px-0">
+          <div className="text-center md:text-left text-black max-w-xl mt-12 sm:mt-16 md:mt-20 lg:mt-[100px] mx-auto md:mx-0">
+           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] mb-4 font-bold tracking-tight font-sinhala">
+              මාලඹේ පුංචි කාර් නිවස
+            </h1>
+            {/* Subheading - Red */}
+              <h2 className="text-xl sm:text-2xl md:text-[24px] lg:text-[24px] font-bold mb-4 sm:mb-6 lg:mb-8 text-[#E4002B] font-sinhala">
+               ඔබට ඇති ප්‍රශ්නවලට අපෙන් පිළිතුරු මෙන්න.
+              </h2>
+            <p className="text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 font-sinhala leading-relaxed">
+             සාමාන්‍යයෙන් වාහන මිලදී ගැනීම, ආනයන, සහ අපගේ සේවාවන්,<br /> පිළිබඳව ඇති ප්‍රශ්නවලට පිළිතුරු සොයා ගන්න
+            </p>
+            
+          </div>
+        </div>
+      </section>
 
 
       
       {/* FAQ Categories */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-0">
           <div className="space-y-12">
             {faqCategories.map((category, categoryIndex) => {
               const IconComponent = category.icon;

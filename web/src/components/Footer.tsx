@@ -25,22 +25,27 @@ export default function Footer() {
   return (
     <footer className="bg-gray-100 text-gray-800">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto py-8 sm:py-12 px-6 sm:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-4 xl:px-0">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 lg:gap-16">
           
           {/* Section 1: Company Logo & Info */}
           <div className="space-y-5 col-span-1">
             <div className="flex items-center">
-              <Image 
-                src="/black_logo.png" 
-                alt="Punchi Car Niwasa" 
-                width={220} 
-                height={40}
-                className="w-auto h-auto max-w-[180px] lg:max-w-[220px]"
-              />
+            {/* Logo */}
+            <Link href="/" className="flex items-center">
+              <div className="relative h-14 w-20">
+                <Image
+                  src="/logo_icon.png"
+                  alt="Punchi Car Niwasa"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </Link>
             </div>
             <p className="text-[14px] lg:text-[15px] text-gray-600 leading-relaxed">
-              When choosing a vehicle from a dealership with 400 options
+              තෝරා ගැනිමට වාහන 400ක් එකම උද්‍යානයක.<br /> මහ පාරෙන් මීටර් 600ක් ඇතුළත මනරම් හරිත කලාපයක පිහිටි දැවැන්ත වාහන උද්‍යානය.
             </p>
             <div className="pt-2">
               <h4 className="text-[16px] lg:text-[17px] font-semibold mb-2 text-gray-900">Sales Hours</h4>
@@ -133,7 +138,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="bg-red-600 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-4 xl:px-0 py-4 sm:py-4">
           <div className="flex flex-col sm:flex-col md:flex-row lg:flex-row justify-center sm:justify-between items-center gap-2 sm:gap-4 text-xs sm:text-sm text-center sm:text-left">
             <p className="text-white text-[11px] sm:text-[13px]">&copy; Copyright 2024 Punchi Car Niwasa</p>
             <p className="text-white text-[11px] sm:text-[13px]">Design & Developed by asankaherath.com</p>

@@ -4,14 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Phone, Mail, ChevronDown } from 'lucide-react';
+import { Menu, X, Phone, Mail } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
   const pathname = usePathname();
-  let dropdownTimeout: NodeJS.Timeout;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,30 +24,12 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleDropdownEnter = () => {
-    clearTimeout(dropdownTimeout);
-    setAboutDropdownOpen(true);
-  };
-
-  const handleDropdownLeave = () => {
-    dropdownTimeout = setTimeout(() => {
-      setAboutDropdownOpen(false);
-    }, 150);
-  };
-
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'Vehicles', href: '/vehicles' },
     { name: 'Our Service', href: '/services' },
-    { 
-      name: 'About Us', 
-      href: '/about',
-      dropdown: [
-        { name: 'About Us', href: '/about' },
-        { name: 'Documents', href: '/about/documents' },
-        { name: 'FAQs', href: '/about/faqs' },
-      ]
-    },
+    { name: 'About Us', href: '/about' },
+    { name: 'FAQ', href: '/about/faqs' },
     { name: 'Contact Us', href: '/contact' },
   ];
 
@@ -61,7 +41,7 @@ export default function Header() {
           ? 'bg-white shadow-lg' 
           : 'bg-transparent'
       }`}>
-      <div className="max-w-7xl mx-auto sm:px-6 md:px-8 lg:px-0 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-0 py-4">
         <div className="flex justify-between items-center">
           {/* Logo and Navigation Container */}
           <div className="flex items-center gap-4">
@@ -81,60 +61,17 @@ export default function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => (
-                item.dropdown ? (
-                  <div 
-                    key={item.name}
-                    className="relative group"
-                    onMouseEnter={handleDropdownEnter}
-                    onMouseLeave={handleDropdownLeave}
-                  >
-                    <button
-                      className={`px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-1 ${
-                        pathname.startsWith('/about')
-                          ? 'text-red-600'
-                          : isScrolled ? 'text-gray-900 hover:text-red-600' : 'text-black hover:text-red-600'
-                      }`}
-                    >
-                      {item.name}
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${aboutDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    <div 
-                      className={`absolute top-full left-0 pt-2 transition-all duration-200 ${
-                        aboutDropdownOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
-                      }`}
-                    >
-                      <div className="w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50 overflow-hidden">
-                        {item.dropdown.map((subItem) => (
-                          <Link
-                            key={subItem.name}
-                            href={subItem.href}
-                            className={`block px-4 py-2.5 text-sm transition-colors ${
-                              pathname === subItem.href
-                                ? 'bg-red-50 text-red-600 font-semibold'
-                                : 'text-slate-700 hover:bg-slate-50 hover:text-red-600'
-                            }`}
-                            onClick={() => setAboutDropdownOpen(false)}
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                      pathname === item.href
-                        ? 'text-red-600'
-                        : isScrolled ? 'text-gray-900 hover:text-red-600' : 'text-black hover:text-red-600'
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
-                )
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                    pathname === item.href
+                      ? 'text-red-600'
+                      : isScrolled ? 'text-gray-900 hover:text-red-600' : 'text-black hover:text-red-600'
+                  }`}
+                >
+                  {item.name}
+                </Link>
               ))}
             </nav>
           </div>
@@ -194,50 +131,18 @@ export default function Header() {
             {/* Menu Items */}
             <div className="px-6 py-4 space-y-2">
               {navItems.map((item) => (
-                item.dropdown ? (
-                  <div key={item.name}>
-                    <Link
-                      href={item.href}
-                      className={`block py-3 px-4 rounded-md font-medium transition-colors ${
-                        pathname === item.href
-                          ? 'text-red-600 bg-red-50'
-                          : 'text-gray-900 hover:text-red-600 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                    <div className="ml-4 mt-2 space-y-2">
-                      {item.dropdown.slice(1).map((subItem) => (
-                        <Link
-                          key={subItem.name}
-                          href={subItem.href}
-                          className={`block py-2 px-4 rounded-md text-sm transition-colors ${
-                            pathname === subItem.href
-                              ? 'text-red-600 bg-red-50'
-                              : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
-                          }`}
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          {subItem.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`block py-3 px-4 rounded-md font-medium transition-colors ${
-                      pathname === item.href
-                        ? 'text-red-600 bg-red-50'
-                        : 'text-gray-900 hover:text-red-600 hover:bg-gray-50'
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                )
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`block py-3 px-4 rounded-md font-medium transition-colors ${
+                    pathname === item.href
+                      ? 'text-red-600 bg-red-50'
+                      : 'text-gray-900 hover:text-red-600 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
               ))}
             </div>
 

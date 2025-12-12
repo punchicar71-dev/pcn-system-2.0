@@ -10,16 +10,16 @@ export default function ServicesPage() {
 
       {/* Hero Section */}
        <section 
-        className="relative h-[280px] sm:h-[340px] md:h-[380px] lg:h-[400px] flex items-center overflow-hidden"
+        className="relative h-[280px] sm:h-[400px] md:h-[400px] lg:h-[450px] flex items-center overflow-hidden"
         style={{
           backgroundImage: "url('/service_page.png')",
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'left center',
           backgroundRepeat: 'no-repeat'
         }}
       >
         {/* Content - Left Aligned */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-4 xl:px-0 flex justify-center md:justify-start">
           <div className="text-left text-black max-w-xl mt-12 sm:mt-16 md:mt-20 lg:mt-[100px]">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] mb-4 font-bold tracking-tight font-sinhala">
               මාලඹේ පුංචි කාර් නිවස
@@ -44,7 +44,7 @@ export default function ServicesPage() {
 
       {/* Buy & Sell Vehicle Section */}
       <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Side - Buy Vehicle Card (50%) */}
             <div className="bg-gray-100 rounded-2xl p-8 lg:p-10">
@@ -127,7 +127,7 @@ export default function ServicesPage() {
       </section>
 
 
-        <section className="pb-12 px-4 md:px-6 gap-y-12 flex flex-col lg:px-28 bg-white">
+        <section className="pb-12 px-4 sm:px-6 lg:px-4 xl:px-0 gap-y-12 flex flex-col lg:px-28 bg-white">
 
         <div className="bg-gray-100 max-w-7xl mx-auto p-6 md:p-8 rounded-2xl">
           <h2 className="text-[28px] md:text-[28px] font-semibold text-gray-900 mb-6 font-sinhala">
