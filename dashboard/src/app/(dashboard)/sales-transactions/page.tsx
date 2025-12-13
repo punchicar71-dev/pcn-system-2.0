@@ -45,7 +45,7 @@ export default function SalesTransactionsPage() {
       // First, get the basic sale data
       const { data: basicSaleData, error: fetchError } = await supabase
         .from('pending_vehicle_sales')
-        .select('vehicle_id, vehicle_number, brand_name, model_name, manufacture_year')
+        .select('vehicle_id, vehicle_number, brand_name, model_name, manufacture_year, body_type')
         .eq('id', selectedSaleId)
         .single();
 
@@ -81,7 +81,7 @@ export default function SalesTransactionsPage() {
       // Try to populate snapshot columns if they're missing AND vehicle still exists
       const snapshotUpdate: any = {};
       
-      if (basicSaleData.vehicle_id && (!basicSaleData.vehicle_number || !basicSaleData.brand_name || !basicSaleData.model_name || !basicSaleData.manufacture_year)) {
+      if (basicSaleData.vehicle_id && (!basicSaleData.vehicle_number || !basicSaleData.brand_name || !basicSaleData.model_name || !basicSaleData.manufacture_year || !basicSaleData.body_type)) {
         console.log('📸 Fetching vehicle details to populate snapshot columns...');
         
         try {
@@ -91,6 +91,7 @@ export default function SalesTransactionsPage() {
             .select(`
               vehicle_number,
               manufacture_year,
+              body_type,
               vehicle_brands:brand_id (name),
               vehicle_models:model_id (name)
             `)
@@ -104,6 +105,7 @@ export default function SalesTransactionsPage() {
             if (!basicSaleData.brand_name && vehicleData.vehicle_brands) snapshotUpdate.brand_name = vehicleData.vehicle_brands.name;
             if (!basicSaleData.model_name && vehicleData.vehicle_models) snapshotUpdate.model_name = vehicleData.vehicle_models.name;
             if (!basicSaleData.manufacture_year) snapshotUpdate.manufacture_year = vehicleData.manufacture_year;
+            if (!basicSaleData.body_type) snapshotUpdate.body_type = vehicleData.body_type;
           } else {
             console.warn('⚠️ Vehicle not found in database - it may have been deleted');
           }

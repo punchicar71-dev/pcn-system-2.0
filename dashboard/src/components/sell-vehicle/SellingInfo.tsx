@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, Loader2 } from 'lucide-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase-client';
 import { Input } from '@/components/ui/input';
@@ -38,49 +38,51 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const searchRequestIdRef = useRef<number>(0);
 
+  // Memoize supabase client for performance
+  const supabase = useMemo(() => createClient(), []);
+
   // Fetch sales agents and leasing companies on mount (these are small lists)
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        setIsInitialLoading(true);
-        const supabase = createClient();
-        
-        // Fetch sales agents and leasing companies in parallel
-        const [agentsResult, companiesResult] = await Promise.all([
-          supabase
-            .from('sales_agents')
-            .select('*')
-            .eq('is_active', true)
-            .order('name', { ascending: true }),
-          supabase
-            .from('leasing_companies')
-            .select('*')
-            .eq('is_active', true)
-            .order('name', { ascending: true })
-        ]);
+  const fetchInitialData = useCallback(async () => {
+    try {
+      setIsInitialLoading(true);
+      
+      // Fetch sales agents and leasing companies in parallel for better performance
+      const [agentsResult, companiesResult] = await Promise.all([
+        supabase
+          .from('sales_agents')
+          .select('id, name, agent_type, is_active')
+          .eq('is_active', true)
+          .order('name', { ascending: true }),
+        supabase
+          .from('leasing_companies')
+          .select('id, name, is_active')
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+      ]);
 
-        if (agentsResult.error) {
-          console.error('Error fetching sales agents:', agentsResult.error);
-        } else {
-          setSalesAgents(agentsResult.data || []);
-        }
-
-        if (companiesResult.error) {
-          console.error('Error fetching leasing companies:', companiesResult.error);
-        } else {
-          setLeasingCompanies(companiesResult.data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching initial data:', error);
-      } finally {
-        setIsInitialLoading(false);
+      if (!agentsResult.error && agentsResult.data) {
+        setSalesAgents(agentsResult.data);
+      } else if (agentsResult.error) {
+        console.error('Error fetching sales agents:', agentsResult.error);
       }
-    };
 
+      if (!companiesResult.error && companiesResult.data) {
+        setLeasingCompanies(companiesResult.data);
+      } else if (companiesResult.error) {
+        console.error('Error fetching leasing companies:', companiesResult.error);
+      }
+    } catch (error) {
+      console.error('Error fetching initial data:', error);
+    } finally {
+      setIsInitialLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [fetchInitialData]);
 
-  // Debounced server-side vehicle search
+  // Debounced server-side vehicle search with optimized query
   const searchVehicles = useCallback(async (searchTerm: string, requestId: number) => {
     if (!searchTerm || searchTerm.length < 2) {
       setFilteredVehicles([]);
@@ -91,16 +93,19 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
 
     try {
       setIsSearching(true);
-      const supabase = createClient();
+      
+      // Normalize search term for better matching
+      const normalizedSearch = searchTerm.trim().toUpperCase();
       
       // Server-side search with ILIKE for case-insensitive matching
+      // Using indexed columns for faster search
       const { data, error } = await supabase
         .from('vehicle_inventory_view')
-        .select('id, vehicle_number, brand_name, model_name, manufacture_year, selling_amount, status')
+        .select('id, vehicle_number, brand_name, model_name, manufacture_year, selling_amount, status, body_type')
         .eq('status', 'In Sale')
-        .ilike('vehicle_number', `%${searchTerm}%`)
+        .or(`vehicle_number.ilike.%${normalizedSearch}%,brand_name.ilike.%${normalizedSearch}%,model_name.ilike.%${normalizedSearch}%`)
         .order('vehicle_number', { ascending: true })
-        .limit(10); // Limit results for performance
+        .limit(15); // Increased limit for better search results
 
       // Check if this is still the latest request (prevent race conditions)
       if (requestId !== searchRequestIdRef.current) {
@@ -112,7 +117,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
         setFilteredVehicles([]);
       } else {
         setFilteredVehicles(data || []);
-        setShowDropdown(true);
+        setShowDropdown(data && data.length > 0);
       }
     } catch (error) {
       console.error('Error searching vehicles:', error);
@@ -123,7 +128,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
         setIsSearching(false);
       }
     }
-  }, []);
+  }, [supabase]);
 
   // Handle search input change with debouncing
   useEffect(() => {
@@ -168,26 +173,42 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
     };
   }, [formData.searchVehicle, formData.selectedVehicle, searchVehicles]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is outside the search input and dropdown
+      if (!target.closest('[data-vehicle-search]')) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showDropdown]);
+
   const [isSelectingVehicle, setIsSelectingVehicle] = useState(false);
 
-  const handleVehicleSelect = async (vehicle: any) => {
+  const handleVehicleSelect = useCallback(async (vehicle: any) => {
     try {
       setIsSelectingVehicle(true);
       setShowDropdown(false); // Hide dropdown immediately for better UX
-      
-      const supabase = createClient();
+      setFilteredVehicles([]); // Clear search results
       
       // Fetch vehicle images and seller details in parallel for faster loading
       const [imagesResult, sellerResult] = await Promise.all([
         supabase
           .from('vehicle_images')
-          .select('*')
+          .select('image_url, display_order, image_type')
           .eq('vehicle_id', vehicle.id)
           .eq('image_type', 'gallery')
-          .order('display_order', { ascending: true }),
+          .order('display_order', { ascending: true })
+          .limit(1), // Only need first image for preview
         supabase
           .from('sellers')
-          .select('*')
+          .select('title, first_name, last_name, mobile_number, address, city')
           .eq('vehicle_id', vehicle.id)
           .maybeSingle() // Use maybeSingle to avoid error when no seller exists
       ]);
@@ -217,15 +238,27 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
       onChange('searchVehicle', vehicle.vehicle_number);
     } catch (error) {
       console.error('Error selecting vehicle:', error);
+      alert('Failed to load vehicle details. Please try again.');
     } finally {
       setIsSelectingVehicle(false);
     }
-  };
+  }, [supabase, onChange]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
-  };
+  }, [onSubmit]);
+
+  // Memoize filtered agents by type for better performance
+  const officeSalesAgents = useMemo(
+    () => salesAgents.filter(agent => agent.agent_type === 'Office Sales Agent'),
+    [salesAgents]
+  );
+
+  const vehicleShowroomAgents = useMemo(
+    () => salesAgents.filter(agent => agent.agent_type === 'Vehicle Showroom Agent'),
+    [salesAgents]
+  );
 
   return (
     <div className="bg-slate-50 z-10 p-6">
@@ -236,7 +269,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
           {/* Left Column - Form Fields */}
           <div className="space-y-6 w-full lg:w-[500px] flex-shrink-0">
             {/* Search Vehicle */}
-            <div className="relative">
+            <div className="relative" data-vehicle-search>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search Vehicle <span className="text-red-500">*</span>
                 {formData.searchVehicle.length > 0 && formData.searchVehicle.length < 2 && (
@@ -255,9 +288,10 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                     }
                   }}
                   className="pl-10 pr-10"
-                  placeholder="Search by Vehicle Number (min 2 chars)"
+                  placeholder="Search by Vehicle Number, Brand, or Model"
                   required
                   disabled={disabled || isSelectingVehicle}
+                  autoComplete="off"
                 />
                 {(isSearching || isSelectingVehicle) && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -407,7 +441,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                   <SelectValue placeholder="Select option..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {salesAgents.filter((agent) => agent.agent_type === 'Office Sales Agent').map((agent) => (
+                  {officeSalesAgents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.name}
                     </SelectItem>
@@ -430,7 +464,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                   <SelectValue placeholder="Select option..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {salesAgents.filter((agent) => agent.agent_type === 'Vehicle Showroom Agent').map((agent) => (
+                  {vehicleShowroomAgents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.name}
                     </SelectItem>

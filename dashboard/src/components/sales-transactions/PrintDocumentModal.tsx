@@ -386,8 +386,17 @@ export default function PrintDocumentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/70 z-[99999]"
+        onClick={onClose}
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+      
+      {/* Modal */}
+      <div className="fixed inset-0 flex items-center justify-center z-[100000] p-4 pointer-events-none" style={{ position: 'fixed' }}>
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h2 className="text-2xl font-bold text-gray-900">Document Print</h2>
@@ -454,25 +463,30 @@ export default function PrintDocumentModal({
                   </span>
                 </button>
 
-                <button
-                  onClick={() => handlePrint('FINANCE_SELLER', '/documents/FINANCE_SELLER.png')}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-300 hover:border-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                >
-                  <Printer className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
-                  <span className="text-base font-semibold text-gray-700 group-hover:text-gray-900">
-                    Print Finance Seller
-                  </span>
-                </button>
+                {/* Show Finance Seller & Finance Dealer only for Leasing payment type */}
+                {saleData.payment_type === 'Leasing' && (
+                  <>
+                    <button
+                      onClick={() => handlePrint('FINANCE_SELLER', '/documents/FINANCE_SELLER.png')}
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-300 hover:border-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
+                    >
+                      <Printer className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+                      <span className="text-base font-semibold text-gray-700 group-hover:text-gray-900">
+                        Print Finance Seller
+                      </span>
+                    </button>
 
-                <button
-                  onClick={() => handlePrint('FINANCE_DEALER', '/documents/FINANCE_DEALER.png')}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-300 hover:border-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                >
-                  <Printer className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
-                  <span className="text-base font-semibold text-gray-700 group-hover:text-gray-900">
-                    Print Finance Dealer
-                  </span>
-                </button>
+                    <button
+                      onClick={() => handlePrint('FINANCE_DEALER', '/documents/FINANCE_DEALER.png')}
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-300 hover:border-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
+                    >
+                      <Printer className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+                      <span className="text-base font-semibold text-gray-700 group-hover:text-gray-900">
+                        Print Finance Dealer
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
             </>
           ) : (
@@ -486,7 +500,8 @@ export default function PrintDocumentModal({
         {/* Hidden canvas for image manipulation */}
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

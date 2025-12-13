@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import StepIndicator from '@/components/vehicle/StepIndicator';
 import Step1VehicleDetails from '@/components/vehicle/Step1VehicleDetails';
@@ -30,40 +30,33 @@ export default function AddVehiclePage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [publishedVehicleId, setPublishedVehicleId] = useState<string>('');
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
-    fetchMasterData();
-  }, []);
-
-  const fetchMasterData = async () => {
+  const fetchMasterData = useCallback(async () => {
     try {
-      // Fetch brands
-      const { data: brandsData } = await supabase
-        .from('vehicle_brands')
-        .select('*')
-        .order('name');
-      if (brandsData) setBrands(brandsData);
-
-      // Fetch countries
-      const { data: countriesData } = await supabase
-        .from('countries')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-      if (countriesData) setCountries(countriesData);
+      // Parallel fetch for better performance
+      const [brandsResult, countriesResult] = await Promise.all([
+        supabase.from('vehicle_brands').select('*').order('name'),
+        supabase.from('countries').select('*').eq('is_active', true).order('name')
+      ]);
+      
+      if (brandsResult.data) setBrands(brandsResult.data);
+      if (countriesResult.data) setCountries(countriesResult.data);
     } catch (error) {
       console.error('Error fetching master data:', error);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
-    if (formState.vehicleDetails.brandId) {
-      fetchModels(formState.vehicleDetails.brandId);
-    }
-  }, [formState.vehicleDetails.brandId]);
+    fetchMasterData();
+  }, [fetchMasterData]);
 
-  const fetchModels = async (brandId: string) => {
+  const fetchModels = useCallback(async (brandId: string) => {
+    if (!brandId) {
+      setModels([]);
+      return;
+    }
+    
     try {
       const { data } = await supabase
         .from('vehicle_models')
@@ -74,63 +67,73 @@ export default function AddVehiclePage() {
     } catch (error) {
       console.error('Error fetching models:', error);
     }
-  };
+  }, [supabase]);
 
-  const updateVehicleDetails = (data: Partial<VehicleDetailsData>) => {
+  useEffect(() => {
+    fetchModels(formState.vehicleDetails.brandId);
+  }, [formState.vehicleDetails.brandId, fetchModels]);
+
+  const updateVehicleDetails = useCallback((data: Partial<VehicleDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
       vehicleDetails: { ...prev.vehicleDetails, ...data },
     }));
-  };
+  }, []);
 
-  const updateSellerDetails = (data: Partial<SellerDetailsData>) => {
+  const updateSellerDetails = useCallback((data: Partial<SellerDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
       sellerDetails: { ...prev.sellerDetails, ...data },
     }));
-  };
+  }, []);
 
-  const updateVehicleOptions = (data: Partial<VehicleOptionsData>) => {
+  const updateVehicleOptions = useCallback((data: Partial<VehicleOptionsData>) => {
     setFormState((prev) => ({
       ...prev,
       vehicleOptions: { ...prev.vehicleOptions, ...data },
     }));
-  };
+  }, []);
 
-  const updateSellingDetails = (data: Partial<SellingDetailsData>) => {
+  const updateSellingDetails = useCallback((data: Partial<SellingDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
       sellingDetails: { ...prev.sellingDetails, ...data },
     }));
-  };
+  }, []);
 
-  const updateSpecialNotes = (data: Partial<SpecialNotesData>) => {
+  const updateSpecialNotes = useCallback((data: Partial<SpecialNotesData>) => {
     setFormState((prev) => ({
       ...prev,
       specialNotes: { ...prev.specialNotes, ...data },
     }));
-  };
+  }, []);
 
-  const goToStep = (step: FormStep) => {
+  const goToStep = useCallback((step: FormStep) => {
     setFormState((prev) => ({ ...prev, currentStep: step }));
-  };
+  }, []);
 
-  const nextStep = () => {
-    const currentStep = formState.currentStep;
-    if (!completedSteps.includes(currentStep)) {
-      setCompletedSteps([...completedSteps, currentStep]);
-    }
-    if (currentStep < 7) {
-      goToStep((currentStep + 1) as FormStep);
-    }
-  };
+  const nextStep = useCallback(() => {
+    setFormState((prev) => {
+      const currentStep = prev.currentStep;
+      if (!completedSteps.includes(currentStep)) {
+        setCompletedSteps((steps) => [...steps, currentStep]);
+      }
+      if (currentStep < 7) {
+        return { ...prev, currentStep: (currentStep + 1) as FormStep };
+      }
+      return prev;
+    });
+  }, [completedSteps]);
 
-  const prevStep = () => {
-    const currentStep = formState.currentStep;
-    if (currentStep > 1) {
-      goToStep((currentStep - 1) as FormStep);
-    }
-  };
+  const prevStep = useCallback(() => {
+    setFormState((prev) => {
+      const currentStep = prev.currentStep;
+      if (currentStep > 1) {
+        return { ...prev, currentStep: (currentStep - 1) as FormStep };
+      }
+      return prev;
+    });
+  }, []);
 
   const uploadImages = async (vehicleId: string) => {
     const { vehicleImages, image360Files, crImages } = formState.vehicleDetails;

@@ -131,16 +131,11 @@ export default function DashboardPage() {
       }
 
       // Fetch Sold-Out Vehicles from pending_vehicle_sales (status: 'sold') - ALL TIME
+      // OPTIMIZED: Use body_type snapshot column directly (no join needed)
+      // This works even when vehicle_id is NULL (vehicle re-added after sale)
       const { data: soldSalesData, error: soldError } = await supabase
         .from('pending_vehicle_sales')
-        .select(`
-          id,
-          vehicle_id,
-          updated_at,
-          vehicles (
-            body_type
-          )
-        `)
+        .select('id, body_type, updated_at')
         .eq('status', 'sold')
 
       console.log('All Sold Sales Data:', soldSalesData)
@@ -148,10 +143,10 @@ export default function DashboardPage() {
       console.log('Sold Sales Error:', soldError)
 
       if (!soldError && soldSalesData) {
-        // Extract vehicles data and calculate stats
+        // Use body_type directly from snapshot column
         const vehiclesData = soldSalesData
-          .filter(sale => sale.vehicles)
-          .map(sale => ({ body_type: (sale.vehicles as any).body_type }))
+          .filter(sale => sale.body_type)
+          .map(sale => ({ body_type: sale.body_type }))
         console.log('Sold Vehicles Data:', vehiclesData)
         const stats = calculateBodyTypeStats(vehiclesData)
         console.log('Sold Vehicle Stats:', stats)

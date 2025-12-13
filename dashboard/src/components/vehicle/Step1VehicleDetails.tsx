@@ -46,7 +46,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   // Function to check if vehicle number exists in database
   // Only checks: 1) Inventory (vehicles not sold), 2) Pending sales (not sold-out)
   // Does NOT block: Sold-out vehicles can be added again
-  const checkVehicleNumberExists = async (vehicleNumber: string): Promise<boolean> => {
+  const checkVehicleNumberExists = useCallback(async (vehicleNumber: string): Promise<boolean> => {
     if (!vehicleNumber || vehicleNumber.trim() === '') {
       return false;
     }
@@ -55,44 +55,45 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
       const supabase = createClient();
       const normalizedVehicleNumber = vehicleNumber.trim().toUpperCase();
 
-      // Check 1: Inventory table - only vehicles that are NOT sold
-      const { data: inventoryVehicles, error: inventoryError } = await supabase
-        .from('vehicles')
-        .select('id, vehicle_number, status')
-        .eq('vehicle_number', normalizedVehicleNumber)
-        .neq('status', 'Sold')
-        .limit(1);
+      // Parallel check for better performance
+      const [inventoryResult, pendingSalesResult] = await Promise.all([
+        // Check 1: Inventory table - only vehicles that are NOT sold
+        supabase
+          .from('vehicles')
+          .select('id, vehicle_number, status')
+          .eq('vehicle_number', normalizedVehicleNumber)
+          .neq('status', 'Sold')
+          .limit(1),
+        
+        // Check 2: Pending vehicle sales - only vehicles with 'pending' status (not 'sold')
+        supabase
+          .from('pending_vehicle_sales')
+          .select(`
+            id,
+            status,
+            vehicles:vehicle_id (
+              vehicle_number
+            )
+          `)
+          .eq('status', 'pending')
+      ]);
 
-      if (inventoryError) {
-        console.error('Error checking vehicle number in inventory:', inventoryError);
-        return false;
+      if (inventoryResult.error) {
+        console.error('Error checking vehicle number in inventory:', inventoryResult.error);
+      }
+      
+      if (pendingSalesResult.error) {
+        console.error('Error checking vehicle number in pending sales:', pendingSalesResult.error);
       }
 
       // If found in inventory (not sold), block the duplicate
-      if (inventoryVehicles && inventoryVehicles.length > 0) {
+      if (inventoryResult.data && inventoryResult.data.length > 0) {
         return true;
       }
 
-      // Check 2: Pending vehicle sales - only vehicles with 'pending' status (not 'sold')
-      const { data: pendingSales, error: pendingError } = await supabase
-        .from('pending_vehicle_sales')
-        .select(`
-          id,
-          status,
-          vehicles:vehicle_id (
-            vehicle_number
-          )
-        `)
-        .eq('status', 'pending');
-
-      if (pendingError) {
-        console.error('Error checking vehicle number in pending sales:', pendingError);
-        return false;
-      }
-
       // Check if any pending sale has matching vehicle number
-      if (pendingSales && pendingSales.length > 0) {
-        const matchingPendingSale = pendingSales.find(
+      if (pendingSalesResult.data && pendingSalesResult.data.length > 0) {
+        const matchingPendingSale = pendingSalesResult.data.find(
           (sale: any) => sale.vehicles?.vehicle_number?.toUpperCase() === normalizedVehicleNumber
         );
         if (matchingPendingSale) {
@@ -106,7 +107,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
       console.error('Error checking vehicle number:', error);
       return false;
     }
-  };
+  }, []);
 
   // Debounced duplicate check function
   const debouncedCheckDuplicate = useCallback((vehicleNumber: string) => {
@@ -144,7 +145,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         setIsCheckingDuplicate(false);
       }
     }, 500);
-  }, []);
+  }, [checkVehicleNumberExists]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -162,17 +163,17 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     }
   }, []); // Only on mount
 
-  const handleVehicleNumberChange = (value: string) => {
-    // Convert to uppercase and format
+  const handleVehicleNumberChange = useCallback((value: string) => {
+    // Convert to uppercase and format (allow only alphanumeric and hyphen)
     const formatted = value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     onChange({ vehicleNumber: formatted });
     
     // Trigger duplicate check
     debouncedCheckDuplicate(formatted);
-  };
+  }, [onChange, debouncedCheckDuplicate]);
 
   // Handle blur - immediate check if not already checked
-  const handleVehicleNumberBlur = async () => {
+  const handleVehicleNumberBlur = useCallback(async () => {
     if (data.vehicleNumber && !hasCheckedVehicle && !isCheckingDuplicate) {
       // Cancel any pending debounce
       if (debounceTimerRef.current) {
@@ -196,9 +197,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         setIsCheckingDuplicate(false);
       }
     }
-  };
+  }, [data.vehicleNumber, hasCheckedVehicle, isCheckingDuplicate, checkVehicleNumberExists]);
 
-  const handleVehicleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVehicleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newImages = [...data.vehicleImages, ...files];
@@ -208,9 +209,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         vehicleImagePreviews: [...data.vehicleImagePreviews, ...newPreviews],
       });
     }
-  };
+  }, [data.vehicleImages, data.vehicleImagePreviews, onChange]);
 
-  const handle360ImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handle360ImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newImages = [...data.image360Files, ...files];
@@ -220,9 +221,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         image360Previews: [...data.image360Previews, ...newPreviews],
       });
     }
-  };
+  }, [data.image360Files, data.image360Previews, onChange]);
 
-  const handleCRImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCRImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newImages = [...data.crImages, ...files];
@@ -232,36 +233,60 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         crImagePreviews: [...data.crImagePreviews, ...newPreviews],
       });
     }
-  };
+  }, [data.crImages, data.crImagePreviews, onChange]);
 
-  const removeVehicleImage = (index: number) => {
+  const removeVehicleImage = useCallback((index: number) => {
+    // Revoke object URL to prevent memory leak
+    if (data.vehicleImagePreviews[index]) {
+      URL.revokeObjectURL(data.vehicleImagePreviews[index]);
+    }
+    
     const newImages = data.vehicleImages.filter((_, i) => i !== index);
     const newPreviews = data.vehicleImagePreviews.filter((_, i) => i !== index);
     onChange({
       vehicleImages: newImages,
       vehicleImagePreviews: newPreviews,
     });
-  };
+  }, [data.vehicleImages, data.vehicleImagePreviews, onChange]);
 
-  const remove360Image = (index: number) => {
+  const remove360Image = useCallback((index: number) => {
+    // Revoke object URL to prevent memory leak
+    if (data.image360Previews[index]) {
+      URL.revokeObjectURL(data.image360Previews[index]);
+    }
+    
     const newImages = data.image360Files.filter((_, i) => i !== index);
     const newPreviews = data.image360Previews.filter((_, i) => i !== index);
     onChange({
       image360Files: newImages,
       image360Previews: newPreviews,
     });
-  };
+  }, [data.image360Files, data.image360Previews, onChange]);
 
-  const removeCRImage = (index: number) => {
+  const removeCRImage = useCallback((index: number) => {
+    // Revoke object URL to prevent memory leak
+    if (data.crImagePreviews[index]) {
+      URL.revokeObjectURL(data.crImagePreviews[index]);
+    }
+    
     const newImages = data.crImages.filter((_, i) => i !== index);
     const newPreviews = data.crImagePreviews.filter((_, i) => i !== index);
     onChange({
       crImages: newImages,
       crImagePreviews: newPreviews,
     });
-  };
+  }, [data.crImages, data.crImagePreviews, onChange]);
+  
+  // Cleanup object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      data.vehicleImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      data.image360Previews.forEach(url => URL.revokeObjectURL(url));
+      data.crImagePreviews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Check for duplicate vehicle number first
@@ -314,7 +339,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     }
     
     onNext();
-  };
+  }, [duplicateError, isCheckingDuplicate, data, hasCheckedVehicle, checkVehicleNumberExists, onNext]);
 
   return (
     <div className="bg-slate-50 p-6">

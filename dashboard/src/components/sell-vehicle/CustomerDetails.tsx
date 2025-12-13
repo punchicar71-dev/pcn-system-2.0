@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -22,27 +22,39 @@ interface CustomerDetailsProps {
   onNext: () => void;
 }
 
-const titles = ['Mr.', 'Miss.', 'Mrs.', 'Dr.'];
+const titles = ['Mr.', 'Miss.', 'Mrs.', 'Dr.'] as const;
 
 export default function CustomerDetails({ formData, onChange, onNext }: CustomerDetailsProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+  // Optimize click outside handler with useCallback
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setIsDropdownOpen(false);
+    }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isDropdownOpen, handleClickOutside]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     onNext();
-  };
+  }, [onNext]);
+
+  const handleTitleSelect = useCallback((title: string) => {
+    onChange('title', title);
+    setIsDropdownOpen(false);
+  }, [onChange]);
+
+  const toggleDropdown = useCallback(() => {
+    setIsDropdownOpen(prev => !prev);
+  }, []);
 
   return (
     <div className="bg-slate-50 p-6">
@@ -61,7 +73,7 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  onClick={toggleDropdown}
                   className="h-9 px-3 rounded-r-none border-r-0 min-w-[80px] justify-between"
                 >
                   <span className="text-sm">{formData.title || 'Mr.'}</span>
@@ -76,10 +88,7 @@ export default function CustomerDetails({ formData, onChange, onNext }: Customer
                         key={title}
                         type="button"
                         variant="ghost"
-                        onClick={() => {
-                          onChange('title', title);
-                          setIsDropdownOpen(false);
-                        }}
+                        onClick={() => handleTitleSelect(title)}
                         className="w-full justify-start rounded-none first:rounded-t-lg last:rounded-b-lg h-auto py-2"
                       >
                         {title}
