@@ -1,5 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, SupabaseClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+
+// Type for user role
+type UserRole = 'admin' | 'editor'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -35,5 +38,33 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  return { supabaseResponse, user }
+  return { supabaseResponse, user, supabase }
+}
+
+/**
+ * Get user role from the users table
+ * @param supabase - Supabase client instance
+ * @param authId - The auth user ID from Supabase Auth
+ * @returns The user's role ('admin' or 'editor')
+ */
+export async function getUserRole(supabase: SupabaseClient, authId: string): Promise<UserRole> {
+  try {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('access_level')
+      .eq('auth_id', authId)
+      .single()
+
+    if (error || !userData) {
+      console.error('Error fetching user role:', error)
+      return 'editor' // Default to most restrictive role
+    }
+
+    // Convert access_level to role
+    const accessLevel = userData.access_level?.toLowerCase()
+    return accessLevel === 'admin' ? 'admin' : 'editor'
+  } catch (error) {
+    console.error('Error in getUserRole:', error)
+    return 'editor' // Default to most restrictive role on error
+  }
 }

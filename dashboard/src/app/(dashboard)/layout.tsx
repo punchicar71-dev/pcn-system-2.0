@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
@@ -28,15 +28,24 @@ import { NotificationProvider } from '@/contexts/NotificationContext'
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import { Toaster } from '@/components/ui/toaster'
 import { UserProfileModal } from '@/components/profile/UserProfileModal'
+import { useRoleAccess } from '@/hooks/useRoleAccess'
+import { UserRole } from '@/lib/rbac'
 
-const navigation = [
+// Navigation items with optional role restrictions
+// If allowedRoles is undefined, the item is accessible to all authenticated users
+const navigation: Array<{
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  allowedRoles?: UserRole[]
+}> = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Add Vehicle', href: '/add-vehicle', icon: PlusCircle },
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Sell Vehicle', href: '/sell-vehicle', icon: DollarSign },
   { name: 'Sales Transactions', href: '/sales-transactions', icon: FileText },
-  { name: 'Reports & Analytics', href: '/reports', icon: BarChart3 },
-  { name: 'User Management', href: '/user-management', icon: Users },
+  { name: 'Reports & Analytics', href: '/reports', icon: BarChart3, allowedRoles: ['admin'] },
+  { name: 'User Management', href: '/user-management', icon: Users, allowedRoles: ['admin'] },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
@@ -57,6 +66,14 @@ export default function DashboardLayout({
 
   // Initialize session heartbeat to track user activity
   useSessionHeartbeat()
+  
+  // Get role-based access control utilities
+  const { hasPermissionFor } = useRoleAccess()
+  
+  // Filter navigation items based on user's role
+  const filteredNavigation = useMemo(() => {
+    return navigation.filter(item => hasPermissionFor(item.allowedRoles))
+  }, [hasPermissionFor])
 
   // Fetch current user data and set greeting
   useEffect(() => {
@@ -257,10 +274,10 @@ export default function DashboardLayout({
             </button>
           </div>
 
-          {/* Navigation - Scrollable area */}
+          {/* Navigation - Scrollable area (role-filtered) */}
           <nav className="flex-1 overflow-y-auto py-5">
             <ul className={`space-y-5 ${isSidebarCollapsed ? 'px-3' : 'px-5'}`}>
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <li 
                   key={item.name}
                   className="relative"

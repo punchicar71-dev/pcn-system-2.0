@@ -2,11 +2,67 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.33 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.34 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 13, 2025 (API Documentation & UI Improvements)
+## 📢 LATEST UPDATE - December 13, 2025 (RBAC & UX Improvements)
+
+### 🔐 Role-Based Access Control & User Experience Enhancements
+
+**Major Update: Implemented comprehensive RBAC system with navigation filtering and improved UX for vehicle management!**
+
+#### What's New:
+
+1. **🔐 Role-Based Access Control (RBAC)**:
+   - Complete RBAC system with `admin` and `editor` roles
+   - Middleware-level route protection for admin-only pages (`/reports`, `/user-management`)
+   - Dynamic navigation filtering based on user role
+   - `RoleGuard` component for conditional UI rendering
+   - `useRoleAccess` hook for role-based logic in components
+   - Access denied toast notification when editors try to access restricted pages
+   - Centralized RBAC configuration in `dashboard/src/lib/rbac/`
+
+2. **🚗 Duplicate Vehicle Number Detection**:
+   - Real-time duplicate check when adding vehicles
+   - Debounced API calls (500ms) for smooth user experience
+   - Visual status indicators (loading spinner, checkmark, error icon)
+   - Prevents form submission with duplicate vehicle numbers
+   - Clear error messages for duplicate detection
+
+3. **🗑️ Image Delete Confirmation Modal**:
+   - Replaced browser `confirm()` with custom modal dialog
+   - Better UX with styled confirmation buttons
+   - Loading state during deletion
+   - Error handling with retry option
+
+4. **🎛️ Access Denied Handler**:
+   - Toast notification when user is redirected from restricted page
+   - Automatic URL cleanup after showing notification
+   - Seamless integration with dashboard page
+
+#### New Files:
+
+- `dashboard/src/lib/rbac/types.ts` - RBAC type definitions ✅
+- `dashboard/src/lib/rbac/config.ts` - Route permissions configuration ✅
+- `dashboard/src/lib/rbac/index.ts` - RBAC module exports ✅
+- `dashboard/src/hooks/useRoleAccess.ts` - Role access hook ✅
+- `dashboard/src/components/auth/RoleGuard.tsx` - Role-based component guard ✅
+- `dashboard/src/components/auth/AccessDeniedHandler.tsx` - Access denied toast ✅
+- `dashboard/src/components/auth/index.ts` - Auth components exports ✅
+
+#### Modified Files:
+
+- `dashboard/src/middleware.ts` - Added RBAC route protection ✅
+- `dashboard/src/lib/supabase-middleware.ts` - Added getUserRole function ✅
+- `dashboard/src/app/(dashboard)/layout.tsx` - Role-filtered navigation ✅
+- `dashboard/src/app/(dashboard)/dashboard/page.tsx` - AccessDeniedHandler integration ✅
+- `dashboard/src/components/vehicle/Step1VehicleDetails.tsx` - Duplicate vehicle check ✅
+- `dashboard/src/components/inventory/VehicleImageUploadModal.tsx` - Delete confirmation modal ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - December 13, 2025 (API Documentation & UI Improvements)
 
 ### 📚 Swagger API Documentation & Dashboard UI Enhancements
 

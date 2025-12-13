@@ -1,10 +1,12 @@
 'use client';
 
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { VehicleDetailsData, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, getYearRange } from '@/types/vehicle-form.types';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { createClient } from '@/lib/supabase-client';
 
 interface Step1VehicleDetailsProps {
   data: VehicleDetailsData;
@@ -18,11 +20,127 @@ interface Step1VehicleDetailsProps {
 
 export default function Step1VehicleDetails({ data, onChange, onNext, onBack, brands, models, countries }: Step1VehicleDetailsProps) {
   const years = getYearRange(1980);
+  
+  // State for duplicate vehicle number check
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [hasCheckedVehicle, setHasCheckedVehicle] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to check if vehicle number exists in database
+  const checkVehicleNumberExists = async (vehicleNumber: string): Promise<boolean> => {
+    if (!vehicleNumber || vehicleNumber.trim() === '') {
+      return false;
+    }
+
+    try {
+      const supabase = createClient();
+      const { data: existingVehicles, error } = await supabase
+        .from('vehicles')
+        .select('id, vehicle_number')
+        .eq('vehicle_number', vehicleNumber.trim().toUpperCase())
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking vehicle number:', error);
+        return false;
+      }
+
+      return existingVehicles && existingVehicles.length > 0;
+    } catch (error) {
+      console.error('Error checking vehicle number:', error);
+      return false;
+    }
+  };
+
+  // Debounced duplicate check function
+  const debouncedCheckDuplicate = useCallback((vehicleNumber: string) => {
+    // Clear any existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Reset states
+    setDuplicateError(null);
+    setHasCheckedVehicle(false);
+
+    if (!vehicleNumber || vehicleNumber.trim() === '') {
+      setIsCheckingDuplicate(false);
+      return;
+    }
+
+    setIsCheckingDuplicate(true);
+
+    // Set new timer for 500ms debounce
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const exists = await checkVehicleNumberExists(vehicleNumber);
+        
+        if (exists) {
+          setDuplicateError('This vehicle number is already added by another user.');
+        } else {
+          setDuplicateError(null);
+        }
+        setHasCheckedVehicle(true);
+      } catch (error) {
+        console.error('Error during duplicate check:', error);
+        setDuplicateError(null);
+      } finally {
+        setIsCheckingDuplicate(false);
+      }
+    }, 500);
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Check duplicate when component mounts with existing vehicle number
+  useEffect(() => {
+    if (data.vehicleNumber && data.vehicleNumber.trim() !== '') {
+      debouncedCheckDuplicate(data.vehicleNumber);
+    }
+  }, []); // Only on mount
 
   const handleVehicleNumberChange = (value: string) => {
     // Convert to uppercase and format
     const formatted = value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     onChange({ vehicleNumber: formatted });
+    
+    // Trigger duplicate check
+    debouncedCheckDuplicate(formatted);
+  };
+
+  // Handle blur - immediate check if not already checked
+  const handleVehicleNumberBlur = async () => {
+    if (data.vehicleNumber && !hasCheckedVehicle && !isCheckingDuplicate) {
+      // Cancel any pending debounce
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
+      setIsCheckingDuplicate(true);
+      
+      try {
+        const exists = await checkVehicleNumberExists(data.vehicleNumber);
+        
+        if (exists) {
+          setDuplicateError('This vehicle number is already added by another user.');
+        } else {
+          setDuplicateError(null);
+        }
+        setHasCheckedVehicle(true);
+      } catch (error) {
+        console.error('Error during blur check:', error);
+      } finally {
+        setIsCheckingDuplicate(false);
+      }
+    }
   };
 
   const handleVehicleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,8 +206,40 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicate vehicle number first
+    if (duplicateError) {
+      alert('Please resolve the duplicate vehicle number issue before proceeding.');
+      return;
+    }
+    
+    // If still checking, wait for it to complete
+    if (isCheckingDuplicate) {
+      alert('Please wait while we verify the vehicle number.');
+      return;
+    }
+    
+    // If vehicle number entered but not yet checked, do a final check
+    if (data.vehicleNumber?.trim() && !hasCheckedVehicle) {
+      setIsCheckingDuplicate(true);
+      try {
+        const exists = await checkVehicleNumberExists(data.vehicleNumber);
+        if (exists) {
+          setDuplicateError('This vehicle number is already added by another user.');
+          setHasCheckedVehicle(true);
+          setIsCheckingDuplicate(false);
+          alert('This vehicle number already exists in the system. Please enter a different vehicle number.');
+          return;
+        }
+        setHasCheckedVehicle(true);
+      } catch (error) {
+        console.error('Error during final check:', error);
+      } finally {
+        setIsCheckingDuplicate(false);
+      }
+    }
     
     // Comprehensive Validation
     const missingFields: string[] = [];
@@ -122,14 +272,49 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             <Label htmlFor="vehicleNumber">
               Vehicle Number <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="vehicleNumber"
-              value={data.vehicleNumber}
-              onChange={(e) => handleVehicleNumberChange(e.target.value)}
-              placeholder="Ex: CBA-3214"
-              className="uppercase"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="vehicleNumber"
+                value={data.vehicleNumber}
+                onChange={(e) => handleVehicleNumberChange(e.target.value)}
+                onBlur={handleVehicleNumberBlur}
+                placeholder="Ex: CBA-3214"
+                className={`uppercase pr-10 ${
+                  duplicateError 
+                    ? 'border-red-500 focus:ring-red-500 focus-visible:ring-red-500 bg-red-50' 
+                    : hasCheckedVehicle && !isCheckingDuplicate && data.vehicleNumber
+                      ? 'border-green-500 focus:ring-green-500 focus-visible:ring-green-500'
+                      : ''
+                }`}
+                required
+              />
+              
+              {/* Status indicators */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {isCheckingDuplicate && (
+                  <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                )}
+                {hasCheckedVehicle && !isCheckingDuplicate && !duplicateError && data.vehicleNumber && (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                )}
+                {duplicateError && !isCheckingDuplicate && (
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                )}
+              </div>
+            </div>
+            
+            {/* Error message */}
+            {duplicateError && (
+              <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                {duplicateError}
+              </p>
+            )}
+            
+            {/* Checking message */}
+            {isCheckingDuplicate && (
+              <p className="mt-1.5 text-sm text-gray-500">Checking availability...</p>
+            )}
           </div>
 
           <div>
@@ -473,9 +658,21 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            disabled={!!duplicateError || isCheckingDuplicate}
+            className={`px-6 py-2 rounded-lg transition-colors ${
+              duplicateError || isCheckingDuplicate
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-gray-800'
+            }`}
           >
-            Next
+            {isCheckingDuplicate ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Checking...
+              </span>
+            ) : (
+              'Next'
+            )}
           </button>
         </div>
       </form>

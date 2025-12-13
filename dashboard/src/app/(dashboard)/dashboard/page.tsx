@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import Image from 'next/image'
 import { ChartAreaInteractive } from '@/components/charts/ChartAreaInteractive'
+import { AccessDeniedHandler } from '@/components/auth/AccessDeniedHandler'
 
 interface VehicleStats {
   total: number
@@ -376,6 +377,11 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Access Denied Handler - shows toast if redirected from restricted page */}
+      <Suspense fallback={null}>
+        <AccessDeniedHandler />
+      </Suspense>
+      
       {/* Page Title */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>

@@ -1,6 +1,16 @@
-import { updateSession } from '@/lib/supabase-middleware'
+import { updateSession, getUserRole } from '@/lib/supabase-middleware'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+
+// Routes that are restricted to admin users only
+const ADMIN_ONLY_ROUTES = ['/reports', '/user-management']
+
+// Check if path matches any admin-only route
+function isAdminOnlyRoute(pathname: string): boolean {
+  return ADMIN_ONLY_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
@@ -20,7 +30,7 @@ export async function middleware(req: NextRequest) {
 
   try {
     // Update session and get user
-    const { supabaseResponse, user } = await updateSession(req)
+    const { supabaseResponse, user, supabase } = await updateSession(req)
 
     console.log('User authenticated:', !!user, 'for path:', pathname)
 
@@ -39,6 +49,21 @@ export async function middleware(req: NextRequest) {
       const redirectUrl = req.nextUrl.clone()
       redirectUrl.pathname = '/login'
       return NextResponse.redirect(redirectUrl)
+    }
+
+    // Role-based access control for admin-only routes
+    if (user && isAdminOnlyRoute(pathname)) {
+      const userRole = await getUserRole(supabase, user.id)
+      console.log('User role for', pathname, ':', userRole)
+      
+      if (userRole !== 'admin') {
+        console.log('Access denied: Editor trying to access admin-only route')
+        // Redirect to dashboard with access denied
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        redirectUrl.searchParams.set('access', 'denied')
+        return NextResponse.redirect(redirectUrl)
+      }
     }
 
     // If user is signed in and trying to access root (/), redirect to dashboard

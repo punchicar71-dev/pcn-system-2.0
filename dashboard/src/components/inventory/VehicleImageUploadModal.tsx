@@ -62,6 +62,8 @@ export default function VehicleImageUploadModal({
     configured: false, 
     checked: false 
   })
+  const [imageToDelete, setImageToDelete] = useState<VehicleImage | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Check S3 status when modal opens
   useEffect(() => {
@@ -248,38 +250,49 @@ export default function VehicleImageUploadModal({
     }, 5000)
   }
 
-  const handleDeleteImage = async (image: VehicleImage) => {
-    if (!confirm('Are you sure you want to delete this image?')) return
+  const handleDeleteImage = (image: VehicleImage) => {
+    setImageToDelete(image)
+    setDeleteError(null)
+  }
 
-    setDeleteLoading(image.id)
+  const confirmDeleteImage = async () => {
+    if (!imageToDelete) return
+
+    setDeleteLoading(imageToDelete.id)
     try {
       // Delete from S3 if s3_key exists
-      if (image.s3_key && vehicleId) {
-        await deleteImage(vehicleId, image.id, image.image_type, image.s3_key)
+      if (imageToDelete.s3_key && vehicleId) {
+        await deleteImage(vehicleId, imageToDelete.id, imageToDelete.image_type, imageToDelete.s3_key)
       }
 
       // Delete from database
       const { error } = await supabase
         .from('vehicle_images')
         .delete()
-        .eq('id', image.id)
+        .eq('id', imageToDelete.id)
 
       if (error) throw error
 
       // Update state
-      if (image.image_type === 'gallery') {
-        setGalleryImages((prev) => prev.filter((img) => img.id !== image.id))
-      } else if (image.image_type === 'image_360') {
-        setImage360s((prev) => prev.filter((img) => img.id !== image.id))
-      } else if (image.image_type === 'cr_paper') {
-        setCrPapers((prev) => prev.filter((img) => img.id !== image.id))
+      if (imageToDelete.image_type === 'gallery') {
+        setGalleryImages((prev) => prev.filter((img) => img.id !== imageToDelete.id))
+      } else if (imageToDelete.image_type === 'image_360') {
+        setImage360s((prev) => prev.filter((img) => img.id !== imageToDelete.id))
+      } else if (imageToDelete.image_type === 'cr_paper') {
+        setCrPapers((prev) => prev.filter((img) => img.id !== imageToDelete.id))
       }
+      setImageToDelete(null)
     } catch (error) {
       console.error('Error deleting image:', error)
-      alert('Failed to delete image. Please try again.')
+      setDeleteError('Failed to delete image. Please try again.')
     } finally {
       setDeleteLoading(null)
     }
+  }
+
+  const cancelDeleteImage = () => {
+    setImageToDelete(null)
+    setDeleteError(null)
   }
 
   const handleClose = () => {
@@ -586,6 +599,44 @@ export default function VehicleImageUploadModal({
           </button>
         </div>
       </DialogContent>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!imageToDelete} onOpenChange={() => cancelDeleteImage()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Delete Image</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-600">Are you sure you want to delete this image? This action cannot be undone.</p>
+            {deleteError && (
+              <p className="mt-2 text-sm text-red-600">{deleteError}</p>
+            )}
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={cancelDeleteImage}
+              disabled={deleteLoading === imageToDelete?.id}
+              className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg border border-gray-300 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteImage}
+              disabled={deleteLoading === imageToDelete?.id}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {deleteLoading === imageToDelete?.id ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
