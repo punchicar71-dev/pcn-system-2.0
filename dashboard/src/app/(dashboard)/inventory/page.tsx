@@ -539,7 +539,13 @@ export default function InventoryPage() {
         s3DeletionSuccess = true // No images to delete counts as success
       }
 
-      // Then delete from database (this will cascade to vehicle_images, sellers, vehicle_options, etc.)
+      // Historical sold-out records in pending_vehicle_sales are preserved automatically
+      // because vehicle details are stored directly in the sale record
+      // (vehicle_number, brand_name, model_name, manufacture_year columns)
+      // No need to set vehicle_id to NULL anymore
+      console.log('✅ Historical sold-out records preserved via vehicle snapshot columns');
+
+      // Delete from database (this will cascade to vehicle_images, sellers, vehicle_options, etc.)
       const { error } = await supabase
         .from('vehicles')
         .delete()

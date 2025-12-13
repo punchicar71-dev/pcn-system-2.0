@@ -92,10 +92,15 @@ export default function SalesAgentsReportTab() {
       setAgents(agentsData || [])
 
       // Fetch sold out sales with full vehicle and agent details
+      // Also fetch stored snapshot columns (vehicle_number, brand_name, model_name, manufacture_year)
       const { data: soldOutSalesData, error: soldOutError } = await supabase
         .from('pending_vehicle_sales')
         .select(`
           *,
+          vehicle_number,
+          brand_name,
+          model_name,
+          manufacture_year,
           vehicles:vehicle_id (
             id,
             vehicle_number,
@@ -136,6 +141,7 @@ export default function SalesAgentsReportTab() {
       }
 
       // Process sold out sales data - every sale has both an Office Sales Agent AND a Vehicle Showroom Agent
+      // Use stored snapshot first, fallback to joined vehicle data for backwards compatibility
       const processedSales: SaleRecord[] = soldOutSalesData
         .map((sale: any) => {
           const vehicle = sale.vehicles
@@ -154,10 +160,11 @@ export default function SalesAgentsReportTab() {
 
           return {
             id: sale.id,
-            vehicle_number: vehicle?.vehicle_number || 'N/A',
-            brand_name: vehicle?.vehicle_brands?.name || 'Unknown',
-            model_name: vehicle?.vehicle_models?.name || 'Unknown',
-            manufacture_year: vehicle?.manufacture_year || 0,
+            // Use stored snapshot first, fallback to joined data
+            vehicle_number: sale.vehicle_number || vehicle?.vehicle_number || 'N/A',
+            brand_name: sale.brand_name || vehicle?.vehicle_brands?.name || 'Unknown',
+            model_name: sale.model_name || vehicle?.vehicle_models?.name || 'Unknown',
+            manufacture_year: sale.manufacture_year || vehicle?.manufacture_year || 0,
             selling_amount: sale.selling_amount,
             payment_type: sale.payment_type,
             office_sales_agent: officeSalesAgent,

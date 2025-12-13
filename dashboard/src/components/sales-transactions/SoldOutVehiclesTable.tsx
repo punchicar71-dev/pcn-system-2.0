@@ -73,12 +73,14 @@ export default function SoldOutVehiclesTable({
       }
 
       // Transform data for display
+      // Priority: Use stored vehicle snapshot, fallback to joined vehicle data for backwards compatibility
       const transformedData = soldSales?.map((sale: any) => ({
         id: sale.id,
-        vehicle_number: sale.vehicles?.vehicle_number || 'N/A',
-        brand_name: sale.vehicles?.vehicle_brands?.name || 'N/A',
-        model_name: sale.vehicles?.vehicle_models?.name || 'N/A',
-        manufacture_year: sale.vehicles?.manufacture_year || 'N/A',
+        // Use stored snapshot first (preserves data even if vehicle is re-added), fallback to joined data
+        vehicle_number: sale.vehicle_number || sale.vehicles?.vehicle_number || 'N/A',
+        brand_name: sale.brand_name || sale.vehicles?.vehicle_brands?.name || 'N/A',
+        model_name: sale.model_name || sale.vehicles?.vehicle_models?.name || 'N/A',
+        manufacture_year: sale.manufacture_year || sale.vehicles?.manufacture_year || 'N/A',
         payment_type: sale.payment_type,
         sales_agent_name: sale.sales_agents?.name || sale.third_party_agent || 'N/A',
         customer_name: `${sale.customer_first_name} ${sale.customer_last_name}`,

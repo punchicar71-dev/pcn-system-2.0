@@ -167,11 +167,12 @@ export default function PrintDocumentModal({
           ctx.fillText(text, x, y);
         };
 
-        // Common data
-        const vehicleInfo = `${saleData.vehicles?.vehicle_brands?.name || ''} ${
-          saleData.vehicles?.vehicle_models?.name || ''
-        } ${saleData.vehicles?.manufacture_year || ''}`.toUpperCase();
-        const vehicleNumber = (saleData.vehicles?.vehicle_number || '').toUpperCase();
+        // Common data - use stored snapshot first, fallback to joined data for backwards compatibility
+        const brandName = saleData.brand_name || saleData.vehicles?.vehicle_brands?.name || '';
+        const modelName = saleData.model_name || saleData.vehicles?.vehicle_models?.name || '';
+        const manufactureYear = saleData.manufacture_year || saleData.vehicles?.manufacture_year || '';
+        const vehicleInfo = `${brandName} ${modelName} ${manufactureYear}`.toUpperCase();
+        const vehicleNumber = (saleData.vehicle_number || saleData.vehicles?.vehicle_number || '').toUpperCase();
         
         // Customer name with title
         const customerTitle = saleData.customer_title || ''; // Mr, Miss, Mrs, Dr

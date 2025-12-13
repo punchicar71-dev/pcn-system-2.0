@@ -2,11 +2,87 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.34 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.35 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 13, 2025 (RBAC & UX Improvements)
+## 📢 LATEST UPDATE - December 13, 2025 (Multiple Sold-Out Records Support)
+
+### 🔄 Enhanced Vehicle Sales Management & Transaction History
+
+**Major Update: Implemented support for multiple sold-out records per vehicle to track complete sales history!**
+
+#### What's New:
+
+1. **📊 Multiple Sold-Out Records**:
+   - Vehicles can now have multiple sold-out records for complete transaction history
+   - Removed unique constraint on `vehicle_id` in `sold_out_vehicles` table
+   - Enables tracking of vehicle buy-back and re-sale scenarios
+   - Maintains complete audit trail of all sales transactions
+
+2. **💾 Vehicle Snapshot at Sale Time**:
+   - Added `vehicle_snapshot` JSONB column to `pending_sales` table
+   - Captures complete vehicle state when sale is initiated
+   - Preserves vehicle details even after modifications
+   - Ensures accurate historical records and reporting
+
+3. **🔧 Database Schema Improvements**:
+   - New migration: `2025_12_13_allow_multiple_soldout_records.sql` - Removes unique constraint
+   - New migration: `2025_12_13_add_vehicle_snapshot_to_pending_sales.sql` - Adds snapshot column
+   - New migration: `2025_12_13_fix_sold_out_table_constraint.sql` - Drops old constraint properly
+   - Updated database types to reflect schema changes
+
+4. **🖥️ UI Updates for Multiple Records**:
+   - Updated Sold-Out Vehicles table to handle multiple records per vehicle
+   - Improved Financial Reports to aggregate multiple sale records
+   - Enhanced Sales Agents Report with accurate commission calculations
+   - Updated Print Document modal for better transaction history
+   - Improved View Detail modal with complete vehicle information
+
+#### New Files:
+
+- `dashboard/migrations/2025_12_13_allow_multiple_soldout_records.sql` - Remove unique constraint ✅
+- `dashboard/migrations/2025_12_13_add_vehicle_snapshot_to_pending_sales.sql` - Add snapshot column ✅
+- `dashboard/migrations/2025_12_13_fix_sold_out_table_constraint.sql` - Drop constraint properly ✅
+- `MULTIPLE_SOLDOUT_RECORDS_IMPLEMENTATION.md` - Implementation documentation ✅
+- `DEPLOYMENT_CHECKLIST_MULTIPLE_SOLDOUT.md` - Deployment guide ✅
+- `dashboard/APPLY_MIGRATIONS_README.md` - Migration application guide ✅
+- `dashboard/apply-migrations.js` - Migration script (Node.js) ✅
+- `dashboard/apply-migrations.sh` - Migration script (Shell) ✅
+
+#### Modified Files:
+
+- `dashboard/src/lib/database.types.ts` - Updated database type definitions ✅
+- `dashboard/src/components/sales-transactions/SoldOutVehiclesTable.tsx` - Multiple records support ✅
+- `dashboard/src/components/reports/FinancialReportsTab.tsx` - Aggregated sales data ✅
+- `dashboard/src/components/reports/SalesAgentsReportTab.tsx` - Commission calculations ✅
+- `dashboard/src/components/sales-transactions/PrintDocumentModal.tsx` - Transaction details ✅
+- `dashboard/src/components/sales-transactions/ViewDetailModal.tsx` - Complete vehicle info ✅
+- `dashboard/src/components/sales-transactions/SoldOutVehicleModal.tsx` - Enhanced modal ✅
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx` - Updated logic ✅
+- `dashboard/src/components/sales-transactions/PendingVehicleModal.tsx` - Updated modal ✅
+- `dashboard/src/components/sell-vehicle/SellingInfo.tsx` - Snapshot implementation ✅
+- `dashboard/src/app/(dashboard)/inventory/page.tsx` - Multiple records handling ✅
+- `dashboard/src/app/(dashboard)/sales-transactions/page.tsx` - Updated queries ✅
+- `dashboard/src/app/(dashboard)/sell-vehicle/page.tsx` - Snapshot storage ✅
+- `dashboard/src/app/(dashboard)/add-vehicle/page.tsx` - Type updates ✅
+- `dashboard/src/components/vehicle/Step1VehicleDetails.tsx` - Type updates ✅
+
+#### Migration Steps:
+
+1. Apply database migrations in order:
+   ```bash
+   cd dashboard
+   ./apply-migrations.sh
+   ```
+2. Verify schema changes in Supabase dashboard
+3. Test sold-out vehicle creation and viewing
+4. Verify reports display correct data
+5. Test vehicle re-sale scenarios
+
+---
+
+## 📢 PREVIOUS UPDATE - December 13, 2025 (RBAC & UX Improvements)
 
 ### 🔐 Role-Based Access Control & User Experience Enhancements
 

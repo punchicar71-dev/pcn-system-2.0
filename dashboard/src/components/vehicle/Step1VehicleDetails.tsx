@@ -28,6 +28,8 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to check if vehicle number exists in database
+  // Only checks: 1) Inventory (vehicles not sold), 2) Pending sales (not sold-out)
+  // Does NOT block: Sold-out vehicles can be added again
   const checkVehicleNumberExists = async (vehicleNumber: string): Promise<boolean> => {
     if (!vehicleNumber || vehicleNumber.trim() === '') {
       return false;
@@ -35,18 +37,55 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
 
     try {
       const supabase = createClient();
-      const { data: existingVehicles, error } = await supabase
+      const normalizedVehicleNumber = vehicleNumber.trim().toUpperCase();
+
+      // Check 1: Inventory table - only vehicles that are NOT sold
+      const { data: inventoryVehicles, error: inventoryError } = await supabase
         .from('vehicles')
-        .select('id, vehicle_number')
-        .eq('vehicle_number', vehicleNumber.trim().toUpperCase())
+        .select('id, vehicle_number, status')
+        .eq('vehicle_number', normalizedVehicleNumber)
+        .neq('status', 'Sold')
         .limit(1);
 
-      if (error) {
-        console.error('Error checking vehicle number:', error);
+      if (inventoryError) {
+        console.error('Error checking vehicle number in inventory:', inventoryError);
         return false;
       }
 
-      return existingVehicles && existingVehicles.length > 0;
+      // If found in inventory (not sold), block the duplicate
+      if (inventoryVehicles && inventoryVehicles.length > 0) {
+        return true;
+      }
+
+      // Check 2: Pending vehicle sales - only vehicles with 'pending' status (not 'sold')
+      const { data: pendingSales, error: pendingError } = await supabase
+        .from('pending_vehicle_sales')
+        .select(`
+          id,
+          status,
+          vehicles:vehicle_id (
+            vehicle_number
+          )
+        `)
+        .eq('status', 'pending');
+
+      if (pendingError) {
+        console.error('Error checking vehicle number in pending sales:', pendingError);
+        return false;
+      }
+
+      // Check if any pending sale has matching vehicle number
+      if (pendingSales && pendingSales.length > 0) {
+        const matchingPendingSale = pendingSales.find(
+          (sale: any) => sale.vehicles?.vehicle_number?.toUpperCase() === normalizedVehicleNumber
+        );
+        if (matchingPendingSale) {
+          return true;
+        }
+      }
+
+      // Not found in active inventory or pending sales - allow adding
+      return false;
     } catch (error) {
       console.error('Error checking vehicle number:', error);
       return false;

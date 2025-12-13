@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase-client';
 import { Input } from '@/components/ui/input';
@@ -27,127 +27,181 @@ interface SellingInfoProps {
 }
 
 export default function SellingInfo({ formData, onChange, onBack, onSubmit, disabled = false, isSubmitting = false }: SellingInfoProps) {
-  const [vehicles, setVehicles] = useState<any[]>([]);
   const [salesAgents, setSalesAgents] = useState<any[]>([]);
   const [leasingCompanies, setLeasingCompanies] = useState<any[]>([]);
   const [filteredVehicles, setFilteredVehicles] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  
+  // Refs for debouncing and request cancellation
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const searchRequestIdRef = useRef<number>(0);
 
-  // Fetch available vehicles from inventory
+  // Fetch sales agents and leasing companies on mount (these are small lists)
   useEffect(() => {
-    const fetchVehicles = async () => {
+    const fetchInitialData = async () => {
       try {
-        setIsLoading(true);
+        setIsInitialLoading(true);
         const supabase = createClient();
         
-        // Fetch only vehicles with status "In Sale"
-        const { data, error } = await supabase
-          .from('vehicle_inventory_view')
-          .select('*')
-          .eq('status', 'In Sale')
-          .order('created_at', { ascending: false });
+        // Fetch sales agents and leasing companies in parallel
+        const [agentsResult, companiesResult] = await Promise.all([
+          supabase
+            .from('sales_agents')
+            .select('*')
+            .eq('is_active', true)
+            .order('name', { ascending: true }),
+          supabase
+            .from('leasing_companies')
+            .select('*')
+            .eq('is_active', true)
+            .order('name', { ascending: true })
+        ]);
 
-        if (error) {
-          console.error('Error fetching vehicles:', error);
-          return;
+        if (agentsResult.error) {
+          console.error('Error fetching sales agents:', agentsResult.error);
+        } else {
+          setSalesAgents(agentsResult.data || []);
         }
 
-        setVehicles(data || []);
+        if (companiesResult.error) {
+          console.error('Error fetching leasing companies:', companiesResult.error);
+        } else {
+          setLeasingCompanies(companiesResult.data || []);
+        }
       } catch (error) {
-        console.error('Error fetching vehicles:', error);
+        console.error('Error fetching initial data:', error);
       } finally {
-        setIsLoading(false);
+        setIsInitialLoading(false);
       }
     };
 
-    const fetchSalesAgents = async () => {
-      try {
-        const supabase = createClient();
-        
-        const { data, error } = await supabase
-          .from('sales_agents')
-          .select('*')
-          .eq('is_active', true)
-          .order('name', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching sales agents:', error);
-          return;
-        }
-
-        setSalesAgents(data || []);
-      } catch (error) {
-        console.error('Error fetching sales agents:', error);
-      }
-    };
-
-    const fetchLeasingCompanies = async () => {
-      try {
-        const supabase = createClient();
-        
-        const { data, error } = await supabase
-          .from('leasing_companies')
-          .select('*')
-          .eq('is_active', true)
-          .order('name', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching leasing companies:', error);
-          return;
-        }
-
-        setLeasingCompanies(data || []);
-      } catch (error) {
-        console.error('Error fetching leasing companies:', error);
-      }
-    };
-
-    fetchVehicles();
-    fetchSalesAgents();
-    fetchLeasingCompanies();
+    fetchInitialData();
   }, []);
 
-  // Filter vehicles based on search input
-  useEffect(() => {
-    if (formData.searchVehicle && !formData.selectedVehicle) {
-      const filtered = vehicles.filter((vehicle) =>
-        vehicle.vehicle_number.toLowerCase().includes(formData.searchVehicle.toLowerCase())
-      );
-      setFilteredVehicles(filtered);
-      setShowDropdown(true);
-    } else {
+  // Debounced server-side vehicle search
+  const searchVehicles = useCallback(async (searchTerm: string, requestId: number) => {
+    if (!searchTerm || searchTerm.length < 2) {
       setFilteredVehicles([]);
       setShowDropdown(false);
+      setIsSearching(false);
+      return;
     }
-  }, [formData.searchVehicle, vehicles, formData.selectedVehicle]);
+
+    try {
+      setIsSearching(true);
+      const supabase = createClient();
+      
+      // Server-side search with ILIKE for case-insensitive matching
+      const { data, error } = await supabase
+        .from('vehicle_inventory_view')
+        .select('id, vehicle_number, brand_name, model_name, manufacture_year, selling_amount, status')
+        .eq('status', 'In Sale')
+        .ilike('vehicle_number', `%${searchTerm}%`)
+        .order('vehicle_number', { ascending: true })
+        .limit(10); // Limit results for performance
+
+      // Check if this is still the latest request (prevent race conditions)
+      if (requestId !== searchRequestIdRef.current) {
+        return; // Stale request, ignore results
+      }
+
+      if (error) {
+        console.error('Error searching vehicles:', error);
+        setFilteredVehicles([]);
+      } else {
+        setFilteredVehicles(data || []);
+        setShowDropdown(true);
+      }
+    } catch (error) {
+      console.error('Error searching vehicles:', error);
+      setFilteredVehicles([]);
+    } finally {
+      // Only update loading state if this is still the latest request
+      if (requestId === searchRequestIdRef.current) {
+        setIsSearching(false);
+      }
+    }
+  }, []);
+
+  // Handle search input change with debouncing
+  useEffect(() => {
+    // Don't search if vehicle is already selected
+    if (formData.selectedVehicle) {
+      setFilteredVehicles([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    // Clear previous timeout
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    const searchTerm = formData.searchVehicle.trim();
+    
+    // If search is empty or too short, clear results immediately
+    if (!searchTerm || searchTerm.length < 2) {
+      setFilteredVehicles([]);
+      setShowDropdown(false);
+      setIsSearching(false);
+      return;
+    }
+
+    // Show loading indicator immediately
+    setIsSearching(true);
+    
+    // Increment request ID to track latest request
+    const requestId = ++searchRequestIdRef.current;
+
+    // Debounce the search by 300ms
+    searchDebounceRef.current = setTimeout(() => {
+      searchVehicles(searchTerm, requestId);
+    }, 300);
+
+    // Cleanup on unmount or when search term changes
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [formData.searchVehicle, formData.selectedVehicle, searchVehicles]);
+
+  const [isSelectingVehicle, setIsSelectingVehicle] = useState(false);
 
   const handleVehicleSelect = async (vehicle: any) => {
     try {
+      setIsSelectingVehicle(true);
+      setShowDropdown(false); // Hide dropdown immediately for better UX
+      
       const supabase = createClient();
       
-      // Fetch vehicle images
-      const { data: images, error: imagesError } = await supabase
-        .from('vehicle_images')
-        .select('*')
-        .eq('vehicle_id', vehicle.id)
-        .eq('image_type', 'gallery')
-        .order('display_order', { ascending: true });
+      // Fetch vehicle images and seller details in parallel for faster loading
+      const [imagesResult, sellerResult] = await Promise.all([
+        supabase
+          .from('vehicle_images')
+          .select('*')
+          .eq('vehicle_id', vehicle.id)
+          .eq('image_type', 'gallery')
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('sellers')
+          .select('*')
+          .eq('vehicle_id', vehicle.id)
+          .maybeSingle() // Use maybeSingle to avoid error when no seller exists
+      ]);
 
-      if (imagesError) {
-        console.error('Error fetching vehicle images:', imagesError);
+      if (imagesResult.error) {
+        console.error('Error fetching vehicle images:', imagesResult.error);
       }
 
-      // Fetch seller details
-      const { data: seller, error: sellerError } = await supabase
-        .from('sellers')
-        .select('*')
-        .eq('vehicle_id', vehicle.id)
-        .single();
-
-      if (sellerError) {
-        console.error('Error fetching seller details:', sellerError);
+      if (sellerResult.error) {
+        console.error('Error fetching seller details:', sellerResult.error);
       }
+
+      const images = imagesResult.data;
+      const seller = sellerResult.data;
 
       // Combine all data
       const completeVehicleData = {
@@ -161,9 +215,10 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
 
       onChange('selectedVehicle', completeVehicleData);
       onChange('searchVehicle', vehicle.vehicle_number);
-      setShowDropdown(false);
     } catch (error) {
       console.error('Error selecting vehicle:', error);
+    } finally {
+      setIsSelectingVehicle(false);
     }
   };
 
@@ -184,6 +239,9 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search Vehicle <span className="text-red-500">*</span>
+                {formData.searchVehicle.length > 0 && formData.searchVehicle.length < 2 && (
+                  <span className="text-xs text-gray-400 ml-2">(type at least 2 characters)</span>
+                )}
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
@@ -196,12 +254,12 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                       onChange('selectedVehicle', null);
                     }
                   }}
-                  className="pl-10 pr-4"
-                  placeholder="Search by Vehicle Number"
+                  className="pl-10 pr-10"
+                  placeholder="Search by Vehicle Number (min 2 chars)"
                   required
-                  disabled={isLoading || disabled}
+                  disabled={disabled || isSelectingVehicle}
                 />
-                {isLoading && (
+                {(isSearching || isSelectingVehicle) && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
                   </div>
@@ -209,8 +267,8 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
               </div>
               
               {/* Dropdown for vehicle search results */}
-              {showDropdown && filteredVehicles.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {showDropdown && !isSelectingVehicle && filteredVehicles.length > 0 && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {filteredVehicles.map((vehicle) => (
                     <div
                       key={vehicle.id}
@@ -226,9 +284,19 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                 </div>
               )}
               
+              {/* Loading message while searching */}
+              {showDropdown && isSearching && filteredVehicles.length === 0 && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
+                    <p className="text-sm text-gray-500">Searching vehicles...</p>
+                  </div>
+                </div>
+              )}
+              
               {/* No results message */}
-              {showDropdown && formData.searchVehicle && filteredVehicles.length === 0 && !isLoading && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+              {showDropdown && formData.searchVehicle.length >= 2 && filteredVehicles.length === 0 && !isSearching && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
                   <p className="text-sm text-gray-500 text-center">No vehicles found matching "{formData.searchVehicle}"</p>
                 </div>
               )}
@@ -428,6 +496,15 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                     )}
                     <p className="text-blue-600"><span className='text-[14px] font-normal text-gray-500'>Mobile: </span><span className='text-[14px] font-semibold text-gray-900' >{formData.selectedVehicle.seller_mobile || 'N/A'}</span></p>
                   </div>
+                </div>
+              </div>
+            ) : isSelectingVehicle ? (
+              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 h-full flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+                  <p className="text-gray-500 text-center">
+                    Loading vehicle details...
+                  </p>
                 </div>
               </div>
             ) : (

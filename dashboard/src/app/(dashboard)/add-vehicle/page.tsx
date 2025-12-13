@@ -418,6 +418,109 @@ export default function AddVehiclePage() {
         transmission: vehicleDetails.transmission,
       });
 
+      // Check if there's an existing SOLD vehicle with the same number and remove it
+      // This allows re-adding a vehicle that was previously sold
+      // NOTE: Historical sold-out records are preserved because vehicle details are stored
+      // directly in pending_vehicle_sales (vehicle_number, brand_name, model_name, manufacture_year)
+      const normalizedVehicleNumber = vehicleDetails.vehicleNumber.trim().toUpperCase();
+      const { data: existingSoldVehicle, error: soldCheckError } = await supabase
+        .from('vehicles')
+        .select('id, status, vehicle_number')
+        .ilike('vehicle_number', normalizedVehicleNumber)
+        .eq('status', 'Sold')
+        .maybeSingle();
+
+      if (soldCheckError) {
+        console.error('⚠️ Error checking for existing sold vehicle:', soldCheckError);
+        // Continue anyway - we'll try to insert and let the database handle conflicts
+      }
+
+      if (existingSoldVehicle) {
+        console.log('🔍 Found existing sold vehicle, removing old record:', existingSoldVehicle.id);
+        
+        // Historical sold-out records in pending_vehicle_sales are preserved automatically
+        // because vehicle details are now stored directly in the sale record
+        // (vehicle_number, brand_name, model_name, manufacture_year columns)
+        // This allows multiple sold-out records for the same vehicle number
+        console.log('✅ Historical sold-out records preserved via vehicle snapshot columns');
+        
+        try {
+          // STEP 1: Nullify vehicle_id in pending_vehicle_sales (preserves sold-out history)
+          console.log('📝 Setting vehicle_id to NULL in pending_vehicle_sales (preserving sold-out records)...');
+          const { error: nullifyError } = await supabase
+            .from('pending_vehicle_sales')
+            .update({ vehicle_id: null })
+            .eq('vehicle_id', existingSoldVehicle.id);
+          
+          if (nullifyError) {
+            console.error('⚠️ Error nullifying vehicle_id in pending_vehicle_sales:', nullifyError);
+            // Continue anyway - the ON DELETE SET NULL should handle this
+          } else {
+            console.log('✅ Sold-out records preserved with NULL vehicle_id');
+          }
+          
+          // STEP 1.5: Check and handle sold_out table if it exists
+          console.log('🔍 Checking for sold_out table references...');
+          try {
+            const { error: soldOutError } = await supabase
+              .from('sold_out')
+              .update({ vehicle_id: null })
+              .eq('vehicle_id', existingSoldVehicle.id);
+            
+            if (soldOutError) {
+              // If table doesn't exist, that's fine
+              if (soldOutError.code === '42P01') {
+                console.log('ℹ️ sold_out table does not exist - skipping');
+              } else {
+                console.error('⚠️ Error nullifying vehicle_id in sold_out:', soldOutError);
+              }
+            } else {
+              console.log('✅ sold_out table references nullified');
+            }
+          } catch (soldOutErr) {
+            console.log('ℹ️ sold_out table handling skipped');
+          }
+          
+          // STEP 2: Delete related records (vehicle_options, vehicle_images, etc.)
+          console.log('🗑️ Deleting related vehicle_options...');
+          await supabase.from('vehicle_options').delete().eq('vehicle_id', existingSoldVehicle.id);
+          
+          console.log('🗑️ Deleting related vehicle_images...');
+          await supabase.from('vehicle_images').delete().eq('vehicle_id', existingSoldVehicle.id);
+          
+          console.log('🗑️ Deleting related seller_details...');
+          await supabase.from('sellers').delete().eq('vehicle_id', existingSoldVehicle.id);
+          
+          console.log('🗑️ Deleting related vehicle_custom_options...');
+          await supabase.from('vehicle_custom_options').delete().eq('vehicle_id', existingSoldVehicle.id);
+          
+          // STEP 3: Delete the sold vehicle record from vehicles table
+          // This does NOT affect sold-out records (they now have NULL vehicle_id with snapshot data)
+          console.log('🗑️ Deleting sold vehicle record from vehicles table...');
+          const { error: deleteError } = await supabase
+            .from('vehicles')
+            .delete()
+            .eq('id', existingSoldVehicle.id)
+            .eq('status', 'Sold'); // Extra safety check
+
+          if (deleteError) {
+            console.error('❌ Error removing old sold vehicle:', deleteError);
+            console.error('Full error details:', JSON.stringify(deleteError, null, 2));
+            alert(`⚠️ Warning: Could not remove old sold vehicle record.\n\nError: ${deleteError.message}\n\nThis might be due to database constraints. The database migration may not have been applied correctly.\n\nPlease apply the migration first and try again.`);
+            throw new Error('Failed to delete sold vehicle: ' + deleteError.message);
+          }
+          
+          console.log(`✅ Successfully removed sold vehicle ${existingSoldVehicle.vehicle_number} (ID: ${existingSoldVehicle.id})`);
+          console.log('✅ Historical sold-out records preserved with snapshot data');
+          console.log('✅ You can now add this vehicle again!');
+        } catch (deleteErr) {
+          console.error('❌ Exception during sold vehicle deletion:', deleteErr);
+          throw deleteErr; // Stop the process if we can't delete the old record
+        }
+      } else {
+        console.log('ℹ️ No existing sold vehicle found for:', normalizedVehicleNumber);
+      }
+
       // Insert vehicle (TEXT DATA - goes to Supabase)
       const { data: vehicle, error: vehicleError } = await supabase
         .from('vehicles')
@@ -457,7 +560,9 @@ export default function AddVehiclePage() {
           alert('❌ Database Error: Invalid brand, model, or country.\n\nPlease ensure:\n1. Master data is properly set up\n2. Selected IDs exist in the database\n3. Try again');
           throw new Error('Foreign key constraint failed');
         } else if (vehicleError.code === '23505') {
-          alert('❌ Vehicle number already exists. Please use a different number.');
+          // Duplicate vehicle number - this shouldn't happen if sold vehicle cleanup worked
+          console.error('❌ Duplicate vehicle error despite cleanup:', vehicleError);
+          alert('❌ Vehicle number already exists.\n\nThis vehicle might still be in active inventory or pending sales.\n\nIf this vehicle was recently marked as sold, please wait a moment and try again.\n\nVehicle Number: ' + vehicleDetails.vehicleNumber);
           throw new Error('Duplicate vehicle number');
         } else if (vehicleError.code === '23502') {
           // NOT NULL constraint violation

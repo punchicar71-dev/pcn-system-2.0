@@ -68,11 +68,16 @@ export default function FinancialReportsTab() {
     setLoading(true)
     try {
       // Fetch sold vehicles with all necessary joins
+      // Also fetch stored snapshot columns (vehicle_number, brand_name, model_name, manufacture_year)
       const { data: soldSales, error } = await supabase
         .from('pending_vehicle_sales')
         .select(`
           id,
           vehicle_id,
+          vehicle_number,
+          brand_name,
+          model_name,
+          manufacture_year,
           selling_amount,
           advance_amount,
           payment_type,
@@ -110,6 +115,7 @@ export default function FinancialReportsTab() {
       if (categoriesError) throw categoriesError
 
       // Process the data
+      // Use stored snapshot first, fallback to joined vehicle data for backwards compatibility
       const processedData: FinancialReportData[] = (soldSales || []).map((sale: any) => {
         const vehicle = sale.vehicles
         const sellingAmount = sale.selling_amount || 0
@@ -129,9 +135,10 @@ export default function FinancialReportsTab() {
 
         return {
           id: sale.id,
-          vehicle_number: vehicle?.vehicle_number || 'N/A',
-          brand_name: vehicle?.vehicle_brands?.name || 'N/A',
-          model_name: vehicle?.vehicle_models?.name || 'N/A',
+          // Use stored snapshot first, fallback to joined data
+          vehicle_number: sale.vehicle_number || vehicle?.vehicle_number || 'N/A',
+          brand_name: sale.brand_name || vehicle?.vehicle_brands?.name || 'N/A',
+          model_name: sale.model_name || vehicle?.vehicle_models?.name || 'N/A',
           seller_price: vehicle?.selling_amount || 0,
           sales_price: sellingAmount,
           down_payment: sale.advance_amount || 0,

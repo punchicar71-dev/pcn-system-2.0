@@ -90,7 +90,8 @@ export default function SellVehiclePage() {
         }
       }
       
-      const saleData = {
+      // Build sale data - snapshot fields are optional (require migration to be applied)
+      const saleData: Record<string, any> = {
         vehicle_id: sellingData.selectedVehicle?.id,
         customer_title: customerData.title || 'Mr.',
         customer_first_name: customerData.firstName,
@@ -109,6 +110,26 @@ export default function SellVehiclePage() {
         third_party_agent: showroomAgentName || null,
         status: 'pending',
       };
+      
+      // Try to add vehicle snapshot fields if columns exist (after migration)
+      // These fields preserve vehicle info even if vehicle is re-added later
+      try {
+        const testQuery = await supabase
+          .from('pending_vehicle_sales')
+          .select('vehicle_number')
+          .limit(0);
+        
+        // If no error, columns exist - add snapshot data
+        if (!testQuery.error) {
+          saleData.vehicle_number = sellingData.selectedVehicle?.vehicle_number || null;
+          saleData.brand_name = sellingData.selectedVehicle?.brand_name || null;
+          saleData.model_name = sellingData.selectedVehicle?.model_name || null;
+          saleData.manufacture_year = sellingData.selectedVehicle?.manufacture_year || null;
+        }
+      } catch (e) {
+        // Columns don't exist yet, skip snapshot fields
+        console.log('Vehicle snapshot columns not available - run migration to enable');
+      }
 
       // Insert into pending_vehicle_sales table
       const { data, error } = await supabase

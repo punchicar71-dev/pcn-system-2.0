@@ -225,7 +225,12 @@ export interface VehicleFormData {
 
 export interface PendingVehicleSale {
   id: string
-  vehicle_id: string
+  vehicle_id: string | null // Can be null for historical sold records when vehicle is re-added
+  // Vehicle snapshot - stored at time of sale to preserve historical data
+  vehicle_number?: string
+  brand_name?: string
+  model_name?: string
+  manufacture_year?: number
   customer_title?: string
   customer_first_name: string
   customer_last_name: string

@@ -209,13 +209,19 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
     if (!saleData) return;
 
     const vehicle = saleData.vehicles;
+    
+    // Use stored snapshot first, fallback to joined vehicle data
+    const csvVehicleNumber = saleData.vehicle_number || vehicle?.vehicle_number || 'N/A';
+    const csvBrandName = saleData.brand_name || vehicle?.vehicle_brands?.name || 'N/A';
+    const csvModelName = saleData.model_name || vehicle?.vehicle_models?.name || 'N/A';
+    const csvManufactureYear = saleData.manufacture_year || vehicle?.manufacture_year || 'N/A';
 
     const csvData = [
       ['Field', 'Value'],
-      ['Vehicle Number', vehicle?.vehicle_number || 'N/A'],
-      ['Brand', vehicle?.vehicle_brands?.name || 'N/A'],
-      ['Model', vehicle?.vehicle_models?.name || 'N/A'],
-      ['Manufacture Year', vehicle?.manufacture_year || 'N/A'],
+      ['Vehicle Number', csvVehicleNumber],
+      ['Brand', csvBrandName],
+      ['Model', csvModelName],
+      ['Manufacture Year', csvManufactureYear],
       ['Registered Year', vehicle?.registered_year || 'N/A'],
       ['Engine Capacity', vehicle?.engine_capacity ? `${vehicle.engine_capacity}cc` : 'N/A'],
       ['Fuel Type', vehicle?.fuel_type || 'N/A'],
@@ -262,7 +268,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
     const url = URL.createObjectURL(blob);
 
     link.setAttribute('href', url);
-    link.setAttribute('download', `vehicle_${vehicle?.vehicle_number || 'export'}_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute('download', `vehicle_${csvVehicleNumber || 'export'}_${format(new Date(), 'yyyyMMdd')}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -273,6 +279,12 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
 
   const vehicle = saleData.vehicles;
   const currentImage = vehicleImages.length > 0 ? vehicleImages[currentImageIndex] : null;
+  
+  // Use stored snapshot first, fallback to joined vehicle data for backwards compatibility
+  const displayVehicleNumber = saleData.vehicle_number || vehicle?.vehicle_number || 'N/A';
+  const displayBrandName = saleData.brand_name || vehicle?.vehicle_brands?.name || 'N/A';
+  const displayModelName = saleData.model_name || vehicle?.vehicle_models?.name || 'N/A';
+  const displayManufactureYear = saleData.manufacture_year || vehicle?.manufacture_year || 'N/A';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -296,8 +308,8 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
             <div className="w-full space-y-6">
               <div className="flex bg-gray-100 items-center justify-between p-4  rounded-lg gap-3">
                 <h2 className="text-lg font-semibold text-gray-600">
-                  {vehicle?.vehicle_brands?.name} {vehicle?.vehicle_models?.name} {vehicle?.manufacture_year}{' '}
-                  <span className="text-gray-900">- {vehicle?.vehicle_number}</span>
+                  {displayBrandName} {displayModelName} {displayManufactureYear}{' '}
+                  <span className="text-gray-900">- {displayVehicleNumber}</span>
                 </h2>
 
                 <div className="flex gap-2 flex-wrap justify-end">

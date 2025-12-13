@@ -42,26 +42,109 @@ export default function SalesTransactionsPage() {
       setIsSoldOutProcessing(true);
       const supabase = createClient();
       
-      // First, get the vehicle_id from the pending sale
-      const { data: saleData, error: fetchError } = await supabase
+      // First, get the basic sale data
+      const { data: basicSaleData, error: fetchError } = await supabase
         .from('pending_vehicle_sales')
-        .select('vehicle_id')
+        .select('vehicle_id, vehicle_number, brand_name, model_name, manufacture_year')
         .eq('id', selectedSaleId)
         .single();
 
-      if (fetchError || !saleData) {
-        console.error('Error fetching sale data:', fetchError);
-        alert('Failed to fetch sale data');
+      if (fetchError) {
+        console.error('❌ Error fetching sale data:', fetchError);
+        alert('Failed to fetch sale data: ' + fetchError.message);
+        setIsSoldOutProcessing(false);
         return;
       }
 
-      console.log('🚗 Moving vehicle to sold out, deleting S3 images for vehicle:', saleData.vehicle_id);
+      if (!basicSaleData) {
+        console.error('❌ No sale data found');
+        alert('Failed to fetch sale data: No record found');
+        setIsSoldOutProcessing(false);
+        return;
+      }
 
-      // Delete S3 images before marking as sold
-      const { data: imageRecords, error: imagesFetchError } = await supabase
-        .from('vehicle_images')
-        .select('s3_key')
-        .eq('vehicle_id', saleData.vehicle_id);
+      console.log('🚗 Moving vehicle to sold out, vehicle_id:', basicSaleData.vehicle_id);
+      
+      // Only process vehicle data if vehicle_id exists (not null)
+      if (!basicSaleData.vehicle_id) {
+        console.warn('⚠️ Vehicle ID is null - this sale was for a vehicle that was previously deleted');
+        console.warn('⚠️ Make sure snapshot columns are populated');
+        
+        // Check if snapshot columns are populated
+        if (!basicSaleData.vehicle_number || !basicSaleData.brand_name) {
+          alert('Cannot complete sale: Vehicle data is missing. This vehicle may have been deleted. Please contact support.');
+          setIsSoldOutProcessing(false);
+          return;
+        }
+      }
+      
+      // Try to populate snapshot columns if they're missing AND vehicle still exists
+      const snapshotUpdate: any = {};
+      
+      if (basicSaleData.vehicle_id && (!basicSaleData.vehicle_number || !basicSaleData.brand_name || !basicSaleData.model_name || !basicSaleData.manufacture_year)) {
+        console.log('📸 Fetching vehicle details to populate snapshot columns...');
+        
+        try {
+          // Fetch vehicle data with proper error handling
+          const { data: vehicleData, error: vehicleError } = await supabase
+            .from('vehicles')
+            .select(`
+              vehicle_number,
+              manufacture_year,
+              vehicle_brands:brand_id (name),
+              vehicle_models:model_id (name)
+            `)
+            .eq('id', basicSaleData.vehicle_id)
+            .maybeSingle();
+
+          if (vehicleError) {
+            console.error('⚠️ Error fetching vehicle data:', vehicleError);
+          } else if (vehicleData) {
+            if (!basicSaleData.vehicle_number) snapshotUpdate.vehicle_number = vehicleData.vehicle_number;
+            if (!basicSaleData.brand_name && vehicleData.vehicle_brands) snapshotUpdate.brand_name = vehicleData.vehicle_brands.name;
+            if (!basicSaleData.model_name && vehicleData.vehicle_models) snapshotUpdate.model_name = vehicleData.vehicle_models.name;
+            if (!basicSaleData.manufacture_year) snapshotUpdate.manufacture_year = vehicleData.manufacture_year;
+          } else {
+            console.warn('⚠️ Vehicle not found in database - it may have been deleted');
+          }
+        } catch (vehicleErr) {
+          console.error('⚠️ Exception fetching vehicle data:', vehicleErr);
+        }
+      }
+      
+      // Update snapshot columns if we have data to update
+      if (Object.keys(snapshotUpdate).length > 0) {
+        console.log('📸 Populating vehicle snapshot columns:', snapshotUpdate);
+        try {
+          await supabase
+            .from('pending_vehicle_sales')
+            .update(snapshotUpdate)
+            .eq('id', selectedSaleId);
+          console.log('✅ Snapshot columns updated');
+        } catch (updateErr) {
+          console.error('⚠️ Failed to update snapshot columns:', updateErr);
+        }
+      } else {
+        console.log('✅ Vehicle snapshot columns already populated or vehicle data unavailable');
+      }
+
+      const saleData = basicSaleData;
+
+      // Delete S3 images before marking as sold (only if vehicle_id exists)
+      let imageRecords = null;
+      let imagesFetchError = null;
+      
+      if (saleData.vehicle_id) {
+        const result = await supabase
+          .from('vehicle_images')
+          .select('s3_key')
+          .eq('vehicle_id', saleData.vehicle_id);
+        
+        imageRecords = result.data;
+        imagesFetchError = result.error;
+      } else {
+        console.log('ℹ️ Skipping image deletion - vehicle_id is null');
+      }
 
       if (imagesFetchError) {
         console.error('❌ Error fetching image records:', imagesFetchError);
@@ -120,33 +203,42 @@ export default function SalesTransactionsPage() {
         .eq('id', selectedSaleId);
 
       if (updateError) {
-        console.error('Error marking vehicle as sold:', updateError);
+        console.error('❌ Error marking vehicle as sold:', updateError);
         alert('Failed to mark vehicle as sold: ' + updateError.message);
+        setIsSoldOutProcessing(false);
         return;
       }
 
-      // Update vehicle status to 'Sold' in vehicles table
-      const { error: vehicleError } = await supabase
-        .from('vehicles')
-        .update({ status: 'Sold' })
-        .eq('id', saleData.vehicle_id);
+      console.log('✅ Pending sale marked as sold');
 
-      if (vehicleError) {
-        console.error('Error updating vehicle status:', vehicleError);
-        // Continue anyway - sale status was updated
-      }
+      // Update vehicle status to 'Sold' in vehicles table (only if vehicle_id exists)
+      if (saleData.vehicle_id) {
+        const { error: vehicleError } = await supabase
+          .from('vehicles')
+          .update({ status: 'Sold' })
+          .eq('id', saleData.vehicle_id);
 
-      // Delete vehicle images from database (after S3 deletion)
-      const { error: deleteImagesError } = await supabase
-        .from('vehicle_images')
-        .delete()
-        .eq('vehicle_id', saleData.vehicle_id);
+        if (vehicleError) {
+          console.error('⚠️ Error updating vehicle status:', vehicleError);
+          // Continue anyway - sale status was updated
+        } else {
+          console.log('✅ Vehicle status updated to Sold');
+        }
 
-      if (deleteImagesError) {
-        console.error('⚠️ Error deleting vehicle images from database:', deleteImagesError);
-        // Continue anyway - images will be handled by the system
+        // Delete vehicle images from database (after S3 deletion)
+        const { error: deleteImagesError } = await supabase
+          .from('vehicle_images')
+          .delete()
+          .eq('vehicle_id', saleData.vehicle_id);
+
+        if (deleteImagesError) {
+          console.error('⚠️ Error deleting vehicle images from database:', deleteImagesError);
+          // Continue anyway - images will be handled by the system
+        } else {
+          console.log('✅ Vehicle images deleted from database');
+        }
       } else {
-        console.log('✅ Vehicle images deleted from database');
+        console.log('ℹ️ Skipping vehicle table update - vehicle_id is null (vehicle was previously deleted)');
       }
 
       // Create notification for vehicle sold out
@@ -160,29 +252,40 @@ export default function SalesTransactionsPage() {
             .single()
 
           if (userData) {
-            // Get vehicle details for notification
-            const { data: vehicleData } = await supabase
-              .from('vehicle_inventory_view')
-              .select('vehicle_number, brand_name, model_name')
-              .eq('id', saleData.vehicle_id)
-              .single()
+            // Get vehicle details for notification - use snapshot data if vehicle_id is null
+            let vehicleNumber = basicSaleData.vehicle_number || 'N/A';
+            let brandName = basicSaleData.brand_name || 'N/A';
+            let modelName = basicSaleData.model_name || 'N/A';
+            
+            // Try to get from view if vehicle still exists
+            if (saleData.vehicle_id) {
+              const { data: vehicleData } = await supabase
+                .from('vehicle_inventory_view')
+                .select('vehicle_number, brand_name, model_name')
+                .eq('id', saleData.vehicle_id)
+                .maybeSingle()
 
-            if (vehicleData) {
-              const userName = `${userData.first_name} ${userData.last_name}`
-              const vehicleInfo = `${vehicleData.brand_name} ${vehicleData.model_name} (${vehicleData.vehicle_number})`
-
-              await supabase.from('notifications').insert({
-                user_id: userData.id,
-                type: 'sold',
-                title: 'Vehicle Sold',
-                message: `${userName} completed the sale of ${vehicleInfo} — vehicle moved to Sold Out.`,
-                vehicle_number: vehicleData.vehicle_number,
-                vehicle_brand: vehicleData.brand_name,
-                vehicle_model: vehicleData.model_name,
-                is_read: false
-              })
-              console.log('✅ Notification created for vehicle sold out')
+              if (vehicleData) {
+                vehicleNumber = vehicleData.vehicle_number;
+                brandName = vehicleData.brand_name;
+                modelName = vehicleData.model_name;
+              }
             }
+
+            const userName = `${userData.first_name} ${userData.last_name}`
+            const vehicleInfo = `${brandName} ${modelName} (${vehicleNumber})`
+
+            await supabase.from('notifications').insert({
+              user_id: userData.id,
+              type: 'sold',
+              title: 'Vehicle Sold',
+              message: `${userName} completed the sale of ${vehicleInfo} — vehicle moved to Sold Out.`,
+              vehicle_number: vehicleNumber,
+              vehicle_brand: brandName,
+              vehicle_model: modelName,
+              is_read: false
+            })
+            console.log('✅ Notification created for vehicle sold out')
           }
         }
       } catch (notifError) {
