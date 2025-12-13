@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { SellingDetailsData, ENTRY_TYPES, VEHICLE_STATUS } from '@/types/vehicle-form.types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import { createClient } from '@/lib/supabase-client';
 import { PriceCategory } from '@/lib/database.types';
 
@@ -22,6 +24,37 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
 
   useEffect(() => {
     fetchPriceCategories();
+    
+    // Set up real-time subscription to price_categories table
+    const channel = supabase
+      .channel('price_categories_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'price_categories'
+        },
+        (payload) => {
+          console.log('Price category changed:', payload);
+          fetchPriceCategories();
+        }
+      )
+      .subscribe();
+
+    // Also refetch when component regains focus (in case user switched tabs)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchPriceCategories();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const fetchPriceCategories = async () => {
@@ -157,12 +190,10 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
             <Label htmlFor="entryDate">
               Entry Date <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="entryDate"
-              type="date"
-              value={data.entryDate}
-              onChange={(e) => onChange({ entryDate: e.target.value })}
-              required
+            <DatePicker
+              date={data.entryDate ? new Date(data.entryDate) : undefined}
+              onDateChange={(date) => onChange({ entryDate: date ? format(date, 'yyyy-MM-dd') : '' })}
+              placeholder="Select entry date"
             />
           </div>
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { VehicleDetailsData, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, getYearRange } from '@/types/vehicle-form.types';
 import { Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { createClient } from '@/lib/supabase-client';
 
 interface Step1VehicleDetailsProps {
@@ -26,6 +27,21 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [hasCheckedVehicle, setHasCheckedVehicle] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Memoize brand and model options for Combobox
+  const brandOptions = useMemo(() => 
+    brands.map(brand => ({
+      value: brand.id,
+      label: brand.name
+    })), [brands]
+  );
+
+  const modelOptions = useMemo(() => 
+    models.map(model => ({
+      value: model.id,
+      label: model.name
+    })), [models]
+  );
 
   // Function to check if vehicle number exists in database
   // Only checks: 1) Inventory (vehicles not sold), 2) Pending sales (not sold-out)
@@ -360,36 +376,29 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             <Label htmlFor="brandId">
               Vehicle Brand <span className="text-red-500">*</span>
             </Label>
-            <Select value={data.brandId} onValueChange={(value) => onChange({ brandId: value, modelId: '' })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                {brands.map((brand) => (
-                  <SelectItem key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox 
+              options={brandOptions}
+              value={data.brandId}
+              onValueChange={(value) => onChange({ brandId: value, modelId: '' })}
+              placeholder="Select brand"
+              searchPlaceholder="Search brands..."
+              emptyText="No brand found."
+            />
           </div>
 
           <div>
             <Label htmlFor="modelId">
               Model Name <span className="text-red-500">*</span>
             </Label>
-            <Select value={data.modelId} onValueChange={(value) => onChange({ modelId: value })} disabled={!data.brandId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                {models.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox 
+              options={modelOptions}
+              value={data.modelId}
+              onValueChange={(value) => onChange({ modelId: value })}
+              placeholder="Select model"
+              searchPlaceholder="Search models..."
+              emptyText="No model found."
+              disabled={!data.brandId}
+            />
           </div>
         </div>
 

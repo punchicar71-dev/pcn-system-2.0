@@ -2,11 +2,61 @@
 
 A comprehensive vehicle selling management system with a public-facing website and an internal management dashboard. Built with modern technologies for optimal performance and user experience.
 
-**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.35 | Build: Stable
+**Status**: ✅ Production Ready | Last Updated: December 13, 2025 | Version: 2.0.36 | Build: Stable
 
 ---
 
-## 📢 LATEST UPDATE - December 13, 2025 (Multiple Sold-Out Records Support)
+## 📢 LATEST UPDATE - December 13, 2025 (Enhanced UI Components)
+
+### 🎨 Improved User Experience with Advanced UI Components
+
+**Major Update: Implemented searchable dropdowns and enhanced date pickers for better UX!**
+
+#### What's New:
+
+1. **🔍 Searchable Combobox Component**:
+   - New `Combobox` component with search functionality
+   - Added `cmdk` library for command menu interface
+   - Better UX for selecting from large lists (brands, models)
+   - Keyboard navigation support for faster data entry
+   - Visual check indicator for selected items
+
+2. **📅 Enhanced Date Picker Integration**:
+   - Replaced native date input with custom DatePicker in selling details
+   - Better date selection experience with calendar UI
+   - Consistent date formatting using `date-fns`
+   - Visual calendar interface instead of browser's default
+
+3. **🔄 Real-Time Price Category Updates**:
+   - Added Supabase real-time subscription to price categories
+   - Automatic refresh when price categories are updated
+   - Refetch on tab visibility change to ensure data freshness
+   - Improved data consistency across admin actions
+
+4. **🚗 Improved Vehicle Form UX**:
+   - Searchable brand and model selection in Step 1
+   - Replaced standard Select with Combobox for better usability
+   - Faster data entry with type-ahead search
+   - Memoized options for performance optimization
+
+#### New Files:
+
+- `dashboard/src/components/ui/combobox.tsx` - Searchable combobox component ✅
+- `dashboard/src/components/ui/command.tsx` - Command menu primitives ✅
+
+#### Modified Files:
+
+- `dashboard/package.json` - Added cmdk dependency ✅
+- `dashboard/src/components/vehicle/Step1VehicleDetails.tsx` - Combobox integration ✅
+- `dashboard/src/components/vehicle/Step4SellingDetails.tsx` - DatePicker & real-time updates ✅
+
+#### Dependencies:
+
+- `cmdk@^1.1.1` - Command menu for React
+
+---
+
+## 📢 PREVIOUS UPDATE - December 13, 2025 (Multiple Sold-Out Records Support)
 
 ### 🔄 Enhanced Vehicle Sales Management & Transaction History
 
