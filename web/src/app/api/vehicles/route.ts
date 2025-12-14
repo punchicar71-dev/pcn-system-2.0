@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { VehicleWithDetails, VehicleCardData } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 // Helper function to transform database vehicle to display format
 function transformToVehicleCard(vehicle: any): VehicleCardData {
   const brandName = vehicle.vehicle_brands?.name || 'Unknown Brand'

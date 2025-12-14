@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
+    // Check if Supabase is properly configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Supabase environment variables not configured')
+      return NextResponse.json(
+        { error: 'Service configuration error' },
+        { status: 503 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const inventoryOnly = searchParams.get('inventoryOnly') === 'true'
 

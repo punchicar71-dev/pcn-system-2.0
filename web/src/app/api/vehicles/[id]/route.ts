@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Check if Supabase is properly configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Supabase environment variables not configured')
+      return NextResponse.json(
+        { error: 'Service configuration error' },
+        { status: 503 }
+      )
+    }
+
     const vehicleId = params.id
 
     // Fetch vehicle with all related data
