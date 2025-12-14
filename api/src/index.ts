@@ -41,6 +41,26 @@ app.get('/api-docs.json', (req: Request, res: Response) => {
   res.send(swaggerSpec);
 });
 
+// Root route
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ 
+    message: 'PCN API Server',
+    version: '2.0',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      documentation: '/api-docs',
+      api: {
+        vehicles: '/api/vehicles',
+        sales: '/api/sales',
+        users: '/api/users',
+        analytics: '/api/analytics',
+        upload: '/api/upload'
+      }
+    }
+  });
+});
+
 // API Routes
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/sales', salesRoutes);
