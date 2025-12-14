@@ -103,11 +103,11 @@ export default function SalesTransactionsPage() {
           } else if (vehicleData) {
             if (!basicSaleData.vehicle_number) snapshotUpdate.vehicle_number = vehicleData.vehicle_number;
             if (!basicSaleData.brand_name && vehicleData.vehicle_brands) {
-              const brandData = vehicleData.vehicle_brands as { name: string } | null;
+              const brandData = vehicleData.vehicle_brands as unknown as { name: string } | null;
               if (brandData) snapshotUpdate.brand_name = brandData.name;
             }
             if (!basicSaleData.model_name && vehicleData.vehicle_models) {
-              const modelData = vehicleData.vehicle_models as { name: string } | null;
+              const modelData = vehicleData.vehicle_models as unknown as { name: string } | null;
               if (modelData) snapshotUpdate.model_name = modelData.name;
             }
             if (!basicSaleData.manufacture_year) snapshotUpdate.manufacture_year = vehicleData.manufacture_year;
