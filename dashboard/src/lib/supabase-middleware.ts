@@ -1,5 +1,6 @@
-import { createServerClient, SupabaseClient } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Type for user role
 type UserRole = 'admin' | 'editor'
