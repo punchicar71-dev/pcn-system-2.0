@@ -10,8 +10,8 @@ export async function GET(request: Request) {
 
     // Use service role client to access auth data
     const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
       {
         auth: {
           autoRefreshToken: false,
@@ -85,8 +85,8 @@ export async function POST(request: Request) {
   try {
     // Use service role client for admin operations
     const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
       {
         auth: {
           autoRefreshToken: false,

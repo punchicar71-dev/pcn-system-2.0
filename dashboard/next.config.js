@@ -25,7 +25,8 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3001'],
+      // Allow server actions from any origin in production
+      bodySizeLimit: '2mb',
     },
   },
   // Suppress dynamic route warnings during build
