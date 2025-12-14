@@ -102,8 +102,14 @@ export default function SalesTransactionsPage() {
             console.error('⚠️ Error fetching vehicle data:', vehicleError);
           } else if (vehicleData) {
             if (!basicSaleData.vehicle_number) snapshotUpdate.vehicle_number = vehicleData.vehicle_number;
-            if (!basicSaleData.brand_name && vehicleData.vehicle_brands) snapshotUpdate.brand_name = vehicleData.vehicle_brands.name;
-            if (!basicSaleData.model_name && vehicleData.vehicle_models) snapshotUpdate.model_name = vehicleData.vehicle_models.name;
+            if (!basicSaleData.brand_name && vehicleData.vehicle_brands) {
+              const brandData = vehicleData.vehicle_brands as { name: string } | null;
+              if (brandData) snapshotUpdate.brand_name = brandData.name;
+            }
+            if (!basicSaleData.model_name && vehicleData.vehicle_models) {
+              const modelData = vehicleData.vehicle_models as { name: string } | null;
+              if (modelData) snapshotUpdate.model_name = modelData.name;
+            }
             if (!basicSaleData.manufacture_year) snapshotUpdate.manufacture_year = vehicleData.manufacture_year;
             if (!basicSaleData.body_type) snapshotUpdate.body_type = vehicleData.body_type;
           } else {

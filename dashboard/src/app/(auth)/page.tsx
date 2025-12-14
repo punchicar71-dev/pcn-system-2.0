@@ -84,11 +84,11 @@ export default function AuthPage() {
             className="rounded-full"
           />
           <div className="text-white">
-            <h1 className="text-2xl font-bold">Punchi Car Niwasa</h1>
-            <p className="text-sm text-gray-300">Management System</p>
+            <h1 className="text-2xl font-bold shadow-lg">Punchi Car Niwasa</h1>
+            <p className="text-sm text-white shadow-lg">Management System</p>
           </div>
         </div>
-        <div className="absolute bottom-8 left-8 z-10 text-white text-sm">
+        <div className="absolute bottom-8 left-8 z-10 text-white shadow-lg text-sm">
           © 2025 Punchi Car. All rights reserved.
         </div>
       </div>
@@ -202,8 +202,8 @@ export default function AuthPage() {
             <div className="mt-4 space-y-1 text-sm text-gray-700">
               <p>
                 <span className="font-medium">Email:</span>{' '}
-                <a href="mailto:admin@punchicar.com" className="text-gray-900 font-medium hover:underline">
-                  admin@punchicar.com
+                <a href="mailto:sales@punchicar.lk" className="text-gray-900 font-medium hover:underline">
+                  sales@punchicar.lk
                 </a>
               </p>
               <p>
