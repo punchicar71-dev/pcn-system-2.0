@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendSMS, formatPhoneNumber, isValidSriLankanPhone, smsTemplates } from '@/lib/sms-service'
 
-// Initialize Supabase Admin Client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Lazy initialize Supabase Admin Client
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-)
+  )
+}
 
 // Generate 6-digit OTP
 function generateOTP(): string {
@@ -52,6 +54,8 @@ export async function POST(request: NextRequest) {
     ]
 
     console.log('Searching for user with mobile number variants:', phoneVariants)
+
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Check if user exists with any of these mobile number formats
     const { data: userData, error: userError } = await supabaseAdmin

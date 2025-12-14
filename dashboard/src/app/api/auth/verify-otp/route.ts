@@ -3,22 +3,26 @@ import { createClient } from '@supabase/supabase-js'
 import { formatPhoneNumber } from '@/lib/sms-service'
 import jwt from 'jsonwebtoken'
 
-// Initialize Supabase Admin Client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Lazy initialize Supabase Admin Client
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-)
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { mobileNumber, otp } = body
+
+    const supabaseAdmin = getSupabaseAdmin()
 
     if (!mobileNumber || !otp) {
       return NextResponse.json(
