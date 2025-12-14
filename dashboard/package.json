@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "node .next/standalone/dashboard/server.js",
-    "start:prod": "HOSTNAME=0.0.0.0 node .next/standalone/dashboard/server.js",
+    "start": "PORT=${PORT:-3001} HOSTNAME=${HOSTNAME:-0.0.0.0} node .next/standalone/dashboard/server.js",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "import-vehicles": "node scripts/import-vehicles.js",

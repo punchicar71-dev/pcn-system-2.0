@@ -6,7 +6,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "npm run start:prod --workspace=pcn-web",
+    "startCommand": "npm run start --workspace=pcn-web",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
