@@ -1,7 +1,17 @@
 'use client'
 
+/**
+ * Notification Context
+ * 
+ * MIGRATING: Supabase Auth session checks have been removed.
+ * This context will be updated to work with Better Auth in Step 2.
+ * 
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
+
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase-client'
+import { supabaseClient } from '@/lib/supabase-db'
 import { useToast } from '@/hooks/use-toast'
 import type { Notification } from '@/types/notification'
 import {
@@ -38,19 +48,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
+        // TODO: Replace with Better Auth session check
+        // const session = await auth.getSession()
         
-        if (session) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id')
-            .eq('auth_id', session.user.id)
-            .single()
-          
-          if (userData) {
-            setCurrentUserId(userData.id)
-          }
+        // Temporary: Get user from localStorage during migration
+        const storedUser = localStorage.getItem('pcn-user')
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
+          setCurrentUserId(userData.id)
         }
       } catch (error) {
         console.error('Error fetching current user:', error)
@@ -58,6 +63,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     fetchCurrentUser()
+    
+    // Listen for storage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pcn-user') {
+        if (e.newValue) {
+          const userData = JSON.parse(e.newValue)
+          setCurrentUserId(userData.id)
+        } else {
+          setCurrentUserId(null)
+        }
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   // Load notifications

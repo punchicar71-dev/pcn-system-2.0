@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -59,6 +65,12 @@ export async function POST(request: NextRequest) {
           userIdForOtp = userRecord.auth_id
           console.log('Found auth_id from users table:', userIdForOtp)
         } else if (userRecord.email) {
+          // TODO: MIGRATION - Supabase Auth admin.listUsers has been commented out
+          // This lookup by email will be reimplemented with Better Auth in Step 2
+          // For now, we'll use the user ID directly
+          console.log('No auth_id found, using user ID directly during migration:', userId)
+          userIdForOtp = userId // Use the user's database ID instead
+          /*
           // Fallback: look up user by email in auth.users
           console.log('No auth_id found, looking up by email:', userRecord.email)
           const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
@@ -67,6 +79,7 @@ export async function POST(request: NextRequest) {
             userIdForOtp = authUser.id
             console.log('Found auth user by email:', userIdForOtp)
           }
+          */
         }
       }
     }

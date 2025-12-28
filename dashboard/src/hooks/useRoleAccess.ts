@@ -1,12 +1,25 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { createClient } from '@/lib/supabase-client'
+/**
+ * Role Access Hook
+ * 
+ * MIGRATING: Supabase Auth session checks have been removed.
+ * This hook will be updated to work with Better Auth in Step 2.
+ * 
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
+
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { supabaseClient } from '@/lib/supabase-db'
 import { 
   UserRole, 
+  UserAction,
   accessLevelToRole, 
   hasPermission,
   isRouteRestricted,
+  canPerformAction,
+  isPageHiddenForRole,
   NAVIGATION_RESTRICTIONS 
 } from '@/lib/rbac'
 
@@ -39,6 +52,16 @@ interface UseRoleAccessReturn {
   hasPermissionFor: (allowedRoles?: UserRole[]) => boolean
   // Check if a navigation item should be shown
   shouldShowNavItem: (href: string) => boolean
+  // Check if user can perform a specific action
+  canPerformUserAction: (action: UserAction) => boolean
+  // Check if page should be hidden for current user
+  isPageHidden: (pathname: string) => boolean
+  // Specific permission checks
+  canAddUsers: boolean
+  canDeleteUsers: boolean
+  canEditUsers: boolean
+  canViewUserManagement: boolean
+  canViewReports: boolean
 }
 
 /**
@@ -52,18 +75,23 @@ export function useRoleAccess(): UseRoleAccessReturn {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const supabase = createClient()
+        // TODO: Replace with Better Auth session check
+        // const session = await auth.getSession()
         
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const { data: userData, error } = await supabase
+        // Temporary: Get user from localStorage during migration
+        const storedUser = localStorage.getItem('pcn-user')
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
+          
+          // Fetch full user data from database
+          const { data: fullUserData, error } = await supabaseClient
             .from('users')
             .select('*')
-            .eq('auth_id', session.user.id)
+            .eq('id', userData.id)
             .single()
           
-          if (userData && !error) {
-            setUser(userData)
+          if (fullUserData && !error) {
+            setUser(fullUserData)
           } else if (error) {
             console.error('Error fetching user data for RBAC:', error)
           }
@@ -77,26 +105,22 @@ export function useRoleAccess(): UseRoleAccessReturn {
 
     fetchUserData()
 
-    // Listen for auth changes
-    const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null)
-      } else if (session) {
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_id', session.user.id)
-          .single()
-        
-        if (userData && !error) {
+    // Listen for storage changes (for cross-tab logout)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pcn-user') {
+        if (e.newValue) {
+          const userData = JSON.parse(e.newValue)
           setUser(userData)
+        } else {
+          setUser(null)
         }
       }
-    })
+    }
+
+    window.addEventListener('storage', handleStorageChange)
 
     return () => {
-      subscription?.unsubscribe()
+      window.removeEventListener('storage', handleStorageChange)
     }
   }, [])
 
@@ -112,25 +136,44 @@ export function useRoleAccess(): UseRoleAccessReturn {
   const isEditor = userRole === 'editor'
 
   // Check if user can access a specific route
-  const canAccessRoute = (path: string): boolean => {
+  const canAccessRoute = useCallback((path: string): boolean => {
     // If still loading, allow (will be handled by middleware)
     if (isLoading) return true
     // If no user, deny (will be handled by auth middleware)
     if (!user) return false
     // Check route restrictions
     return !isRouteRestricted(path, userRole)
-  }
+  }, [isLoading, user, userRole])
 
   // Check if user has permission for a set of allowed roles
-  const hasPermissionFor = (allowedRoles?: UserRole[]): boolean => {
+  const hasPermissionFor = useCallback((allowedRoles?: UserRole[]): boolean => {
     return hasPermission(userRole, allowedRoles)
-  }
+  }, [userRole])
 
   // Check if a navigation item should be shown
-  const shouldShowNavItem = (href: string): boolean => {
+  const shouldShowNavItem = useCallback((href: string): boolean => {
+    // Check if page is hidden for user's role
+    if (isPageHiddenForRole(href, userRole)) return false
     const allowedRoles = NAVIGATION_RESTRICTIONS[href]
     return hasPermission(userRole, allowedRoles)
-  }
+  }, [userRole])
+
+  // Check if user can perform a specific action
+  const canPerformUserAction = useCallback((action: UserAction): boolean => {
+    return canPerformAction(userRole, action)
+  }, [userRole])
+
+  // Check if page should be hidden for current user
+  const isPageHidden = useCallback((pathname: string): boolean => {
+    return isPageHiddenForRole(pathname, userRole)
+  }, [userRole])
+
+  // Specific permission checks for user management
+  const canAddUsers = useMemo(() => canPerformAction(userRole, 'addUser'), [userRole])
+  const canDeleteUsers = useMemo(() => canPerformAction(userRole, 'deleteUser'), [userRole])
+  const canEditUsers = useMemo(() => canPerformAction(userRole, 'editUser'), [userRole])
+  const canViewUserManagement = useMemo(() => !isPageHiddenForRole('/user-management', userRole), [userRole])
+  const canViewReports = useMemo(() => !isPageHiddenForRole('/reports', userRole), [userRole])
 
   return {
     user,
@@ -141,5 +184,12 @@ export function useRoleAccess(): UseRoleAccessReturn {
     canAccessRoute,
     hasPermissionFor,
     shouldShowNavItem,
+    canPerformUserAction,
+    isPageHidden,
+    canAddUsers,
+    canDeleteUsers,
+    canEditUsers,
+    canViewUserManagement,
+    canViewReports,
   }
 }

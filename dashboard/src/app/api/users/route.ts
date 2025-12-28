@@ -1,24 +1,26 @@
-import { createClient } from '@/lib/supabase-server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+/**
+ * Users API Routes
+ * 
+ * MIGRATING: Supabase Auth has been removed.
+ * User creation now only creates a record in the users table.
+ * Password hashing will be handled by Better Auth in Step 2.
+ */
+
+import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { sendSMS, formatPhoneNumber, isValidSriLankanPhone, smsTemplates } from '@/lib/sms-service'
+import * as crypto from 'crypto'
+
+// Simple password hashing (temporary until Better Auth is integrated)
+// TODO: Replace with Better Auth password hashing
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex')
+}
 
 // GET all users
 export async function GET(request: Request) {
   try {
     const supabase = await createClient()
-
-    // Use service role client to access auth data
-    const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
 
     const { data: users, error } = await supabase
       .from('users')
@@ -30,45 +32,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Enrich users with auth status (online/offline based on active session)
-    const usersWithStatus = await Promise.all(
-      users.map(async (user) => {
-        try {
-          // Get current session info from Supabase Auth
-          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(user.auth_id)
-          
-          if (authError) {
-            console.error('Error fetching auth data for user:', user.id, authError)
-            return {
-              ...user,
-              last_sign_in_at: null,
-              is_online: false
-            }
-          }
-          
-          const lastSignIn = authData?.user?.last_sign_in_at
-          
-          // Consider user online if they signed in within last 30 minutes
-          // This is more realistic for active browsing sessions
-          const isOnline = lastSignIn 
-            ? (new Date().getTime() - new Date(lastSignIn).getTime()) < 30 * 60 * 1000
-            : false
-          
-          return {
-            ...user,
-            last_sign_in_at: lastSignIn,
-            is_online: isOnline
-          }
-        } catch (error) {
-          console.error('Error fetching status for user:', user.id, error)
-          return {
-            ...user,
-            last_sign_in_at: null,
-            is_online: false
-          }
-        }
-      })
-    )
+    // Return users without auth-specific status (will be updated with Better Auth)
+    const usersWithStatus = users.map((user) => ({
+      ...user,
+      last_sign_in_at: user.last_sign_in_at || null,
+      is_online: false // Will be implemented with Better Auth sessions
+    }))
 
     return NextResponse.json({ users: usersWithStatus }, { status: 200 })
   } catch (error) {
@@ -83,17 +52,7 @@ export async function GET(request: Request) {
 // POST - Create new user
 export async function POST(request: Request) {
   try {
-    // Use service role client for admin operations
-    const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const supabaseAdmin = await createAdminClient()
 
     const body = await request.json()
     const {
@@ -146,32 +105,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // Step 1: Create auth user in Supabase Auth
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-        username: username
-      }
-    })
+    // Generate a unique ID for the user (will be auth_id placeholder)
+    const uniqueId = crypto.randomUUID()
 
-    if (authError) {
-      console.error('Error creating auth user:', authError)
-      return NextResponse.json(
-        { error: `Failed to create auth user: ${authError.message}` },
-        { status: 400 }
-      )
-    }
-
-    // Step 2: Create user record in users table
+    // Create user record in users table
+    // NOTE: Password is hashed temporarily. Better Auth will handle this properly.
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
       .insert([
         {
-          auth_id: authData.user.id,
+          auth_id: uniqueId, // Placeholder - will be replaced by Better Auth user ID
           first_name: firstName,
           last_name: lastName,
           username: username,
@@ -180,7 +123,9 @@ export async function POST(request: Request) {
           access_level: accessLevel,
           role: role,
           profile_picture_url: profilePicture || null,
-          status: 'Active'
+          status: 'Active',
+          // Store hashed password temporarily (Better Auth will migrate this)
+          password_hash: hashPassword(password)
         }
       ])
       .select()
@@ -188,8 +133,6 @@ export async function POST(request: Request) {
 
     if (userError) {
       console.error('Error creating user record:', userError)
-      // Rollback: Delete the auth user if user record creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return NextResponse.json(
         { error: `Failed to create user record: ${userError.message}` },
         { status: 400 }

@@ -2,7 +2,14 @@ version: '3.8'
 
 services:
   dashboard:
-    image: pcnsystem2/pcn-dashboard:latest
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - SUPABASE_URL=${SUPABASE_URL}
+        - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
     container_name: pcn-dashboard
     ports:
       - "3001:3001"
@@ -29,7 +36,12 @@ services:
     restart: unless-stopped
 
   web:
-    image: pcnsystem2/pcn-web:latest
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: pcn-web
     ports:
       - "3002:3002"
@@ -45,7 +57,9 @@ services:
     restart: unless-stopped
 
   api:
-    image: pcnsystem2/pcn-api:latest
+    build:
+      context: ./api
+      dockerfile: Dockerfile
     container_name: pcn-api
     ports:
       - "4000:4000"

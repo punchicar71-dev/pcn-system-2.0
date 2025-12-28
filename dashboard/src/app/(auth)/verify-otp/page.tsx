@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Mail } from 'lucide-react'
 
 export default function VerifyOTPPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -10,7 +11,7 @@ export default function VerifyOTPPage() {
   const [error, setError] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const mobileNumber = searchParams.get('mobile') || ''
+  const email = searchParams.get('email') || ''
   
   // Refs for input fields
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -86,7 +87,7 @@ export default function VerifyOTPPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mobileNumber, otp: otpCode }),
+        body: JSON.stringify({ email, otp: otpCode }),
       })
 
       const data = await response.json()
@@ -104,6 +105,9 @@ export default function VerifyOTPPage() {
       setLoading(false)
     }
   }
+
+  // Mask email for display (e.g., j***@example.com)
+  const maskedEmail = email ? email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : ''
 
   return (
     <div className="min-h-screen flex">
@@ -140,11 +144,17 @@ export default function VerifyOTPPage() {
           {/* Title */}
           <div className="text-center">
             <h2 className="text-[24px] font-bold text-gray-900">
-              Forget Password
+              Verify OTP Code
             </h2>
             <p className="mt-2 text-gray-600">
-              Please enter your Mobile Number to search for your account.
+              We've sent a 6-digit OTP code to your email address.
             </p>
+            {email && (
+              <div className="mt-3 flex items-center justify-center gap-2 text-gray-700">
+                <Mail className="w-4 h-4" />
+                <span className="font-medium">{maskedEmail}</span>
+              </div>
+            )}
           </div>
 
           {/* Form */}
@@ -183,15 +193,14 @@ export default function VerifyOTPPage() {
               disabled={loading}
               className="w-full py-3 px-4 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? 'Verifying...' : 'Continue'}
+              {loading ? 'Verifying...' : 'Verify & Continue'}
             </button>
           </form>
 
           {/* Contact Information Box */}
           <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-sm text-gray-700 text-center leading-relaxed">
-              If you don't have an account, please contact the administrator. 
-              Account creation is not available for existing users.
+              Didn't receive the email? Check your spam folder or contact support.
             </p>
             <div className="mt-4 space-y-1 text-sm text-gray-700">
               <p>

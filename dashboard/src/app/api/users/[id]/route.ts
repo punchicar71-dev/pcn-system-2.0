@@ -1,5 +1,13 @@
-import { createClient } from '@/lib/supabase-server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+/**
+ * User API Routes (Single User)
+ * 
+ * MIGRATING: Supabase Auth has been removed.
+ * Session validation will be handled by Better Auth in Step 2.
+ * 
+ * TODO: Add Better Auth session validation to these endpoints.
+ */
+
+import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // GET - Get single user by ID
@@ -10,15 +18,12 @@ export async function GET(
   try {
     const supabase = await createClient()
 
-    // Check if current user is authenticated
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    
-    if (!authUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized - No session found' },
-        { status: 401 }
-      )
-    }
+    // TODO: Replace with Better Auth session validation
+    // For now, we skip auth check - will be added with Better Auth
+    // const session = await auth.api.getSession({ headers: request.headers })
+    // if (!session) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
 
     // Get user details
     const { data: user, error } = await supabase
@@ -55,40 +60,17 @@ export async function PUT(
   try {
     const supabase = await createClient()
 
-    // Check if current user is authenticated and is an admin
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    
-    if (!authUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized - No session found' },
-        { status: 401 }
-      )
-    }
+    // TODO: Replace with Better Auth session validation and admin check
+    // For now, we check the user making the request via a header or cookie
+    // const session = await auth.api.getSession({ headers: request.headers })
+    // if (!session) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
+    // if (session.user.accessLevel !== 'Admin') {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    // }
 
-    // Get current user's role
-    const { data: currentUser, error: userError } = await supabase
-      .from('users')
-      .select('access_level')
-      .eq('auth_id', authUser.id)
-      .single()
-
-    if (userError || !currentUser) {
-      return NextResponse.json(
-        { error: 'Failed to verify user permissions' },
-        { status: 403 }
-      )
-    }
-
-    // Only allow admins to update users
-    if (currentUser.access_level?.toLowerCase() !== 'admin') {
-      console.log(`[UPDATE USER] Access denied - User ${authUser.id} with access level "${currentUser.access_level}" attempted to update user ${params.id}`)
-      return NextResponse.json(
-        { error: 'Forbidden - Only administrators can update users' },
-        { status: 403 }
-      )
-    }
-
-    console.log(`[UPDATE USER] Admin ${authUser.id} updating user ${params.id}`)
+    console.log(`[UPDATE USER] Updating user ${params.id}`)
 
     const body = await request.json()
     const {
@@ -185,59 +167,20 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
+    const supabaseAdmin = await createAdminClient()
 
-    // Check if current user is authenticated and is an admin
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    
-    if (!authUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized - No session found' },
-        { status: 401 }
-      )
-    }
-
-    // Get current user's role and ID
-    const { data: currentUser, error: userError } = await supabase
-      .from('users')
-      .select('access_level, id, auth_id')
-      .eq('auth_id', authUser.id)
-      .single()
-
-    if (userError || !currentUser) {
-      return NextResponse.json(
-        { error: 'Failed to verify user permissions' },
-        { status: 403 }
-      )
-    }
-
-    // Only allow admins to delete users
-    if (currentUser.access_level?.toLowerCase() !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden - Only administrators can delete users' },
-        { status: 403 }
-      )
-    }
-
-    // Prevent self-deletion (compare user IDs, not auth IDs)
-    if (currentUser.id === params.id) {
-      return NextResponse.json(
-        { error: 'Cannot delete your own account' },
-        { status: 400 }
-      )
-    }
-
-    // Use service role client for admin operations
-    const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    // TODO: Replace with Better Auth session validation and admin check
+    // const session = await auth.api.getSession({ headers: request.headers })
+    // if (!session) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
+    // if (session.user.accessLevel !== 'Admin') {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    // }
+    // Prevent self-deletion
+    // if (session.user.id === params.id) {
+    //   return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
+    // }
 
     // Get the user to be deleted
     const { data: userToDelete, error: fetchError } = await supabaseAdmin
@@ -256,7 +199,7 @@ export async function DELETE(
 
     console.log('Deleting user:', userToDelete)
 
-    // Step 1: Delete user from users table first
+    // Delete user from users table
     const { error: deleteUserError } = await supabaseAdmin
       .from('users')
       .delete()
@@ -270,40 +213,8 @@ export async function DELETE(
       )
     }
 
-    // Step 2: Try to delete user from Supabase Auth (if auth_id is valid)
-    // Only attempt if auth_id exists and looks like a valid UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    
-    if (userToDelete.auth_id && uuidRegex.test(userToDelete.auth_id)) {
-      try {
-        const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(
-          userToDelete.auth_id
-        )
-
-        if (deleteAuthError) {
-          console.error('Error deleting auth user:', deleteAuthError)
-          // User record is already deleted, so we consider this a success with a warning
-          return NextResponse.json(
-            { 
-              success: true,
-              warning: 'User deleted but authentication cleanup had issues',
-              message: `User ${userToDelete.first_name} ${userToDelete.last_name} has been deleted`,
-              deletedUser: {
-                id: params.id,
-                name: `${userToDelete.first_name} ${userToDelete.last_name}`,
-                email: userToDelete.email
-              }
-            },
-            { status: 200 }
-          )
-        }
-      } catch (authError) {
-        console.error('Auth deletion error:', authError)
-        // Continue anyway since the main user record is deleted
-      }
-    } else {
-      console.log('Skipping auth deletion - invalid or missing auth_id:', userToDelete.auth_id)
-    }
+    // NOTE: No need to delete from Supabase Auth anymore
+    // Better Auth will handle session cleanup automatically
 
     return NextResponse.json(
       { 

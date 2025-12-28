@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -128,7 +134,7 @@ export default function InventoryPage() {
       const { data, error } = await supabase
         .from('vehicle_inventory_view')
         .select('*')
-        .in('status', ['In Sale', 'In Transit'])  // Only show available vehicles
+        .eq('status', 'In Sale')  // Only show available vehicles (valid DB status)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -506,18 +512,17 @@ export default function InventoryPage() {
       // Delete images from S3 if we have any keys
       let s3DeletionSuccess = false
       if (s3Keys.length > 0) {
-        // Get the current session token
-        const { data: { session } } = await supabase.auth.getSession()
+        // MIGRATION: Using localStorage instead of Supabase Auth - S3 deletion doesn't need auth token
+        const storedUser = localStorage.getItem('pcn-user')
         
-        if (!session?.access_token) {
-          // No session token, skip S3 deletion
+        if (!storedUser) {
+          // No user, skip S3 deletion
         } else {
           try {
             // Call Next.js API route (which proxies to backend)
             const s3Response = await fetch(`/api/upload/delete-vehicle/${deleteId}`, {
               method: 'DELETE',
               headers: {
-                'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ s3Keys }),
@@ -561,13 +566,10 @@ export default function InventoryPage() {
       try {
         const deletedVehicle = vehicles.find(v => v.id === deleteId)
         if (deletedVehicle) {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            const { data: userData } = await supabase
-              .from('users')
-              .select('id, first_name, last_name')
-              .eq('auth_id', session.user.id)
-              .single()
+          // MIGRATION: Using localStorage instead of Supabase Auth
+          const storedUserForNotif = localStorage.getItem('pcn-user')
+          if (storedUserForNotif) {
+            const userData = JSON.parse(storedUserForNotif)
 
             if (userData) {
               const userName = `${userData.first_name} ${userData.last_name}`

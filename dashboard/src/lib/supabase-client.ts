@@ -1,42 +1,59 @@
 'use client'
 
-import { createBrowserClient } from '@supabase/ssr'
+/**
+ * Supabase Client (Browser-side)
+ * 
+ * This module provides a Supabase client for DATABASE OPERATIONS ONLY.
+ * Authentication is handled separately by Better Auth.
+ * 
+ * Note: This file is kept for backward compatibility.
+ * For new code, prefer importing from '@/lib/supabase-db'.
+ */
+
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 // Get environment variables with proper error handling
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Only throw errors in the browser, not during SSR/build
-function validateEnvVars() {
-  if (typeof window === 'undefined') {
-    // During SSR or build, just warn
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.warn('⚠️ Supabase environment variables not set. Client will not work properly.')
-    }
-    return false
-  }
-  
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase environment variables. Please check your .env.local file.')
-    return false
-  }
-  
-  return true
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('⚠️ Missing Supabase environment variables. Database operations will fail.')
 }
 
-// Create a single supabase browser client for the entire application
-// Use fallback empty strings to prevent crashes, validation happens at runtime
-export const supabase = createBrowserClient(
+/**
+ * Single supabase browser client for the entire application.
+ * Used for database operations only - auth is handled by Better Auth.
+ */
+export const supabase = createSupabaseClient(
   supabaseUrl || '',
-  supabaseAnonKey || ''
+  supabaseAnonKey || '',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  }
 )
 
-// Export a function to create a new client if needed
+/**
+ * Create a new Supabase client instance.
+ * Used for database operations only - auth is handled by Better Auth.
+ */
 export function createClient() {
-  validateEnvVars()
-  return createBrowserClient(
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('⚠️ Missing Supabase environment variables')
+  }
+  return createSupabaseClient(
     supabaseUrl || '',
-    supabaseAnonKey || ''
+    supabaseAnonKey || '',
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
   )
 }
 

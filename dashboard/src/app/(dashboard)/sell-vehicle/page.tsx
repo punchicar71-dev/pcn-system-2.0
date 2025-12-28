@@ -1,7 +1,13 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client';
 
 import { DollarSign } from 'lucide-react';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import SellVehicleStepIndicator from '@/components/sell-vehicle/SellVehicleStepIndicator';
 import CustomerDetails from '@/components/sell-vehicle/CustomerDetails';
 import SellingInfo from '@/components/sell-vehicle/SellingInfo';
@@ -47,18 +53,18 @@ export default function SellVehiclePage() {
     currentStep === 2 // Only enable locking on step 2 (selling info)
   );
 
-  const handleCustomerDataChange = useCallback((field: string, value: string) => {
+  const handleCustomerDataChange = (field: string, value: string) => {
     setCustomerData((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  };
 
-  const handleSellingDataChange = useCallback((field: string, value: any) => {
+  const handleSellingDataChange = (field: string, value: any) => {
     setSellingData((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  };
 
-  const handleNextFromCustomerDetails = useCallback(() => {
+  const handleNextFromCustomerDetails = () => {
     setCompletedSteps([1]);
     setCurrentStep(2);
-  }, []);
+  };
 
   // 🔒 Acquire lock when vehicle is selected and we're on step 2
   useEffect(() => {
@@ -67,11 +73,11 @@ export default function SellVehiclePage() {
     }
   }, [sellingData.selectedVehicle?.id, currentStep, acquireLock]);
 
-  const handleBackFromSellingInfo = useCallback(() => {
+  const handleBackFromSellingInfo = () => {
     setCurrentStep(1);
-  }, []);
+  };
 
-  const handleSubmitSale = useCallback(async () => {
+  const handleSubmitSale = async () => {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
@@ -125,20 +131,6 @@ export default function SellVehiclePage() {
           saleData.brand_name = sellingData.selectedVehicle?.brand_name || null;
           saleData.model_name = sellingData.selectedVehicle?.model_name || null;
           saleData.manufacture_year = sellingData.selectedVehicle?.manufacture_year || null;
-          
-          // Check if body_type column exists separately (newer migration)
-          try {
-            const bodyTypeTest = await supabase
-              .from('pending_vehicle_sales')
-              .select('body_type')
-              .limit(0);
-            
-            if (!bodyTypeTest.error) {
-              saleData.body_type = sellingData.selectedVehicle?.body_type || null;
-            }
-          } catch (e) {
-            console.log('body_type column not available yet');
-          }
         }
       } catch (e) {
         // Columns don't exist yet, skip snapshot fields
@@ -163,10 +155,10 @@ export default function SellVehiclePage() {
         setCreatedSaleId(data.id);
       }
 
-      // Update vehicle status to 'Pending Sale' so it disappears from inventory
+      // Update vehicle status to 'Reserved' so it disappears from inventory
       const { error: updateError } = await supabase
         .from('vehicles')
-        .update({ status: 'Pending Sale' })
+        .update({ status: 'Reserved' })
         .eq('id', sellingData.selectedVehicle?.id);
 
       if (updateError) {
@@ -176,13 +168,10 @@ export default function SellVehiclePage() {
 
       // Create notification for moving vehicle to sales
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, first_name, last_name')
-            .eq('auth_id', session.user.id)
-            .single()
+        // MIGRATION: Using localStorage instead of Supabase Auth
+        const storedUser = localStorage.getItem('pcn-user')
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
 
           if (userData) {
             const userName = `${userData.first_name} ${userData.last_name}`
@@ -266,13 +255,13 @@ export default function SellVehiclePage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [sellingData, customerData, releaseLock]);
+  };
 
   // Determine if form should be disabled (locked by another user)
-  const isFormDisabled = useMemo(() => isLocked && !hasMyLock, [isLocked, hasMyLock]);
+  const isFormDisabled = isLocked && !hasMyLock;
 
   return (
-    <div className="min-h-screen bg-slte-50">
+    <div className="min-h-screen bg-slate-50">
       
 
       <SellVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />

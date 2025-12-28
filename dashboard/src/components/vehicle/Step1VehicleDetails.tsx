@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { VehicleDetailsData, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, getYearRange } from '@/types/vehicle-form.types';
 import { Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Combobox } from '@/components/ui/combobox';
 import { createClient } from '@/lib/supabase-client';
 
 interface Step1VehicleDetailsProps {
@@ -28,25 +27,10 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   const [hasCheckedVehicle, setHasCheckedVehicle] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Memoize brand and model options for Combobox
-  const brandOptions = useMemo(() => 
-    brands.map(brand => ({
-      value: brand.id,
-      label: brand.name
-    })), [brands]
-  );
-
-  const modelOptions = useMemo(() => 
-    models.map(model => ({
-      value: model.id,
-      label: model.name
-    })), [models]
-  );
-
   // Function to check if vehicle number exists in database
   // Only checks: 1) Inventory (vehicles not sold), 2) Pending sales (not sold-out)
   // Does NOT block: Sold-out vehicles can be added again
-  const checkVehicleNumberExists = useCallback(async (vehicleNumber: string): Promise<boolean> => {
+  const checkVehicleNumberExists = async (vehicleNumber: string): Promise<boolean> => {
     if (!vehicleNumber || vehicleNumber.trim() === '') {
       return false;
     }
@@ -55,45 +39,44 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
       const supabase = createClient();
       const normalizedVehicleNumber = vehicleNumber.trim().toUpperCase();
 
-      // Parallel check for better performance
-      const [inventoryResult, pendingSalesResult] = await Promise.all([
-        // Check 1: Inventory table - only vehicles that are NOT sold
-        supabase
-          .from('vehicles')
-          .select('id, vehicle_number, status')
-          .eq('vehicle_number', normalizedVehicleNumber)
-          .neq('status', 'Sold')
-          .limit(1),
-        
-        // Check 2: Pending vehicle sales - only vehicles with 'pending' status (not 'sold')
-        supabase
-          .from('pending_vehicle_sales')
-          .select(`
-            id,
-            status,
-            vehicles:vehicle_id (
-              vehicle_number
-            )
-          `)
-          .eq('status', 'pending')
-      ]);
+      // Check 1: Inventory table - only vehicles that are NOT sold
+      const { data: inventoryVehicles, error: inventoryError } = await supabase
+        .from('vehicles')
+        .select('id, vehicle_number, status')
+        .eq('vehicle_number', normalizedVehicleNumber)
+        .neq('status', 'Sold')
+        .limit(1);
 
-      if (inventoryResult.error) {
-        console.error('Error checking vehicle number in inventory:', inventoryResult.error);
-      }
-      
-      if (pendingSalesResult.error) {
-        console.error('Error checking vehicle number in pending sales:', pendingSalesResult.error);
+      if (inventoryError) {
+        console.error('Error checking vehicle number in inventory:', inventoryError);
+        return false;
       }
 
       // If found in inventory (not sold), block the duplicate
-      if (inventoryResult.data && inventoryResult.data.length > 0) {
+      if (inventoryVehicles && inventoryVehicles.length > 0) {
         return true;
       }
 
+      // Check 2: Pending vehicle sales - only vehicles with 'pending' status (not 'sold')
+      const { data: pendingSales, error: pendingError } = await supabase
+        .from('pending_vehicle_sales')
+        .select(`
+          id,
+          status,
+          vehicles:vehicle_id (
+            vehicle_number
+          )
+        `)
+        .eq('status', 'pending');
+
+      if (pendingError) {
+        console.error('Error checking vehicle number in pending sales:', pendingError);
+        return false;
+      }
+
       // Check if any pending sale has matching vehicle number
-      if (pendingSalesResult.data && pendingSalesResult.data.length > 0) {
-        const matchingPendingSale = pendingSalesResult.data.find(
+      if (pendingSales && pendingSales.length > 0) {
+        const matchingPendingSale = pendingSales.find(
           (sale: any) => sale.vehicles?.vehicle_number?.toUpperCase() === normalizedVehicleNumber
         );
         if (matchingPendingSale) {
@@ -107,7 +90,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
       console.error('Error checking vehicle number:', error);
       return false;
     }
-  }, []);
+  };
 
   // Debounced duplicate check function
   const debouncedCheckDuplicate = useCallback((vehicleNumber: string) => {
@@ -145,7 +128,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         setIsCheckingDuplicate(false);
       }
     }, 500);
-  }, [checkVehicleNumberExists]);
+  }, []);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -163,17 +146,17 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     }
   }, []); // Only on mount
 
-  const handleVehicleNumberChange = useCallback((value: string) => {
-    // Convert to uppercase and format (allow only alphanumeric and hyphen)
+  const handleVehicleNumberChange = (value: string) => {
+    // Convert to uppercase and format
     const formatted = value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     onChange({ vehicleNumber: formatted });
     
     // Trigger duplicate check
     debouncedCheckDuplicate(formatted);
-  }, [onChange, debouncedCheckDuplicate]);
+  };
 
   // Handle blur - immediate check if not already checked
-  const handleVehicleNumberBlur = useCallback(async () => {
+  const handleVehicleNumberBlur = async () => {
     if (data.vehicleNumber && !hasCheckedVehicle && !isCheckingDuplicate) {
       // Cancel any pending debounce
       if (debounceTimerRef.current) {
@@ -197,9 +180,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         setIsCheckingDuplicate(false);
       }
     }
-  }, [data.vehicleNumber, hasCheckedVehicle, isCheckingDuplicate, checkVehicleNumberExists]);
+  };
 
-  const handleVehicleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVehicleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newImages = [...data.vehicleImages, ...files];
@@ -209,9 +192,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         vehicleImagePreviews: [...data.vehicleImagePreviews, ...newPreviews],
       });
     }
-  }, [data.vehicleImages, data.vehicleImagePreviews, onChange]);
+  };
 
-  const handle360ImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handle360ImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newImages = [...data.image360Files, ...files];
@@ -221,9 +204,9 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         image360Previews: [...data.image360Previews, ...newPreviews],
       });
     }
-  }, [data.image360Files, data.image360Previews, onChange]);
+  };
 
-  const handleCRImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCRImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newImages = [...data.crImages, ...files];
@@ -233,60 +216,36 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         crImagePreviews: [...data.crImagePreviews, ...newPreviews],
       });
     }
-  }, [data.crImages, data.crImagePreviews, onChange]);
+  };
 
-  const removeVehicleImage = useCallback((index: number) => {
-    // Revoke object URL to prevent memory leak
-    if (data.vehicleImagePreviews[index]) {
-      URL.revokeObjectURL(data.vehicleImagePreviews[index]);
-    }
-    
+  const removeVehicleImage = (index: number) => {
     const newImages = data.vehicleImages.filter((_, i) => i !== index);
     const newPreviews = data.vehicleImagePreviews.filter((_, i) => i !== index);
     onChange({
       vehicleImages: newImages,
       vehicleImagePreviews: newPreviews,
     });
-  }, [data.vehicleImages, data.vehicleImagePreviews, onChange]);
+  };
 
-  const remove360Image = useCallback((index: number) => {
-    // Revoke object URL to prevent memory leak
-    if (data.image360Previews[index]) {
-      URL.revokeObjectURL(data.image360Previews[index]);
-    }
-    
+  const remove360Image = (index: number) => {
     const newImages = data.image360Files.filter((_, i) => i !== index);
     const newPreviews = data.image360Previews.filter((_, i) => i !== index);
     onChange({
       image360Files: newImages,
       image360Previews: newPreviews,
     });
-  }, [data.image360Files, data.image360Previews, onChange]);
+  };
 
-  const removeCRImage = useCallback((index: number) => {
-    // Revoke object URL to prevent memory leak
-    if (data.crImagePreviews[index]) {
-      URL.revokeObjectURL(data.crImagePreviews[index]);
-    }
-    
+  const removeCRImage = (index: number) => {
     const newImages = data.crImages.filter((_, i) => i !== index);
     const newPreviews = data.crImagePreviews.filter((_, i) => i !== index);
     onChange({
       crImages: newImages,
       crImagePreviews: newPreviews,
     });
-  }, [data.crImages, data.crImagePreviews, onChange]);
-  
-  // Cleanup object URLs on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      data.vehicleImagePreviews.forEach(url => URL.revokeObjectURL(url));
-      data.image360Previews.forEach(url => URL.revokeObjectURL(url));
-      data.crImagePreviews.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, []);
+  };
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Check for duplicate vehicle number first
@@ -339,7 +298,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
     }
     
     onNext();
-  }, [duplicateError, isCheckingDuplicate, data, hasCheckedVehicle, checkVehicleNumberExists, onNext]);
+  };
 
   return (
     <div className="bg-slate-50 p-6">
@@ -401,29 +360,36 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             <Label htmlFor="brandId">
               Vehicle Brand <span className="text-red-500">*</span>
             </Label>
-            <Combobox 
-              options={brandOptions}
-              value={data.brandId}
-              onValueChange={(value) => onChange({ brandId: value, modelId: '' })}
-              placeholder="Select brand"
-              searchPlaceholder="Search brands..."
-              emptyText="No brand found."
-            />
+            <Select value={data.brandId} onValueChange={(value) => onChange({ brandId: value, modelId: '' })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label htmlFor="modelId">
               Model Name <span className="text-red-500">*</span>
             </Label>
-            <Combobox 
-              options={modelOptions}
-              value={data.modelId}
-              onValueChange={(value) => onChange({ modelId: value })}
-              placeholder="Select model"
-              searchPlaceholder="Search models..."
-              emptyText="No model found."
-              disabled={!data.brandId}
-            />
+            <Select value={data.modelId} onValueChange={(value) => onChange({ modelId: value })} disabled={!data.brandId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
@@ -300,8 +306,9 @@ export default function DashboardPage() {
 
   const fetchActiveUsers = async () => {
     try {
-      // Get current session to identify logged-in user
-      const { data: { session } } = await supabase.auth.getSession()
+      // MIGRATION: Get current user from localStorage to identify logged-in user
+      const storedUser = localStorage.getItem('pcn-user')
+      const currentUserData = storedUser ? JSON.parse(storedUser) : null
 
       const { data: usersData, error } = await supabase
         .from('users')
@@ -312,7 +319,7 @@ export default function DashboardPage() {
         // Mark current logged-in user and recently active users as online
         const usersWithStatus = usersData.map((user) => ({
           ...user,
-          is_online: session ? user.auth_id === session.user.id : false
+          is_online: currentUserData ? (user.auth_id === currentUserData.auth_id || user.id === currentUserData.id) : false
         }))
 
         // Filter only online users

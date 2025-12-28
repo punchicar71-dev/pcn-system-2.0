@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -441,13 +447,10 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
       // Create notification for vehicle update
       if (vehicleData) {
         try {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            const { data: userData } = await supabase
-              .from('users')
-              .select('id, first_name, last_name')
-              .eq('auth_id', session.user.id)
-              .single()
+          // MIGRATION: Using localStorage instead of Supabase Auth
+          const storedUser = localStorage.getItem('pcn-user')
+          if (storedUser) {
+            const userData = JSON.parse(storedUser)
 
             if (userData) {
               const userName = `${userData.first_name} ${userData.last_name}`

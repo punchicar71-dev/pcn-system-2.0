@@ -1,52 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { formatPhoneNumber } from '@/lib/sms-service'
 import jwt from 'jsonwebtoken'
 
-// Lazy initialize Supabase Admin Client
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+// Initialize Supabase Admin Client
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-  )
-}
+  }
+)
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { mobileNumber, otp } = body
+    const { email, otp } = body
 
-    const supabaseAdmin = getSupabaseAdmin()
-
-    if (!mobileNumber || !otp) {
+    if (!email || !otp) {
       return NextResponse.json(
-        { error: 'Mobile number and OTP are required' },
+        { error: 'Email and OTP are required' },
         { status: 400 }
       )
     }
 
-    const formattedPhone = formatPhoneNumber(mobileNumber)
-    
-    // Create phone number variants to search
-    const phoneVariants = [
-      formattedPhone,                                    // 94710898944
-      `+${formattedPhone}`,                              // +94710898944
-      formattedPhone.startsWith('94') ? `0${formattedPhone.substring(2)}` : formattedPhone  // 0710898944
-    ]
+    const normalizedEmail = email.toLowerCase().trim()
 
-    console.log('Verifying OTP for mobile number variants:', phoneVariants)
+    console.log('Verifying OTP for email:', normalizedEmail)
 
-    // Find OTP record (check all phone number variants)
+    // Find OTP record by email
     const { data: otpRecord, error: otpError } = await supabaseAdmin
       .from('password_reset_otps')
       .select('*')
-      .in('mobile_number', phoneVariants)
+      .ilike('email', normalizedEmail)
       .eq('otp_code', otp)
       .eq('verified', false)
       .single()
@@ -84,13 +72,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate a temporary token for password reset
-    // Since user_id might be null, we need to look up the user by mobile number
-    // Get user info from the users table
+    // Get user info from the users table by email
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id, auth_id')
-      .in('mobile_number', phoneVariants)
+      .ilike('email', normalizedEmail)
       .single()
 
     if (userError || !user) {
@@ -105,7 +91,7 @@ export async function POST(request: NextRequest) {
       { 
         userId: user.id,
         authId: user.auth_id,
-        mobileNumber: formattedPhone,
+        email: normalizedEmail,
         otpId: otpRecord.id,
         type: 'password_reset'
       },
@@ -113,7 +99,7 @@ export async function POST(request: NextRequest) {
       { expiresIn: '15m' }
     )
 
-    console.log('OTP verified successfully for:', formattedPhone)
+    console.log('OTP verified successfully for:', normalizedEmail)
 
     return NextResponse.json({
       success: true,

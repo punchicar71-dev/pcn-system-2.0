@@ -1,6 +1,12 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import StepIndicator from '@/components/vehicle/StepIndicator';
 import Step1VehicleDetails from '@/components/vehicle/Step1VehicleDetails';
@@ -30,33 +36,40 @@ export default function AddVehiclePage() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [publishedVehicleId, setPublishedVehicleId] = useState<string>('');
 
-  const supabase = useMemo(() => createClient(), []);
-
-  const fetchMasterData = useCallback(async () => {
-    try {
-      // Parallel fetch for better performance
-      const [brandsResult, countriesResult] = await Promise.all([
-        supabase.from('vehicle_brands').select('*').order('name'),
-        supabase.from('countries').select('*').eq('is_active', true).order('name')
-      ]);
-      
-      if (brandsResult.data) setBrands(brandsResult.data);
-      if (countriesResult.data) setCountries(countriesResult.data);
-    } catch (error) {
-      console.error('Error fetching master data:', error);
-    }
-  }, [supabase]);
+  const supabase = createClient();
 
   useEffect(() => {
     fetchMasterData();
-  }, [fetchMasterData]);
+  }, []);
 
-  const fetchModels = useCallback(async (brandId: string) => {
-    if (!brandId) {
-      setModels([]);
-      return;
+  const fetchMasterData = async () => {
+    try {
+      // Fetch brands
+      const { data: brandsData } = await supabase
+        .from('vehicle_brands')
+        .select('*')
+        .order('name');
+      if (brandsData) setBrands(brandsData);
+
+      // Fetch countries
+      const { data: countriesData } = await supabase
+        .from('countries')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      if (countriesData) setCountries(countriesData);
+    } catch (error) {
+      console.error('Error fetching master data:', error);
     }
-    
+  };
+
+  useEffect(() => {
+    if (formState.vehicleDetails.brandId) {
+      fetchModels(formState.vehicleDetails.brandId);
+    }
+  }, [formState.vehicleDetails.brandId]);
+
+  const fetchModels = async (brandId: string) => {
     try {
       const { data } = await supabase
         .from('vehicle_models')
@@ -67,73 +80,63 @@ export default function AddVehiclePage() {
     } catch (error) {
       console.error('Error fetching models:', error);
     }
-  }, [supabase]);
+  };
 
-  useEffect(() => {
-    fetchModels(formState.vehicleDetails.brandId);
-  }, [formState.vehicleDetails.brandId, fetchModels]);
-
-  const updateVehicleDetails = useCallback((data: Partial<VehicleDetailsData>) => {
+  const updateVehicleDetails = (data: Partial<VehicleDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
       vehicleDetails: { ...prev.vehicleDetails, ...data },
     }));
-  }, []);
+  };
 
-  const updateSellerDetails = useCallback((data: Partial<SellerDetailsData>) => {
+  const updateSellerDetails = (data: Partial<SellerDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
       sellerDetails: { ...prev.sellerDetails, ...data },
     }));
-  }, []);
+  };
 
-  const updateVehicleOptions = useCallback((data: Partial<VehicleOptionsData>) => {
+  const updateVehicleOptions = (data: Partial<VehicleOptionsData>) => {
     setFormState((prev) => ({
       ...prev,
       vehicleOptions: { ...prev.vehicleOptions, ...data },
     }));
-  }, []);
+  };
 
-  const updateSellingDetails = useCallback((data: Partial<SellingDetailsData>) => {
+  const updateSellingDetails = (data: Partial<SellingDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
       sellingDetails: { ...prev.sellingDetails, ...data },
     }));
-  }, []);
+  };
 
-  const updateSpecialNotes = useCallback((data: Partial<SpecialNotesData>) => {
+  const updateSpecialNotes = (data: Partial<SpecialNotesData>) => {
     setFormState((prev) => ({
       ...prev,
       specialNotes: { ...prev.specialNotes, ...data },
     }));
-  }, []);
+  };
 
-  const goToStep = useCallback((step: FormStep) => {
+  const goToStep = (step: FormStep) => {
     setFormState((prev) => ({ ...prev, currentStep: step }));
-  }, []);
+  };
 
-  const nextStep = useCallback(() => {
-    setFormState((prev) => {
-      const currentStep = prev.currentStep;
-      if (!completedSteps.includes(currentStep)) {
-        setCompletedSteps((steps) => [...steps, currentStep]);
-      }
-      if (currentStep < 7) {
-        return { ...prev, currentStep: (currentStep + 1) as FormStep };
-      }
-      return prev;
-    });
-  }, [completedSteps]);
+  const nextStep = () => {
+    const currentStep = formState.currentStep;
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps([...completedSteps, currentStep]);
+    }
+    if (currentStep < 7) {
+      goToStep((currentStep + 1) as FormStep);
+    }
+  };
 
-  const prevStep = useCallback(() => {
-    setFormState((prev) => {
-      const currentStep = prev.currentStep;
-      if (currentStep > 1) {
-        return { ...prev, currentStep: (currentStep - 1) as FormStep };
-      }
-      return prev;
-    });
-  }, []);
+  const prevStep = () => {
+    const currentStep = formState.currentStep;
+    if (currentStep > 1) {
+      goToStep((currentStep - 1) as FormStep);
+    }
+  };
 
   const uploadImages = async (vehicleId: string) => {
     const { vehicleImages, image360Files, crImages } = formState.vehicleDetails;
@@ -146,10 +149,10 @@ export default function AddVehiclePage() {
         
         const uploadPromise = (async () => {
           try {
-            // Step 1: Get presigned URL from API with timeout
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) {
-              throw new Error('No authentication token available');
+            // MIGRATION: Using localStorage instead of Supabase Auth - presigned URL doesn't need auth token
+            const storedUser = localStorage.getItem('pcn-user');
+            if (!storedUser) {
+              throw new Error('No user logged in');
             }
 
             // Create abort controller for timeout
@@ -160,7 +163,6 @@ export default function AddVehiclePage() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
                 vehicleId,
@@ -223,9 +225,10 @@ export default function AddVehiclePage() {
         
         const uploadPromise = (async () => {
           try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) {
-              throw new Error('No authentication token available');
+            // MIGRATION: Using localStorage instead of Supabase Auth - presigned URL doesn't need auth token
+            const storedUser = localStorage.getItem('pcn-user');
+            if (!storedUser) {
+              throw new Error('No user logged in');
             }
 
             // Create abort controller for timeout
@@ -236,7 +239,6 @@ export default function AddVehiclePage() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
                 vehicleId,
@@ -297,9 +299,10 @@ export default function AddVehiclePage() {
         
         const uploadPromise = (async () => {
           try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.access_token) {
-              throw new Error('No authentication token available');
+            // MIGRATION: Using localStorage instead of Supabase Auth - presigned URL doesn't need auth token
+            const storedUser = localStorage.getItem('pcn-user');
+            if (!storedUser) {
+              throw new Error('No user logged in');
             }
 
             // Create abort controller for timeout
@@ -310,7 +313,6 @@ export default function AddVehiclePage() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
                 vehicleId,
@@ -402,16 +404,16 @@ export default function AddVehiclePage() {
         return;
       }
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
+      // MIGRATION: Get current user from localStorage instead of Supabase Auth
+      const storedUser = localStorage.getItem('pcn-user');
+      if (!storedUser) {
         alert('You must be logged in to add a vehicle');
         return;
       }
+      const user = JSON.parse(storedUser);
 
       console.log('Starting vehicle insertion...');
-      console.log('User:', user.id);
+      console.log('User:', user.auth_id || user.id);
       console.log('Vehicle Details:', {
         vehicleNumber: vehicleDetails.vehicleNumber,
         brandId: vehicleDetails.brandId,
@@ -426,20 +428,15 @@ export default function AddVehiclePage() {
       // NOTE: Historical sold-out records are preserved because vehicle details are stored
       // directly in pending_vehicle_sales (vehicle_number, brand_name, model_name, manufacture_year)
       const normalizedVehicleNumber = vehicleDetails.vehicleNumber.trim().toUpperCase();
-      const { data: existingSoldVehicle, error: soldCheckError } = await supabase
+      const { data: existingSoldVehicle } = await supabase
         .from('vehicles')
-        .select('id, status, vehicle_number')
-        .ilike('vehicle_number', normalizedVehicleNumber)
+        .select('id, status')
+        .eq('vehicle_number', normalizedVehicleNumber)
         .eq('status', 'Sold')
-        .maybeSingle();
-
-      if (soldCheckError) {
-        console.error('⚠️ Error checking for existing sold vehicle:', soldCheckError);
-        // Continue anyway - we'll try to insert and let the database handle conflicts
-      }
+        .single();
 
       if (existingSoldVehicle) {
-        console.log('🔍 Found existing sold vehicle, removing old record:', existingSoldVehicle.id);
+        console.log('Found existing sold vehicle, removing old record:', existingSoldVehicle.id);
         
         // Historical sold-out records in pending_vehicle_sales are preserved automatically
         // because vehicle details are now stored directly in the sale record
@@ -447,81 +444,25 @@ export default function AddVehiclePage() {
         // This allows multiple sold-out records for the same vehicle number
         console.log('✅ Historical sold-out records preserved via vehicle snapshot columns');
         
-        try {
-          // STEP 1: Nullify vehicle_id in pending_vehicle_sales (preserves sold-out history)
-          console.log('📝 Setting vehicle_id to NULL in pending_vehicle_sales (preserving sold-out records)...');
-          const { error: nullifyError } = await supabase
-            .from('pending_vehicle_sales')
-            .update({ vehicle_id: null })
-            .eq('vehicle_id', existingSoldVehicle.id);
-          
-          if (nullifyError) {
-            console.error('⚠️ Error nullifying vehicle_id in pending_vehicle_sales:', nullifyError);
-            // Continue anyway - the ON DELETE SET NULL should handle this
-          } else {
-            console.log('✅ Sold-out records preserved with NULL vehicle_id');
-          }
-          
-          // STEP 1.5: Check and handle sold_out table if it exists
-          console.log('🔍 Checking for sold_out table references...');
-          try {
-            const { error: soldOutError } = await supabase
-              .from('sold_out')
-              .update({ vehicle_id: null })
-              .eq('vehicle_id', existingSoldVehicle.id);
-            
-            if (soldOutError) {
-              // If table doesn't exist, that's fine
-              if (soldOutError.code === '42P01') {
-                console.log('ℹ️ sold_out table does not exist - skipping');
-              } else {
-                console.error('⚠️ Error nullifying vehicle_id in sold_out:', soldOutError);
-              }
-            } else {
-              console.log('✅ sold_out table references nullified');
-            }
-          } catch (soldOutErr) {
-            console.log('ℹ️ sold_out table handling skipped');
-          }
-          
-          // STEP 2: Delete related records (vehicle_options, vehicle_images, etc.)
-          console.log('🗑️ Deleting related vehicle_options...');
-          await supabase.from('vehicle_options').delete().eq('vehicle_id', existingSoldVehicle.id);
-          
-          console.log('🗑️ Deleting related vehicle_images...');
-          await supabase.from('vehicle_images').delete().eq('vehicle_id', existingSoldVehicle.id);
-          
-          console.log('🗑️ Deleting related seller_details...');
-          await supabase.from('sellers').delete().eq('vehicle_id', existingSoldVehicle.id);
-          
-          console.log('🗑️ Deleting related vehicle_custom_options...');
-          await supabase.from('vehicle_custom_options').delete().eq('vehicle_id', existingSoldVehicle.id);
-          
-          // STEP 3: Delete the sold vehicle record from vehicles table
-          // This does NOT affect sold-out records (they now have NULL vehicle_id with snapshot data)
-          console.log('🗑️ Deleting sold vehicle record from vehicles table...');
-          const { error: deleteError } = await supabase
-            .from('vehicles')
-            .delete()
-            .eq('id', existingSoldVehicle.id)
-            .eq('status', 'Sold'); // Extra safety check
+        // Delete related records first (vehicle_options, vehicle_images, etc.)
+        await supabase.from('vehicle_options').delete().eq('vehicle_id', existingSoldVehicle.id);
+        await supabase.from('vehicle_images').delete().eq('vehicle_id', existingSoldVehicle.id);
+        await supabase.from('sellers').delete().eq('vehicle_id', existingSoldVehicle.id);
+        
+        // Delete the sold vehicle record from vehicles table
+        // This does NOT affect sold-out records since they have their own vehicle info stored
+        const { error: deleteError } = await supabase
+          .from('vehicles')
+          .delete()
+          .eq('id', existingSoldVehicle.id)
+          .eq('status', 'Sold'); // Extra safety check
 
-          if (deleteError) {
-            console.error('❌ Error removing old sold vehicle:', deleteError);
-            console.error('Full error details:', JSON.stringify(deleteError, null, 2));
-            alert(`⚠️ Warning: Could not remove old sold vehicle record.\n\nError: ${deleteError.message}\n\nThis might be due to database constraints. The database migration may not have been applied correctly.\n\nPlease apply the migration first and try again.`);
-            throw new Error('Failed to delete sold vehicle: ' + deleteError.message);
-          }
-          
-          console.log(`✅ Successfully removed sold vehicle ${existingSoldVehicle.vehicle_number} (ID: ${existingSoldVehicle.id})`);
-          console.log('✅ Historical sold-out records preserved with snapshot data');
-          console.log('✅ You can now add this vehicle again!');
-        } catch (deleteErr) {
-          console.error('❌ Exception during sold vehicle deletion:', deleteErr);
-          throw deleteErr; // Stop the process if we can't delete the old record
+        if (deleteError) {
+          console.error('Error removing old sold vehicle:', deleteError);
+          // Continue anyway - the insert might still work if it was already deleted
+        } else {
+          console.log('✅ Old sold vehicle record removed successfully');
         }
-      } else {
-        console.log('ℹ️ No existing sold vehicle found for:', normalizedVehicleNumber);
       }
 
       // Insert vehicle (TEXT DATA - goes to Supabase)
@@ -547,7 +488,7 @@ export default function AddVehiclePage() {
           status: sellingDetails.status || 'In Sale',
           tag_notes: specialNotes.tagNotes?.trim() || null,
           special_note_print: specialNotes.specialNotePrint?.trim() || null,
-          created_by: user.id,
+          created_by: user.auth_id || user.id,  // MIGRATION: Use auth_id from localStorage
         })
         .select()
         .single();
@@ -563,9 +504,7 @@ export default function AddVehiclePage() {
           alert('❌ Database Error: Invalid brand, model, or country.\n\nPlease ensure:\n1. Master data is properly set up\n2. Selected IDs exist in the database\n3. Try again');
           throw new Error('Foreign key constraint failed');
         } else if (vehicleError.code === '23505') {
-          // Duplicate vehicle number - this shouldn't happen if sold vehicle cleanup worked
-          console.error('❌ Duplicate vehicle error despite cleanup:', vehicleError);
-          alert('❌ Vehicle number already exists.\n\nThis vehicle might still be in active inventory or pending sales.\n\nIf this vehicle was recently marked as sold, please wait a moment and try again.\n\nVehicle Number: ' + vehicleDetails.vehicleNumber);
+          alert('❌ Vehicle number already exists in the active inventory or pending sales.\n\nNote: If this vehicle was previously sold, please try again or contact support.');
           throw new Error('Duplicate vehicle number');
         } else if (vehicleError.code === '23502') {
           // NOT NULL constraint violation
@@ -603,32 +542,25 @@ export default function AddVehiclePage() {
 
       // Create notification for vehicle addition
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, first_name, last_name')
-            .eq('auth_id', session.user.id)
-            .single()
+        // MIGRATION: Using localStorage instead of Supabase Auth
+        // User data is already available from the earlier localStorage read
+        if (user) {
+          const userName = `${user.first_name} ${user.last_name}`
+          const brandName = brands.find(b => b.id === vehicleDetails.brandId)?.name || ''
+          const modelName = models.find(m => m.id === vehicleDetails.modelId)?.name || ''
+          const vehicleInfo = `${brandName} ${modelName} (${vehicleDetails.vehicleNumber})`
 
-          if (userData) {
-            const userName = `${userData.first_name} ${userData.last_name}`
-            const brandName = brands.find(b => b.id === vehicleDetails.brandId)?.name || ''
-            const modelName = models.find(m => m.id === vehicleDetails.modelId)?.name || ''
-            const vehicleInfo = `${brandName} ${modelName} (${vehicleDetails.vehicleNumber})`
-
-            await supabase.from('notifications').insert({
-              user_id: userData.id,
-              type: 'added',
-              title: 'Vehicle Added',
-              message: `${userName} added ${vehicleInfo} to the Inventory.`,
-              vehicle_number: vehicleDetails.vehicleNumber,
-              vehicle_brand: brandName,
-              vehicle_model: modelName,
-              is_read: false
-            })
-            console.log('✅ Notification created for vehicle addition')
-          }
+          await supabase.from('notifications').insert({
+            user_id: user.id,
+            type: 'added',
+            title: 'Vehicle Added',
+            message: `${userName} added ${vehicleInfo} to the Inventory.`,
+            vehicle_number: vehicleDetails.vehicleNumber,
+            vehicle_brand: brandName,
+            vehicle_model: modelName,
+            is_read: false
+          })
+          console.log('✅ Notification created for vehicle addition')
         }
       } catch (notifError) {
         console.error('⚠️  Failed to create notification:', notifError)

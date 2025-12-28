@@ -4,9 +4,10 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Mail } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
-  const [mobileNumber, setMobileNumber] = useState('')
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -17,13 +18,13 @@ export default function ForgotPasswordPage() {
     setError('')
 
     try {
-      // Send OTP via SMS
+      // Send OTP via Email
       const response = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mobileNumber }),
+        body: JSON.stringify({ email }),
       })
 
       const data = await response.json()
@@ -34,8 +35,13 @@ export default function ForgotPasswordPage() {
         return
       }
 
+      // If devMode, show the OTP in an alert (for development testing)
+      if (data.devMode && data.devOtp) {
+        alert(`🔐 Development Mode\n\nYour OTP code is: ${data.devOtp}\n\nThis will not appear in production.`)
+      }
+
       // Navigate to OTP verification page
-      router.push(`/verify-otp?mobile=${encodeURIComponent(mobileNumber)}`)
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
     } catch (err) {
       setError('An error occurred. Please try again.')
       setLoading(false)
@@ -80,7 +86,7 @@ export default function ForgotPasswordPage() {
               Forget Password
             </h2>
             <p className="mt-2 text-gray-600">
-              Please enter your Mobile Number to search for your account.
+              Please enter your email address to receive a password reset OTP.
             </p>
           </div>
 
@@ -93,19 +99,22 @@ export default function ForgotPasswordPage() {
             )}
 
             <div>
-              <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
-                Mobile Number
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
               </label>
-              <input
-                id="mobile"
-                name="mobile"
-                type="text"
-                required
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
-                placeholder="+94"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+                  placeholder="Enter your email address"
+                />
+              </div>
             </div>
 
             {/* Send OTP Button */}
@@ -114,7 +123,7 @@ export default function ForgotPasswordPage() {
               disabled={loading}
               className="w-full py-3 px-4 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {loading ? 'Sending...' : 'Send OTP'}
+              {loading ? 'Sending...' : 'Send OTP to Email'}
             </button>
 
             {/* Back to Login Button */}

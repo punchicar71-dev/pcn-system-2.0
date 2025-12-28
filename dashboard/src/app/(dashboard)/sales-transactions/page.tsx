@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client';
 
 import { FileText } from 'lucide-react';
@@ -168,15 +174,15 @@ export default function SalesTransactionsPage() {
 
       // Delete images from S3 if we have any keys
       if (s3Keys.length > 0) {
-        const { data: { session } } = await supabase.auth.getSession();
+        // MIGRATION: Using localStorage instead of Supabase Auth - S3 deletion doesn't need auth token
+        const storedUser = localStorage.getItem('pcn-user');
         
-        if (session?.access_token) {
+        if (storedUser) {
           try {
             console.log('🌐 Calling S3 deletion API for sold out vehicle...');
             const s3Response = await fetch(`/api/upload/delete-vehicle/${saleData.vehicle_id}`, {
               method: 'DELETE',
               headers: {
-                'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ s3Keys }),
@@ -251,13 +257,10 @@ export default function SalesTransactionsPage() {
 
       // Create notification for vehicle sold out
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, first_name, last_name')
-            .eq('auth_id', session.user.id)
-            .single()
+        // MIGRATION: Using localStorage instead of Supabase Auth
+        const storedUserForNotif = localStorage.getItem('pcn-user')
+        if (storedUserForNotif) {
+          const userData = JSON.parse(storedUserForNotif)
 
           if (userData) {
             // Get vehicle details for notification - use snapshot data if vehicle_id is null

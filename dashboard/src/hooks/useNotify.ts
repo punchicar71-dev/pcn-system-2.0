@@ -1,7 +1,17 @@
 'use client'
 
+/**
+ * Notification Hook
+ * 
+ * MIGRATING: Supabase Auth session checks have been removed.
+ * This hook will be updated to work with Better Auth in Step 2.
+ * 
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
+
 import { useCallback } from 'react'
-import { createClient } from '@/lib/supabase-client'
+import { supabaseClient } from '@/lib/supabase-db'
 import { notifyVehicleAction } from '@/lib/notificationService'
 import { useToast } from '@/hooks/use-toast'
 import type { NotificationType } from '@/types/notification'
@@ -19,28 +29,19 @@ export function useNotify() {
     vehicleModel: string
   ) => {
     try {
-      // Get current user
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
+      // TODO: Replace with Better Auth session check
+      // const session = await auth.getSession()
       
-      if (!session) {
-        console.error('No session found')
+      // Temporary: Get user from localStorage during migration
+      const storedUser = localStorage.getItem('pcn-user')
+      if (!storedUser) {
+        console.error('No user found in localStorage')
         return
       }
+      
+      const userData = JSON.parse(storedUser)
 
-      // Get user data
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id, first_name, last_name')
-        .eq('auth_id', session.user.id)
-        .single()
-
-      if (!userData) {
-        console.error('User data not found')
-        return
-      }
-
-      const userName = `${userData.first_name} ${userData.last_name}`
+      const userName = `${userData.firstName} ${userData.lastName}`
       
       // Create notification in database
       await notifyVehicleAction(

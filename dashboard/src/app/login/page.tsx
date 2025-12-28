@@ -1,11 +1,30 @@
 'use client'
 
+/**
+ * Login Page
+ * 
+ * MIGRATING: Supabase Auth has been removed.
+ * This page will be updated to use Better Auth in Step 2.
+ * 
+ * Currently, this page uses a temporary login mechanism that validates
+ * against the users table with password_hash.
+ * 
+ * TODO: Replace with Better Auth signIn in Step 2.
+ */
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase-client'
 import { Eye, EyeOff } from 'lucide-react'
+import * as crypto from 'crypto'
+
+// Temporary password verification (will be replaced by Better Auth)
+function verifyPassword(password: string, hash: string): boolean {
+  const inputHash = crypto.createHash('sha256').update(password).digest('hex')
+  return inputHash === hash
+}
 
 export default function LoginPage() {
   const [emailOrUsername, setEmailOrUsername] = useState('')
@@ -27,76 +46,84 @@ export default function LoginPage() {
       // Determine if input is email or username
       const isEmail = emailOrUsername.includes('@')
       
-      let email = emailOrUsername
+      // Look up user in database
+      let query = supabase.from('users').select('id, email, username, password_hash, first_name, last_name, access_level, role, status')
       
-      // If username, fetch the email from users table
-      if (!isEmail) {
-        console.log('Looking up username in database...')
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('email')
-          .eq('username', emailOrUsername)
-          .single()
-        
-        if (userError || !userData) {
-          console.error('Username lookup error:', userError)
-          setError('Invalid username or password')
-          setLoading(false)
-          return
-        }
-        
-        email = userData.email
-        console.log('Found email for username:', email)
+      if (isEmail) {
+        query = query.eq('email', emailOrUsername)
+      } else {
+        query = query.eq('username', emailOrUsername)
       }
-
-      // Sign in with Supabase - the new SSR package handles session management automatically
-      console.log('Attempting to sign in with email:', email)
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      })
-
-      if (signInError) {
-        console.error('Sign in error:', signInError)
-        
-        // Provide specific error messages
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError('Invalid email/username or password. Please check your credentials and try again.')
-        } else if (signInError.message.includes('Email not confirmed')) {
-          setError('Please confirm your email address before logging in.')
-        } else {
-          setError(signInError.message || 'Failed to sign in. Please try again.')
-        }
-        
+      
+      const { data: userData, error: userError } = await query.single()
+      
+      if (userError || !userData) {
+        console.error('User lookup error:', userError)
+        setError('Invalid username/email or password')
+        setLoading(false)
+        return
+      }
+      
+      // Check if user is active
+      if (userData.status?.toLowerCase() !== 'active') {
+        setError('Your account is not active. Please contact an administrator.')
+        setLoading(false)
+        return
+      }
+      
+      // Verify password (temporary - will be replaced by Better Auth)
+      // TODO: Better Auth will handle password verification properly
+      if (!userData.password_hash) {
+        // If no password_hash, the user was created with Supabase Auth
+        // They need to reset their password
+        setError('Please reset your password to continue. Your account needs to be migrated.')
+        setLoading(false)
+        return
+      }
+      
+      // Simple hash verification (temporary)
+      const passwordHash = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, hash: userData.password_hash })
+      }).then(r => r.json()).catch(() => ({ valid: false }))
+      
+      if (!passwordHash.valid) {
+        setError('Invalid username/email or password')
         setLoading(false)
         return
       }
 
-      if (!data.user) {
-        setError('Login failed. No user data returned.')
-        setLoading(false)
-        return
-      }
-
-      console.log('Login successful! User:', data.user.email)
+      console.log('Login successful! User:', userData.email)
+      
+      // Set a temporary session cookie (will be replaced by Better Auth)
+      // TODO: Replace with Better Auth session management
+      document.cookie = `pcn-dashboard.session_token=${userData.id}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
+      
+      // Store user info in localStorage for client-side access
+      localStorage.setItem('pcn-user', JSON.stringify({
+        id: userData.id,
+        email: userData.email,
+        username: userData.username,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        accessLevel: userData.access_level,
+        role: userData.role,
+      }))
       
       // Short delay to allow cookies to be set
       await new Promise(resolve => setTimeout(resolve, 300))
       
       console.log('Redirecting to dashboard...')
-      // Use router.push for client-side navigation
       router.push('/dashboard')
-      router.refresh() // Refresh to update middleware
+      router.refresh()
       
     } catch (err) {
       console.error('Login error:', err)
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       
-      // Provide user-friendly error messages
       if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
         setError('Network error. Please check your internet connection and try again.')
-      } else if (errorMessage.toLowerCase().includes('credentials')) {
-        setError('Invalid email/username or password')
       } else {
         setError('An unexpected error occurred. Please try again.')
       }

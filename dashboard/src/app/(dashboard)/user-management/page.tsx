@@ -1,13 +1,22 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client'
 
-import { Plus, MoreVertical, Eye, Trash2, Pencil } from 'lucide-react'
+import { Plus, MoreVertical, Eye, Trash2, Pencil, Shield } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import AddUserModal from './components/AddUserModal'
 import SuccessModal from './components/SuccessModal'
 import DeleteUserModal from './components/DeleteUserModal'
 import UserDetailsModal from './components/UserDetailsModal'
 import { supabase } from '@/lib/supabase-client'
+import { useRoleAccess } from '@/hooks/useRoleAccess'
+import { RouteProtection } from '@/components/auth/RouteProtection'
 import {
   Table,
   TableBody,
@@ -39,7 +48,9 @@ interface User {
   is_online?: boolean
 }
 
-export default function UserManagementPage() {
+function UserManagementContent() {
+  const router = useRouter()
+  const { isAdmin, isEditor, canAddUsers, canDeleteUsers, canEditUsers, isLoading: roleLoading } = useRoleAccess()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
@@ -106,14 +117,11 @@ export default function UserManagementPage() {
 
   const fetchCurrentUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('Current session:', session?.user?.id)
-      if (session) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_id', session.user.id)
-          .single()
+      // MIGRATION: Using localStorage instead of Supabase Auth
+      const storedUser = localStorage.getItem('pcn-user')
+      console.log('Stored user:', storedUser ? 'found' : 'not found')
+      if (storedUser) {
+        const userData = JSON.parse(storedUser)
         
         console.log('Current user data:', userData)
         if (userData) {
@@ -143,12 +151,13 @@ export default function UserManagementPage() {
       if (response.ok && data.users) {
         console.log('Users fetched successfully:', data.users.length, 'users')
         
-        // Get current session to identify logged-in user
-        const { data: { session } } = await supabase.auth.getSession()
+        // MIGRATION: Get current user from localStorage to identify logged-in user
+        const storedUser = localStorage.getItem('pcn-user')
+        const currentUserData = storedUser ? JSON.parse(storedUser) : null
         
         // Mark the current logged-in user as active
         const usersWithCurrentStatus = data.users.map((user: User) => {
-          if (session && user.auth_id === session.user.id) {
+          if (currentUserData && (user.auth_id === currentUserData.auth_id || user.id === currentUserData.id)) {
             return { ...user, is_online: true }
           }
           return user
@@ -214,8 +223,8 @@ export default function UserManagementPage() {
   }
 
   const handleEditUser = (userId: string) => {
-    // Check if current user is admin
-    if (!currentUser || currentUser.access_level?.toLowerCase() !== 'admin') {
+    // Check if current user has edit permission
+    if (!canEditUsers) {
       return
     }
     console.log('Edit user:', userId)
@@ -224,21 +233,28 @@ export default function UserManagementPage() {
   }
 
   const handleDeleteUser = async (userId: string) => {
-    // Check if current user is admin
-    if (!currentUser || currentUser.access_level?.toLowerCase() !== 'admin') {
+    // Check if current user has delete permission
+    if (!canDeleteUsers) {
+      console.log('User does not have delete permission')
       return
     }
 
     // Prevent self-deletion
-    if (currentUser.id === userId) {
+    if (currentUser && currentUser.id === userId) {
+      console.log('Cannot delete yourself')
       return
     }
 
     // Find the user to delete
     const user = users.find(u => u.id === userId)
     if (!user) {
+      console.log('User not found:', userId)
       return
     }
+
+    // Close the details modal if open
+    setShowUserDetailsModal(false)
+    setSelectedUserId(null)
 
     // Show delete confirmation modal
     setUserToDelete(user)
@@ -413,15 +429,26 @@ export default function UserManagementPage() {
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[18px] font-bold text-gray-900">User Management</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[18px] font-bold text-gray-900">User Management</h1>
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+              <Shield className="w-3 h-3" />
+              Admin Access
+            </span>
+          )}
+        </div>
         
-        <button 
-          onClick={() => setShowAddUserModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add User
-        </button>
+        {/* Only show Add User button for admins */}
+        {canAddUsers && (
+          <button 
+            onClick={() => setShowAddUserModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add User
+          </button>
+        )}
       </div>
 
       {/* Users Table */}
@@ -498,28 +525,26 @@ export default function UserManagementPage() {
                         <Eye className="w-4 h-4" />
                         View Detail
                       </button>
-                      {/* Only show edit and delete buttons for admins */}
-                      {currentUser && currentUser.access_level && currentUser.access_level.toLowerCase() === 'admin' && (
-                        <>
-                          <button 
-                            onClick={() => handleEditUser(user.id)}
-                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit User"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          {/* Prevent self-deletion */}
-                          {currentUser.id !== user.id && (
-                            <button 
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete User"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
+                      {/* Edit button - only for admins */}
+                      {canEditUsers && (
+                        <button 
+                          onClick={() => handleEditUser(user.id)}
+                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit User"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
                       )}
+                      {/* Delete button - only for admins and prevent self-deletion */}
+                      {canDeleteUsers && currentUser && currentUser.id !== user.id && (
+                          <button 
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -655,9 +680,20 @@ export default function UserManagementPage() {
         }}
         userId={selectedUserId}
         onUserUpdated={fetchUsers}
-        currentUserAccessLevel={currentUser?.access_level || ''}
         onDeleteUser={handleDeleteUser}
       />
     </div>
+  )
+}
+
+/**
+ * User Management Page
+ * Protected route - only accessible by admins
+ */
+export default function UserManagementPage() {
+  return (
+    <RouteProtection adminOnly>
+      <UserManagementContent />
+    </RouteProtection>
   )
 }

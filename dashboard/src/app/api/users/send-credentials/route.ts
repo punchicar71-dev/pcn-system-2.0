@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
@@ -127,6 +133,10 @@ export async function POST(request: Request) {
     if (!response.ok) {
       console.log('Supabase function not available, using alternative method')
       
+      // TODO: MIGRATION - Supabase Auth admin.inviteUserByEmail has been commented out
+      // This will be reimplemented with Better Auth in Step 2
+      // For now, the user account is created but no invite email is sent
+      /*
       // Alternative: Send a password reset email with custom text
       // This is a workaround using Supabase's built-in email system
       try {
@@ -162,6 +172,13 @@ export async function POST(request: Request) {
           { status: 200 }
         )
       }
+      */
+      
+      // MIGRATION: Return success without sending invite email
+      return NextResponse.json(
+        { warning: 'Email service temporarily unavailable during auth migration' },
+        { status: 200 }
+      )
     }
 
     const data = await response.json()

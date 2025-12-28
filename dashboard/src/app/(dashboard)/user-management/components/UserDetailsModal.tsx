@@ -1,15 +1,15 @@
 'use client'
 
-import { X, Upload, Lock } from 'lucide-react'
+import { X, Upload, Lock, Shield, Eye } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useRoleAccess } from '@/hooks/useRoleAccess'
 
 interface UserDetailsModalProps {
   isOpen: boolean
   onClose: () => void
   userId: string | null
   onUserUpdated: () => void
-  currentUserAccessLevel: string
   onDeleteUser?: (userId: string) => void
 }
 
@@ -35,7 +35,6 @@ export default function UserDetailsModal({
   onClose,
   userId,
   onUserUpdated,
-  currentUserAccessLevel,
   onDeleteUser
 }: UserDetailsModalProps) {
   const [user, setUser] = useState<UserDetails | null>(null)
@@ -45,8 +44,8 @@ export default function UserDetailsModal({
   const [error, setError] = useState('')
   const [profileImage, setProfileImage] = useState<string | null>(null)
 
-  // Check if current user is admin
-  const isAdmin = currentUserAccessLevel?.toLowerCase() === 'admin'
+  // Get role-based permissions from hook
+  const { isAdmin, isEditor, canEditUsers, canDeleteUsers } = useRoleAccess()
 
   // Form data
   const [formData, setFormData] = useState({
@@ -201,9 +200,12 @@ export default function UserDetailsModal({
   }
 
   const handleDelete = () => {
-    if (!userId || !onDeleteUser) return
+    if (!userId || !onDeleteUser) {
+      console.log('Cannot delete: userId or onDeleteUser missing')
+      return
+    }
+    // Call the delete handler from parent - it will handle closing the modal
     onDeleteUser(userId)
-    onClose()
   }
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -225,10 +227,18 @@ export default function UserDetailsModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-gray-900">User Details</h2>
-              {!isAdmin && (
-                <p className="text-sm text-gray-500 mt-1">View Only - Admin access required to edit</p>
+              {isAdmin ? (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                  <Shield className="w-3 h-3" />
+                  Full Access
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                  <Eye className="w-3 h-3" />
+                  View Only
+                </span>
               )}
             </div>
             <button
@@ -258,14 +268,14 @@ export default function UserDetailsModal({
                 </div>
               )}
 
-              {/* View-Only Info Banner for Non-Admins */}
-              {!isAdmin && !isEditing && (
+              {/* View-Only Info Banner for Editors */}
+              {isEditor && !isEditing && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
                   <Lock className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <h4 className="text-sm font-semibold text-blue-900 mb-1">View-Only Mode</h4>
                     <p className="text-sm text-blue-700">
-                      You are viewing user details in read-only mode. Only administrators can edit user information.
+                      You are viewing user details in read-only mode. Only administrators can edit or delete user accounts.
                     </p>
                   </div>
                 </div>
@@ -448,22 +458,23 @@ export default function UserDetailsModal({
                     >
                       Close
                     </button>
-                    {/* Only show Edit button for admins */}
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={handleDelete}
-                          className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-                        >
-                          Delete User
-                        </button>
-                        <button
-                          onClick={() => setIsEditing(true)}
-                          className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
-                        >
-                          Edit Details
-                        </button>
-                      </>
+                    {/* Delete button - only for admins with delete permission */}
+                    {canDeleteUsers && (
+                      <button
+                        onClick={handleDelete}
+                        className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                      >
+                        Delete User
+                      </button>
+                    )}
+                    {/* Edit button - only for admins with edit permission */}
+                    {canEditUsers && (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                      >
+                        Edit Details
+                      </button>
                     )}
                   </>
                 )}

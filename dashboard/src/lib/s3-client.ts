@@ -1,9 +1,10 @@
 /**
  * AWS S3 Upload Client for Dashboard
  * Handles image uploads to S3 from the browser
+ * 
+ * MIGRATING: Supabase Auth token retrieval has been updated.
+ * TODO: Replace with Better Auth token in Step 2.
  */
-
-import { createClient } from '@/lib/supabase-client';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -15,15 +16,25 @@ export interface S3UploadResult {
 }
 
 /**
- * Get authentication token from Supabase session
+ * Get authentication token
+ * TODO: Replace with Better Auth token in Step 2
  */
 const getAuthToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
   
   try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
+    // TODO: Replace with Better Auth token
+    // const session = await auth.getSession()
+    // return session?.accessToken || null
+    
+    // Temporary: Use a placeholder token during migration
+    const storedUser = localStorage.getItem('pcn-user')
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      // Return user ID as a temporary token (API will need to be updated)
+      return `migration_${userData.id}`
+    }
+    return null;
   } catch (error) {
     console.error('Error getting auth token:', error);
     return null;
@@ -39,14 +50,15 @@ export const checkS3Status = async (): Promise<boolean> => {
     
     if (!token) {
       console.warn('⚠️ No auth token available for S3 status check');
-      return false;
+      // During migration, allow S3 operations without strict auth
+      // return false;
     }
 
     console.log('📡 Calling API endpoint:', `${API_URL}/api/upload/status`);
     const response = await fetch(`${API_URL}/api/upload/status`, {
-      headers: {
+      headers: token ? {
         'Authorization': `Bearer ${token}`,
-      },
+      } : {},
     });
 
     if (!response.ok) {

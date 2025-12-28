@@ -1,25 +1,39 @@
+/**
+ * Reset Password API Route
+ * 
+ * MIGRATING: Supabase Auth password update has been removed.
+ * This route now updates the password_hash in the users table.
+ * Better Auth will handle proper password hashing in Step 2.
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
+import * as crypto from 'crypto'
 
-// Lazy initialize Supabase Admin Client
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+// Initialize Supabase Admin Client (for database operations only)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-  )
+  }
+)
+
+// Simple password hashing (temporary until Better Auth is integrated)
+// TODO: Replace with Better Auth password hashing
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex')
 }
 
 interface ResetTokenPayload {
   userId: string
   authId: string
-  mobileNumber: string
+  email?: string
+  mobileNumber?: string
   otpId: string
   type: string
 }
@@ -28,8 +42,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { token, newPassword } = body
-
-    const supabaseAdmin = getSupabaseAdmin()
 
     if (!token || !newPassword) {
       return NextResponse.json(
@@ -75,41 +87,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's auth ID from users table
-    let authId = decoded.authId
-    
-    // If authId is not in token (fallback), look it up from users table
-    if (!authId && decoded.userId) {
-      const { data: userData, error: userError } = await supabaseAdmin
-        .from('users')
-        .select('auth_id')
-        .eq('id', decoded.userId)
-        .single()
+    // Get user ID from token
+    const userId = decoded.userId
 
-      if (userError || !userData) {
-        return NextResponse.json(
-          { error: 'User not found' },
-          { status: 404 }
-        )
-      }
-      authId = userData.auth_id
-    }
-
-    if (!authId) {
+    if (!userId) {
       return NextResponse.json(
-        { error: 'Cannot determine user auth ID' },
+        { error: 'Cannot determine user ID' },
         { status: 400 }
       )
     }
 
-    // Update password using Supabase Admin API
-    const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
-      authId,
-      { password: newPassword }
-    )
+    // Update password in users table
+    // NOTE: Using simple hash temporarily. Better Auth will handle this properly.
+    const passwordHash = hashPassword(newPassword)
+    
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ 
+        password_hash: passwordHash,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
 
-    if (passwordError) {
-      console.error('Error updating password:', passwordError)
+    if (updateError) {
+      console.error('Error updating password:', updateError)
       return NextResponse.json(
         { error: 'Failed to update password' },
         { status: 500 }
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       .delete()
       .eq('id', decoded.otpId)
 
-    console.log('Password reset successfully for user:', decoded.userId)
+    console.log('Password reset successfully for user:', userId)
 
     return NextResponse.json({
       success: true,

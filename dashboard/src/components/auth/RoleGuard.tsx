@@ -2,13 +2,15 @@
 
 import { ReactNode } from 'react'
 import { useRoleAccess } from '@/hooks/useRoleAccess'
-import { UserRole } from '@/lib/rbac'
+import { UserRole, UserAction } from '@/lib/rbac'
 
 interface RoleGuardProps {
   /** Child components to render if user has permission */
   children: ReactNode
   /** Roles that are allowed to see this content */
-  allowedRoles: UserRole[]
+  allowedRoles?: UserRole[]
+  /** Specific action permission to check (alternative to allowedRoles) */
+  requiredAction?: UserAction
   /** Optional fallback content to show if user doesn't have permission */
   fallback?: ReactNode
   /** If true, shows a loading state while checking permissions */
@@ -21,26 +23,40 @@ interface RoleGuardProps {
  * 
  * @example
  * ```tsx
+ * // Using role restriction
  * <RoleGuard allowedRoles={['admin']}>
  *   <AdminOnlyButton />
+ * </RoleGuard>
+ * 
+ * // Using action permission
+ * <RoleGuard requiredAction="addUser">
+ *   <AddUserButton />
  * </RoleGuard>
  * ```
  */
 export function RoleGuard({ 
   children, 
-  allowedRoles, 
+  allowedRoles,
+  requiredAction,
   fallback = null,
   showLoading = false 
 }: RoleGuardProps) {
-  const { hasPermissionFor, isLoading } = useRoleAccess()
+  const { hasPermissionFor, canPerformUserAction, isLoading } = useRoleAccess()
 
   // Show loading state if requested
   if (isLoading && showLoading) {
     return <div className="animate-pulse bg-gray-200 rounded h-4 w-20"></div>
   }
 
-  // Check if user has permission
-  if (!hasPermissionFor(allowedRoles)) {
+  // Check permission based on action or roles
+  let hasPermission = true
+  if (requiredAction) {
+    hasPermission = canPerformUserAction(requiredAction)
+  } else if (allowedRoles) {
+    hasPermission = hasPermissionFor(allowedRoles)
+  }
+
+  if (!hasPermission) {
     return <>{fallback}</>
   }
 

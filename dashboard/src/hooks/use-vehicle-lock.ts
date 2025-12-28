@@ -1,3 +1,9 @@
+/**
+ * MIGRATING: Supabase Auth has been removed.
+ * This file will be updated to work with Better Auth in Step 2.
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -28,31 +34,24 @@ export function useVehicleLock(
   const hasShownToast = useRef(false);
 
   /**
-   * Get current user info from Supabase
+   * Get current user info from localStorage
+   * MIGRATION: Using localStorage instead of Supabase Auth
    */
   const getUserInfo = useCallback(async () => {
     try {
-      const { data: { session } } = await lockService.current['supabase'].auth.getSession();
-      if (!session) return null;
+      // MIGRATION: Using localStorage instead of Supabase Auth
+      const storedUser = localStorage.getItem('pcn-user');
+      if (!storedUser) return null;
 
-      // Try to get user info from users table
-      const { data: userData } = await lockService.current['supabase']
-        .from('users')
-        .select('id, first_name, last_name')
-        .eq('auth_id', session.user.id)
-        .single();
-
+      const userData = JSON.parse(storedUser);
       if (userData) {
         return {
-          id: session.user.id,
-          name: `${userData.first_name} ${userData.last_name}`.trim() || session.user.email || 'Unknown User'
+          id: userData.auth_id || userData.id, // Use auth_id for compatibility
+          name: `${userData.first_name} ${userData.last_name}`.trim() || userData.email || 'Unknown User'
         };
       }
 
-      return {
-        id: session.user.id,
-        name: session.user.email || 'Unknown User'
-      };
+      return null;
     } catch (error) {
       console.error('❌ Error getting user info:', error);
       return null;

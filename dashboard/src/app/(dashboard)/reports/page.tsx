@@ -1,16 +1,23 @@
 'use client'
 
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, Shield } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import SummaryReportsTab from '@/components/reports/SummaryReportsTab'
 import FinancialReportsTab from '@/components/reports/FinancialReportsTab'
 import SalesAgentsReportTab from '@/components/reports/SalesAgentsReportTab'
+import { RouteProtection } from '@/components/auth/RouteProtection'
 
-export default function ReportsPage() {
+function ReportsContent() {
   return (
     <div className="space-y-6 bg-slate-50 p-6 ">
-      {/* Header */}
-      
+      {/* Header with Admin Badge */}
+      <div className="flex items-center gap-3">
+        <h1 className="text-[18px] font-bold text-gray-900">Reports & Analytics</h1>
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+          <Shield className="w-3 h-3" />
+          Admin Only
+        </span>
+      </div>
 
       {/* Tabs */}
       <Tabs defaultValue="summary" className="w-full">
@@ -36,3 +43,14 @@ export default function ReportsPage() {
   )
 }
 
+/**
+ * Reports & Analytics Page
+ * Protected route - only accessible by admins
+ */
+export default function ReportsPage() {
+  return (
+    <RouteProtection adminOnly>
+      <ReportsContent />
+    </RouteProtection>
+  )
+}

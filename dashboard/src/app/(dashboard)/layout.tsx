@@ -1,9 +1,19 @@
 'use client'
 
+/**
+ * Dashboard Layout
+ * 
+ * MIGRATING: Supabase Auth session checks have been removed.
+ * This layout will be updated to work with Better Auth in Step 2.
+ * 
+ * Currently uses localStorage for user data during migration.
+ * TODO: Replace with Better Auth session in Step 2.
+ */
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -23,13 +33,14 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { useSessionHeartbeat } from '@/hooks/useSessionHeartbeat'
-import { createClient } from '@/lib/supabase-client'
+import { supabaseClient } from '@/lib/supabase-db'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import { Toaster } from '@/components/ui/toaster'
 import { UserProfileModal } from '@/components/profile/UserProfileModal'
 import { useRoleAccess } from '@/hooks/useRoleAccess'
 import { UserRole } from '@/lib/rbac'
+import { AccessDeniedBanner } from '@/components/auth/RouteProtection'
 
 // Navigation items with optional role restrictions
 // If allowedRoles is undefined, the item is accessible to all authenticated users
@@ -63,37 +74,46 @@ export default function DashboardLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const pathname = usePathname()
+  const router = useRouter()
 
   // Initialize session heartbeat to track user activity
   useSessionHeartbeat()
   
   // Get role-based access control utilities
-  const { hasPermissionFor } = useRoleAccess()
+  const { hasPermissionFor, shouldShowNavItem, isAdmin, isEditor } = useRoleAccess()
   
-  // Filter navigation items based on user's role
+  // Filter navigation items based on user's role using shouldShowNavItem
   const filteredNavigation = useMemo(() => {
-    return navigation.filter(item => hasPermissionFor(item.allowedRoles))
-  }, [hasPermissionFor])
+    return navigation.filter(item => shouldShowNavItem(item.href))
+  }, [shouldShowNavItem])
 
   // Fetch current user data and set greeting
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const supabase = createClient()
+        // TODO: Replace with Better Auth session check
+        // const session = await auth.getSession()
         
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          const { data: userData, error } = await supabase
+        // Temporary: Get user from localStorage during migration
+        const storedUser = localStorage.getItem('pcn-user')
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
+          
+          // Fetch full user data from database
+          const { data: fullUserData, error } = await supabaseClient
             .from('users')
             .select('*')
-            .eq('auth_id', session.user.id)
+            .eq('id', userData.id)
             .single()
           
-          if (userData && !error) {
-            setCurrentUser(userData)
+          if (fullUserData && !error) {
+            setCurrentUser(fullUserData)
           } else if (error) {
             console.error('Error fetching user data:', error)
           }
+        } else {
+          // No user data, redirect to login
+          router.push('/login')
         }
       } catch (error) {
         console.error('Error fetching current user:', error)
@@ -118,7 +138,7 @@ export default function DashboardLayout({
     // Update greeting every minute
     const interval = setInterval(updateGreeting, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [router])
 
   const handleLogout = async () => {
     try {
@@ -127,18 +147,16 @@ export default function DashboardLayout({
       
       // End the session before logging out
       try {
-        const supabase = createClient()
-        
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          console.log('Found active session, ending user session...')
+        const storedUser = localStorage.getItem('pcn-user')
+        if (storedUser) {
+          const userData = JSON.parse(storedUser)
+          console.log('Found user, ending user session...')
           const { endUserSession } = await import('@/lib/sessionManager')
-          const endSessionResult = await endUserSession(session.user.id)
+          const endSessionResult = await endUserSession(userData.id)
           console.log('End session result:', endSessionResult)
         }
       } catch (sessionError) {
         console.warn('Warning: Could not end user session, continuing with logout:', sessionError)
-        // Don't throw - continue with logout even if session end fails
       }
       
       console.log('Calling logout API...')
@@ -160,7 +178,7 @@ export default function DashboardLayout({
       localStorage.clear()
       sessionStorage.clear()
       
-      // Clear any cookies (redundant but ensures complete cleanup)
+      // Clear any cookies
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
@@ -168,12 +186,9 @@ export default function DashboardLayout({
       });
       
       console.log('Waiting for cleanup to complete...')
-      // Wait briefly for cookies to be cleared
       await new Promise(resolve => setTimeout(resolve, 300))
       
       console.log('Redirecting to login page...')
-      // Force full page reload and navigate to login page
-      // This ensures middleware re-evaluates the session
       window.location.replace('/')
     } catch (error) {
       console.error('Error logging out:', error)
@@ -428,6 +443,10 @@ export default function DashboardLayout({
 
         {/* Page content - Full height body */}
         <div className="min-h-[calc(100vh-50px)] w-auto ">
+          {/* Show access denied banner if user was redirected */}
+          <div className="px-6 ">
+            <AccessDeniedBanner />
+          </div>
           {children}
         </div>
       </main>

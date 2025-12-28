@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendSMS, formatPhoneNumber, isValidSriLankanPhone, smsTemplates } from '@/lib/sms-service'
+import { sendEmail, emailTemplates, isValidEmail } from '@/lib/email-service'
 
-// Lazy initialize Supabase Admin Client
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+// Initialize Supabase Admin Client
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-  )
-}
+  }
+)
 
 // Generate 6-digit OTP
 function generateOTP(): string {
@@ -24,74 +22,61 @@ function generateOTP(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { mobileNumber } = body
+    const { email } = body
 
-    if (!mobileNumber) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Mobile number is required' },
+        { error: 'Email address is required' },
         { status: 400 }
       )
     }
 
-    // Validate phone number
-    if (!isValidSriLankanPhone(mobileNumber)) {
+    // Validate email format
+    if (!isValidEmail(email)) {
       return NextResponse.json(
-        { error: 'Invalid mobile number format' },
+        { error: 'Invalid email address format' },
         { status: 400 }
       )
     }
 
-    const formattedPhone = formatPhoneNumber(mobileNumber)
+    const normalizedEmail = email.toLowerCase().trim()
 
-    // Try to find user with multiple phone number formats
-    // Format 1: 94710898944 (international without +)
-    // Format 2: +94710898944 (international with +)
-    // Format 3: 0710898944 (local format)
-    const phoneVariants = [
-      formattedPhone,                                    // 94710898944
-      `+${formattedPhone}`,                              // +94710898944
-      formattedPhone.startsWith('94') ? `0${formattedPhone.substring(2)}` : formattedPhone  // 0710898944
-    ]
+    console.log('Searching for user with email:', normalizedEmail)
 
-    console.log('Searching for user with mobile number variants:', phoneVariants)
-
-    const supabaseAdmin = getSupabaseAdmin()
-
-    // Check if user exists with any of these mobile number formats
+    // Check if user exists with this email
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
-      .select('id, first_name, mobile_number')
-      .in('mobile_number', phoneVariants)
+      .select('id, first_name, email')
+      .ilike('email', normalizedEmail)
       .single()
 
     if (userError || !userData) {
       console.error('User lookup error:', userError)
-      console.log('No user found with mobile number:', phoneVariants)
+      console.log('No user found with email:', normalizedEmail)
       return NextResponse.json(
-        { error: 'No account found with this mobile number' },
+        { error: 'No account found with this email address' },
         { status: 404 }
       )
     }
 
-    console.log('User found:', userData.id, 'with mobile:', userData.mobile_number)
+    console.log('User found:', userData.id, 'with email:', userData.email)
 
     // Generate OTP
     const otpCode = generateOTP()
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
 
-    // Clean up any existing OTPs for this mobile number (all variants)
+    // Clean up any existing OTPs for this email
     await supabaseAdmin
       .from('password_reset_otps')
       .delete()
-      .in('mobile_number', phoneVariants)
+      .ilike('email', normalizedEmail)
 
-    // Store OTP in database
-    // Note: We don't store user_id due to FK constraint issues between auth.users and public.users
-    // The user was already validated by looking up their mobile number above
+    // Store OTP in database (using email instead of mobile_number)
     const { error: otpError } = await supabaseAdmin
       .from('password_reset_otps')
       .insert({
-        mobile_number: formattedPhone,
+        email: normalizedEmail,
+        mobile_number: null, // Keep for backwards compatibility
         otp_code: otpCode,
         user_id: null, // Set to null to avoid FK constraint issues
         expires_at: expiresAt.toISOString(),
@@ -115,34 +100,61 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('OTP stored successfully:', {
-      mobile: formattedPhone,
+      email: normalizedEmail,
       expires: expiresAt.toISOString()
     })
 
-    // Try to send SMS first before returning success
-    // This ensures we don't report success if SMS fails completely
-    const message = smsTemplates.passwordReset(userData.first_name, otpCode)
-    console.log('Sending SMS with message:', message)
+    // Send OTP via email using Resend
+    const emailContent = emailTemplates.passwordResetOTP(userData.first_name, otpCode)
     
-    const smsResult = await sendSMS({
-      to: formattedPhone,
-      message
+    const emailResult = await sendEmail({
+      to: normalizedEmail,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text
     })
 
-    if (smsResult.status === 'error') {
-      console.error('Failed to send OTP SMS:', smsResult.message)
-      // Don't fail the request if SMS fails, OTP is still in database
+    if (emailResult.status === 'error') {
+      console.error('Failed to send OTP email:', emailResult.message)
+      console.error('Email error details:', emailResult.error)
+      
+      // Check if it's a Resend domain verification issue
+      const isDomainError = emailResult.message?.includes('verify a domain') || 
+                            emailResult.message?.includes('testing emails') ||
+                            emailResult.message?.includes('can only send')
+      
+      if (isDomainError) {
+        // In development/testing mode, still return success with OTP stored
+        // The user can check the server console for the OTP
+        console.log('='.repeat(50))
+        console.log('🔐 DEV MODE - OTP CODE:', otpCode)
+        console.log('📧 For email:', normalizedEmail)
+        console.log('⏰ Expires at:', expiresAt.toISOString())
+        console.log('='.repeat(50))
+        
+        // Return success so the user can proceed to OTP verification page
+        return NextResponse.json({
+          success: true,
+          message: 'OTP generated successfully. Check server console for OTP code (dev mode).',
+          expiresIn: 300,
+          // Include OTP in response for development testing
+          devMode: true,
+          devOtp: otpCode
+        })
+      }
+      
       return NextResponse.json({
-        success: true,
-        message: 'OTP generated but SMS delivery may have failed. Please try again or contact support.'
-      })
+        success: false,
+        error: 'Failed to send OTP email. Please try again.',
+        details: emailResult.message
+      }, { status: 500 })
     }
 
-    console.log('OTP sent successfully to:', formattedPhone)
+    console.log('OTP sent successfully to:', normalizedEmail)
 
     return NextResponse.json({
       success: true,
-      message: 'OTP sent successfully to your mobile number',
+      message: 'OTP sent successfully to your email address',
       expiresIn: 300 // 5 minutes in seconds
     })
 

@@ -24,6 +24,23 @@ export interface NavigationItem {
 // User access level from database (matches existing schema)
 export type AccessLevel = 'Admin' | 'Editor'
 
+// User action permissions
+export type UserAction = 'addUser' | 'deleteUser' | 'editUser' | 'viewUsers'
+
+// Permission map for user actions
+export const USER_ACTION_PERMISSIONS: Record<UserAction, UserRole[]> = {
+  addUser: ['admin'],      // Only admin can add users
+  deleteUser: ['admin'],   // Only admin can delete users
+  editUser: ['admin'],     // Only admin can edit users
+  viewUsers: ['admin'],    // Only admin can view user management
+}
+
+// Pages hidden from specific roles
+export const HIDDEN_PAGES: Record<UserRole, string[]> = {
+  admin: [],  // Admin can see all pages
+  editor: ['/reports', '/user-management'],  // Editor cannot see Reports & User Management
+}
+
 // Helper to convert database access level to role
 export function accessLevelToRole(accessLevel: string | null | undefined): UserRole {
   if (!accessLevel) return 'editor'
@@ -47,4 +64,21 @@ export function hasPermission(userRole: UserRole, allowedRoles?: UserRole[]): bo
   
   // Check if user's role is in allowed roles
   return allowedRoles.includes(userRole)
+}
+
+// Check if user can perform a specific action
+export function canPerformAction(userRole: UserRole, action: UserAction): boolean {
+  // Admin always has access
+  if (userRole === 'admin') return true
+  
+  // Check if user's role is allowed for this action
+  return USER_ACTION_PERMISSIONS[action].includes(userRole)
+}
+
+// Check if a page should be hidden for a role
+export function isPageHiddenForRole(pathname: string, userRole: UserRole): boolean {
+  const hiddenPages = HIDDEN_PAGES[userRole] || []
+  return hiddenPages.some(page => 
+    pathname === page || pathname.startsWith(`${page}/`)
+  )
 }
