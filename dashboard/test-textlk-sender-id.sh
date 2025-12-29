@@ -13,9 +13,20 @@ echo "🧪 Text.lk Sender ID Testing Script"
 echo "===================================="
 echo ""
 
-# Configuration
-API_TOKEN="2063|IdMDgC2QbCWqQvghUd1vFVToO5hcvius5M2jT8aL49de4169"
-TEST_PHONE="94710898944"  # Your phone number from the screenshot
+# Load from .env.local if exists
+if [ -f ".env.local" ]; then
+    export $(grep -v '^#' .env.local | xargs)
+fi
+
+# Configuration - Use environment variables (no hardcoded tokens)
+API_TOKEN="${TEXTLK_API_TOKEN}"
+TEST_PHONE="${TEST_PHONE_NUMBER:-94771234567}"
+
+if [ -z "$API_TOKEN" ]; then
+    echo -e "${RED}❌ TEXTLK_API_TOKEN environment variable is required${NC}"
+    echo "Please set it in your .env.local file"
+    exit 1
+fi
 
 # Prompt for Sender ID
 echo -e "${YELLOW}Enter the Sender ID you want to test:${NC}"

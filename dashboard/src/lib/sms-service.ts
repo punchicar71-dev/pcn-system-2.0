@@ -20,10 +20,14 @@ interface TextLKResponse {
  */
 export async function sendSMS({ to, message }: SMSParams): Promise<TextLKResponse> {
   try {
-    // Text.lk API configuration from environment or fallback to defaults
-    const apiToken = process.env.TEXTLK_API_TOKEN || '2063|IdMDgC2QbCWqQvghUd1vFVToO5hcvius5M2jT8aL49de4169'
+    // Text.lk API configuration from environment variables (required)
+    const apiToken = process.env.TEXTLK_API_TOKEN
     const apiUrl = process.env.TEXTLK_API_URL || 'https://app.text.lk/api/v3/sms/send'
     const senderId = process.env.TEXTLK_SENDER_ID // Optional: Set this after getting approval
+    
+    if (!apiToken) {
+      throw new Error('TEXTLK_API_TOKEN environment variable is not set. Please configure it in .env.local')
+    }
     
     console.log('Sending SMS to:', to)
     console.log('Message:', message)
@@ -135,19 +139,192 @@ export function isValidSriLankanPhone(phoneNumber: string): boolean {
 
 /**
  * SMS Templates for different scenarios
+ * 
+ * ⚠️ SECURITY: All SMS content MUST be defined here on the server.
+ * Never allow clients to pass arbitrary message content.
+ */
+export type SMSTemplateType = 
+  | 'welcome'
+  | 'password-reset'
+  | 'phone-verification'
+  | 'account-status'
+  | 'account-deleted'
+  | 'vehicle-acceptance'
+  | 'vehicle-sold'
+  | 'payment-reminder'
+  | 'custom-notification';
+
+interface WelcomeParams {
+  firstName: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+interface PasswordResetParams {
+  firstName: string;
+  otpCode: string;
+}
+
+interface PhoneVerificationParams {
+  otpCode: string;
+}
+
+interface AccountStatusParams {
+  firstName: string;
+  status: string;
+}
+
+interface AccountDeletedParams {
+  firstName: string;
+}
+
+interface VehicleAcceptanceParams {
+  sellerTitle?: string;
+  sellerFirstName: string;
+  vehicleNumber: string;
+  brand: string;
+  model: string;
+  year: number;
+}
+
+interface VehicleSoldParams {
+  sellerTitle?: string;
+  sellerFirstName: string;
+  vehicleNumber: string;
+  brand: string;
+  model: string;
+  year: number;
+  sellingPrice: number;
+}
+
+interface PaymentReminderParams {
+  firstName: string;
+  amount: number;
+  dueDate: string;
+}
+
+interface CustomNotificationParams {
+  firstName: string;
+  notificationType: 'info' | 'warning' | 'success';
+  briefMessage: string; // Limited to 50 chars, sanitized
+}
+
+export type SMSTemplateParams = 
+  | { type: 'welcome'; params: WelcomeParams }
+  | { type: 'password-reset'; params: PasswordResetParams }
+  | { type: 'phone-verification'; params: PhoneVerificationParams }
+  | { type: 'account-status'; params: AccountStatusParams }
+  | { type: 'account-deleted'; params: AccountDeletedParams }
+  | { type: 'vehicle-acceptance'; params: VehicleAcceptanceParams }
+  | { type: 'vehicle-sold'; params: VehicleSoldParams }
+  | { type: 'payment-reminder'; params: PaymentReminderParams }
+  | { type: 'custom-notification'; params: CustomNotificationParams };
+
+/**
+ * Sanitize user input to prevent SMS injection
+ */
+function sanitizeInput(input: string, maxLength: number = 100): string {
+  return input
+    .replace(/[\r\n]/g, ' ')  // Remove newlines
+    .replace(/[^\w\s@.,\-()]/g, '') // Only allow safe characters
+    .substring(0, maxLength)
+    .trim();
+}
+
+/**
+ * Build SMS message from template
+ * All templates are defined server-side for security
+ */
+export function buildSMSFromTemplate(template: SMSTemplateParams): string {
+  const COMPANY_NAME = 'Punchi Car Niwasa';
+  const CONTACT_NUMBERS = '0112 413 865 | 0117 275 275';
+  
+  switch (template.type) {
+    case 'welcome': {
+      const { firstName, username, email, password } = template.params;
+      return `Hi ${sanitizeInput(firstName, 30)},\n\nYour ${COMPANY_NAME} Management System account has been successfully created.\n\nUsername: ${sanitizeInput(username, 50)}\nEmail: ${sanitizeInput(email, 50)}\nPassword: ${sanitizeInput(password, 30)}\n\nPlease keep this information confidential.\n\n– ${COMPANY_NAME} Team`;
+    }
+    
+    case 'password-reset': {
+      const { firstName, otpCode } = template.params;
+      // OTP must be exactly 6 digits
+      const sanitizedOTP = otpCode.replace(/\D/g, '').substring(0, 6);
+      if (sanitizedOTP.length !== 6) {
+        throw new Error('Invalid OTP code format');
+      }
+      return `${COMPANY_NAME} - Password Reset\n\nDear ${sanitizeInput(firstName, 30)},\n\nYour OTP code is: ${sanitizedOTP}\n\nThis code expires in 5 minutes. Do not share it with anyone.\n\n– ${COMPANY_NAME} Support`;
+    }
+    
+    case 'phone-verification': {
+      const { otpCode } = template.params;
+      const sanitizedOTP = otpCode.replace(/\D/g, '').substring(0, 6);
+      if (sanitizedOTP.length !== 6) {
+        throw new Error('Invalid OTP code format');
+      }
+      return `${COMPANY_NAME}\n\nYour verification code is: ${sanitizedOTP}\n\nThis code expires in 5 minutes.\n\n– ${COMPANY_NAME}`;
+    }
+    
+    case 'account-status': {
+      const { firstName, status } = template.params;
+      const allowedStatuses = ['Active', 'Inactive', 'Suspended', 'Pending'];
+      const sanitizedStatus = allowedStatuses.includes(status) ? status : 'Updated';
+      return `Hi ${sanitizeInput(firstName, 30)},\n\nYour ${COMPANY_NAME} account status has been changed to: ${sanitizedStatus}.\n\nContact us at ${CONTACT_NUMBERS} for questions.\n\n– ${COMPANY_NAME}`;
+    }
+    
+    case 'account-deleted': {
+      const { firstName } = template.params;
+      return `Hi ${sanitizeInput(firstName, 30)},\n\nYour ${COMPANY_NAME} account has been deleted.\n\nIf this was not requested by you, please contact us immediately at ${CONTACT_NUMBERS}.\n\n– ${COMPANY_NAME}`;
+    }
+    
+    case 'vehicle-acceptance': {
+      const { sellerTitle, sellerFirstName, vehicleNumber, brand, model, year } = template.params;
+      const titlePart = sellerTitle ? `${sanitizeInput(sellerTitle, 10)} ` : '';
+      return `Dear ${titlePart}${sanitizeInput(sellerFirstName, 30)},\n\nYour vehicle ${sanitizeInput(vehicleNumber, 15)}: ${sanitizeInput(brand, 20)}, ${sanitizeInput(model, 20)}, ${year} has been successfully handed over to ${COMPANY_NAME} showroom for sale.\n\nWe will contact you once a buyer inspects your vehicle.\n\nContact: ${CONTACT_NUMBERS}\n\n– ${COMPANY_NAME}`;
+    }
+    
+    case 'vehicle-sold': {
+      const { sellerTitle, sellerFirstName, vehicleNumber, brand, model, year, sellingPrice } = template.params;
+      const titlePart = sellerTitle ? `${sanitizeInput(sellerTitle, 10)} ` : '';
+      const priceFormatted = Number(sellingPrice).toLocaleString('en-LK');
+      return `Dear ${titlePart}${sanitizeInput(sellerFirstName, 30)},\n\nYour vehicle deal has been confirmed!\n\n• Vehicle: ${sanitizeInput(brand, 20)}, ${sanitizeInput(model, 20)}, ${year}\n• Reg No: ${sanitizeInput(vehicleNumber, 15)}\n• Amount: Rs. ${priceFormatted}\n\nContact: ${CONTACT_NUMBERS}\n\n– ${COMPANY_NAME}`;
+    }
+    
+    case 'payment-reminder': {
+      const { firstName, amount, dueDate } = template.params;
+      const amountFormatted = Number(amount).toLocaleString('en-LK');
+      return `Hi ${sanitizeInput(firstName, 30)},\n\nReminder: Payment of Rs. ${amountFormatted} is due on ${sanitizeInput(dueDate, 15)}.\n\nContact: ${CONTACT_NUMBERS}\n\n– ${COMPANY_NAME}`;
+    }
+    
+    case 'custom-notification': {
+      const { firstName, notificationType, briefMessage } = template.params;
+      const typeEmoji = notificationType === 'success' ? '✓' : notificationType === 'warning' ? '!' : 'ℹ';
+      // Strictly limit custom messages
+      const sanitizedMessage = sanitizeInput(briefMessage, 50);
+      return `${COMPANY_NAME} [${typeEmoji}]\n\nHi ${sanitizeInput(firstName, 30)},\n\n${sanitizedMessage}\n\nContact: ${CONTACT_NUMBERS}`;
+    }
+    
+    default:
+      throw new Error('Unknown SMS template type');
+  }
+}
+
+/**
+ * Legacy templates for backward compatibility
+ * @deprecated Use buildSMSFromTemplate() instead
  */
 export const smsTemplates = {
   welcome: (firstName: string, username: string, email: string, password: string) => 
-    `Hi ${firstName},\n\nYour Punchi Car Niwasa Management System account has been successfully created.\nHere are your login details:\n\nUsername: ${username}\nEmail: ${email}\nPassword: ${password}\n\nPlease keep this information confidential and do not share it with anyone.\n\nThank you,\nPunchi Car Niwasa Team`,
+    buildSMSFromTemplate({ type: 'welcome', params: { firstName, username, email, password } }),
   
   passwordReset: (firstName: string, otpCode: string) =>
-    `Punchi Car Niwasa - Password Reset\nYour OTP code is ${otpCode}.\nPlease use this code to reset your password.\nThis code will expire in 5 minutes.\n\n– Punchi Car Niwasa Support`,
+    buildSMSFromTemplate({ type: 'password-reset', params: { firstName, otpCode } }),
   
   accountStatus: (firstName: string, status: string) =>
-    `Hi ${firstName}, your PCN System account status has been updated to: ${status}.`,
+    buildSMSFromTemplate({ type: 'account-status', params: { firstName, status } }),
     
   accountDeleted: (firstName: string) =>
-    `Hi ${firstName}, your PCN System account has been deleted. Contact admin for more info.`,
+    buildSMSFromTemplate({ type: 'account-deleted', params: { firstName } }),
     
   loginNotification: (firstName: string, time: string) =>
     `Hi ${firstName}, a new login to your PCN System account was detected at ${time}.`

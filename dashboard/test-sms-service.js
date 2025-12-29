@@ -7,12 +7,19 @@
  * 3. Check your phone for the SMS
  */
 
-// Text.lk API Configuration
+// Text.lk API Configuration - Load from environment variables
 // Based on Text.lk API documentation, use Bearer token format
-const TEXTLK_API_TOKEN = '2063|IdMDgC2QbCWqQvghUd1vFVToO5hcvius5M2jT8aL49de4169'
+require('dotenv').config({ path: '.env.local' })
+const TEXTLK_API_TOKEN = process.env.TEXTLK_API_TOKEN
+
+if (!TEXTLK_API_TOKEN) {
+  console.error('❌ TEXTLK_API_TOKEN environment variable is required')
+  console.error('Please set it in your .env.local file')
+  process.exit(1)
+}
 
 // **IMPORTANT**: Replace with your actual phone number
-const TEST_PHONE_NUMBER = '94771234567' // Format: 94XXXXXXXXX
+const TEST_PHONE_NUMBER = process.env.TEST_PHONE_NUMBER || '94771234567' // Format: 94XXXXXXXXX
 
 // Test message
 const TEST_MESSAGE = 'Test SMS from PCN System. If you receive this, SMS integration is working!'

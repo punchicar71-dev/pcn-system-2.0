@@ -18,10 +18,16 @@
 const https = require('https');
 const http = require('http');
 
-// Configuration
-const TEXTLK_API_TOKEN = process.env.TEXTLK_API_TOKEN || '2063|IdMDgC2QbCWqQvghUd1vFVToO5hcvius5M2jT8aL49de4169';
+// Configuration - Load from environment variables only (no hardcoded fallbacks)
+const TEXTLK_API_TOKEN = process.env.TEXTLK_API_TOKEN;
 const TEXTLK_API_URL = process.env.TEXTLK_API_URL || 'https://app.text.lk/api/v3/sms/send';
 const TEXTLK_SENDER_ID = process.env.TEXTLK_SENDER_ID || '';
+
+if (!TEXTLK_API_TOKEN) {
+  console.error('❌ TEXTLK_API_TOKEN environment variable is required');
+  console.error('Please set it in your .env.local file');
+  process.exit(1);
+}
 const LOCAL_API_URL = 'http://localhost:3000';
 
 // Test phone number - UPDATE THIS WITH YOUR REAL NUMBER FOR ACTUAL SENDING

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, emailTemplates, isValidEmail } from '@/lib/email-service'
+import { checkRateLimit, rateLimiters, getClientIP } from '@/lib/rate-limit'
 
 // Initialize Supabase Admin Client
 const supabaseAdmin = createClient(
@@ -40,6 +41,46 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim()
+
+    // Rate limiting: Check by email AND by IP
+    const emailRateLimit = checkRateLimit(normalizedEmail, rateLimiters.otp)
+    const ipRateLimit = checkRateLimit(getClientIP(request), rateLimiters.otp)
+    
+    if (!emailRateLimit.allowed) {
+      console.warn(`Rate limit exceeded for email: ${normalizedEmail}`)
+      return NextResponse.json(
+        { 
+          error: 'Too many OTP requests. Please wait before trying again.',
+          retryAfter: emailRateLimit.retryAfter 
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(emailRateLimit.retryAfter),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(emailRateLimit.resetInSeconds)
+          }
+        }
+      )
+    }
+    
+    if (!ipRateLimit.allowed) {
+      console.warn(`Rate limit exceeded for IP: ${getClientIP(request)}`)
+      return NextResponse.json(
+        { 
+          error: 'Too many requests from this location. Please wait before trying again.',
+          retryAfter: ipRateLimit.retryAfter 
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(ipRateLimit.retryAfter),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(ipRateLimit.resetInSeconds)
+          }
+        }
+      )
+    }
 
     console.log('Searching for user with email:', normalizedEmail)
 

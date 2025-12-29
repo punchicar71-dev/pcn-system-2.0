@@ -1,5 +1,9 @@
 /**
  * Vehicle SMS Notification Service
+ * 
+ * This is a CLIENT-SIDE service that calls the server API.
+ * All sensitive operations (API tokens, message building) happen on the server.
+ * This service only sends structured data to the backend proxy.
  */
 
 export interface SellerInfo {
@@ -35,6 +39,10 @@ export interface SMSNotificationResult {
   error?: string;
 }
 
+/**
+ * @deprecated Message building moved to server-side for security
+ * Kept for backward compatibility but not used in client calls
+ */
 export function buildVehicleAcceptanceSMSMessage(seller: SellerInfo, vehicle: VehicleInfo): string {
   const titlePart = seller.title ? `${seller.title} ` : '';
   const greeting = `Dear ${titlePart}${seller.firstName},`;
@@ -42,6 +50,10 @@ export function buildVehicleAcceptanceSMSMessage(seller: SellerInfo, vehicle: Ve
   return `${greeting}\n\nYour vehicle ${vehicle.vehicleNumber}: ${vehicle.brand}, ${vehicle.model}, ${vehicle.year} has been successfully handed over to the Punchi Car Niwasa showroom for sale. Once a buyer inspects your vehicle, we will contact you to finalize the best offer.\n\nFor any inquiries, please contact: 0112 413 865 | 0117 275 275.\n\nThank you for trusting Punchi Car Niwasa.`;
 }
 
+/**
+ * @deprecated Message building moved to server-side for security
+ * Kept for backward compatibility but not used in client calls
+ */
 export function buildSellVehicleConfirmationSMSMessage(
   seller: SellerInfo,
   vehicle: VehicleInfo,
@@ -90,7 +102,8 @@ export async function sendVehicleAcceptanceSMS(
       };
     }
 
-    const message = buildVehicleAcceptanceSMSMessage(seller, vehicle);
+    // NOTE: Message is now built SERVER-SIDE for security
+    // We only send structured data to the backend
 
     console.log('📱 Calling SMS API endpoint...');
     const response = await fetch('/api/vehicles/send-sms', {
@@ -102,7 +115,7 @@ export async function sendVehicleAcceptanceSMS(
         type: 'vehicle-acceptance',
         seller,
         vehicle,
-        message,
+        // message is built server-side, not passed from client
       }),
     });
 
@@ -183,7 +196,8 @@ export async function sendSellVehicleConfirmationSMS(
       };
     }
 
-    const message = buildSellVehicleConfirmationSMSMessage(seller, vehicle, sellingPrice);
+    // NOTE: Message is now built SERVER-SIDE for security
+    // We only send structured data to the backend
 
     console.log('📱 Calling SMS API endpoint for sell vehicle confirmation...');
     const response = await fetch('/api/vehicles/send-sms', {
@@ -196,7 +210,7 @@ export async function sendSellVehicleConfirmationSMS(
         seller,
         vehicle,
         sellingPrice,
-        message,
+        // message is built server-side, not passed from client
       }),
     });
 

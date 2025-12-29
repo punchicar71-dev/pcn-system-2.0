@@ -2,11 +2,16 @@
  * API Route: Send Vehicle SMS Notifications
  * POST /api/vehicles/send-sms
  * 
+ * ⚠️ PROTECTED ENDPOINT - Requires authentication
+ * ⚠️ RATE LIMITED - 10 SMS per hour per user
+ * 
  * This route handles sending SMS notifications for vehicle acceptance and confirmation.
  * It's needed because client-side code cannot access server-side environment variables.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, AuthenticatedUser } from '@/lib/api-auth';
+import { checkRateLimit, rateLimiters } from '@/lib/rate-limit';
 
 interface SendSMSRequest {
   type?: 'vehicle-acceptance' | 'sell-vehicle-confirmation';
@@ -215,10 +220,35 @@ async function sendSMSViaTextLK(
 /**
  * POST /api/vehicles/send-sms
  * Send SMS notification for vehicle acceptance or sell confirmation
+ * 
+ * ⚠️ PROTECTED - Requires authenticated user
+ * ⚠️ RATE LIMITED - 10 SMS per hour per user
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, user: AuthenticatedUser) => {
   try {
-    console.log('📨 SMS API: Received POST request');
+    console.log('📨 SMS API: Received POST request from user:', user.email);
+    
+    // Rate limiting: Check SMS quota per user
+    const rateLimit = checkRateLimit(user.id, rateLimiters.sms);
+    if (!rateLimit.allowed) {
+      console.warn(`📨 SMS rate limit exceeded for user: ${user.email}`);
+      return NextResponse.json(
+        { 
+          success: false,
+          message: 'SMS quota exceeded. Please wait before sending more messages.',
+          retryAfter: rateLimit.retryAfter,
+          remaining: 0
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.retryAfter),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(rateLimit.resetInSeconds)
+          }
+        }
+      );
+    }
     
     const body: SendSMSRequest = await request.json();
     console.log('📨 SMS API: Request body received');
@@ -366,4 +396,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
