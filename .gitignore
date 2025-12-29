@@ -55,6 +55,11 @@ next-env.d.ts
 **/supabase/.branches
 **/supabase/.temp
 
+# Database SQL files (run directly in Supabase, not needed in deployment)
+**/migrations/*.sql
+**/COMPLETE_DATABASE_SETUP.sql
+*.sql
+
 # Documentation (keep local only)
 README.md
 System Flow Docs/
