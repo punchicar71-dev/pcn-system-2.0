@@ -54,3 +54,7 @@ next-env.d.ts
 # Supabase
 **/supabase/.branches
 **/supabase/.temp
+
+# Documentation (keep local only)
+README.md
+System Flow Docs/
