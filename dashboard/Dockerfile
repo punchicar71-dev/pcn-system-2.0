@@ -45,13 +45,13 @@ RUN adduser --system --uid 1001 nextjs
 # Copy built application - standalone mode requires proper structure
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./dashboard/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 8080
+EXPOSE 3001
 
-ENV PORT 8080
+ENV PORT 3001
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "dashboard/server.js"]
+CMD ["node", "server.js"]
