@@ -244,11 +244,10 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
       ['Seller Mobile', vehicle?.seller?.mobile_number || 'N/A'],
       [''],
       ['Buyer Information', ''],
-      ['Buyer Name', `${saleData.customer_first_name} ${saleData.customer_last_name}`],
-      ['Buyer Address', saleData.customer_address && saleData.customer_city ? `${saleData.customer_address}, ${saleData.customer_city}` : saleData.customer_address || saleData.customer_city || 'N/A'],
+      ['Buyer Name', saleData.customer_name || 'N/A'],
+      ['Buyer Address', saleData.customer_address || 'N/A'],
       ['Buyer Mobile', saleData.customer_mobile || 'N/A'],
       ['Buyer NIC', saleData.customer_nic || 'N/A'],
-      ['Buyer Email', saleData.customer_email || 'N/A'],
     ];
 
     if (vehicle?.vehicle_options && vehicle.vehicle_options.length > 0) {
@@ -373,7 +372,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
                     <div className="flex items-start gap-3">
                       <span className="text-gray-600 min-w-[140px]">Selling Price</span>
                       <span className="text-gray-900">:</span>
-                      <span className="font-semibold text-gray-900">Rs. {saleData.selling_amount?.toLocaleString()}</span>
+                      <span className="font-semibold text-gray-900">Rs. {(saleData.sale_price ?? saleData.selling_amount ?? 0)?.toLocaleString()}</span>
                     </div>
                     <div className="flex items-start gap-3">
                       <span className="text-gray-600 min-w-[140px]">Payment Type</span>
@@ -386,20 +385,14 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
                       <span className="text-gray-600 min-w-[140px]">Showroom Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {(() => {
-                          console.log('🏢 Rendering Vehicle Showroom Agent:', saleData.third_party_agent);
-                          return saleData.third_party_agent || 'N/A';
-                        })()}
+                        {saleData.vehicle_showroom_agent?.name || saleData.third_party_agent || 'N/A'}
                       </span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Office Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {(() => {
-                          console.log('👔 Rendering Office Sales Agent:', saleData.sales_agents?.name);
-                          return saleData.sales_agents?.name || 'N/A';
-                        })()}
+                        {saleData.sales_agents?.name || 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -408,7 +401,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
                     <div className="flex items-start gap-3">
                       <span className="text-gray-600 min-w-[140px]">Customer Price</span>
                       <span className="text-gray-900">:</span>
-                      <span className="font-semibold text-gray-900">Rs. {saleData.selling_amount?.toLocaleString()}</span>
+                      <span className="font-semibold text-gray-900">Rs. {(saleData.sale_price ?? saleData.selling_amount ?? 0)?.toLocaleString()}</span>
                     </div>
                     <div className="flex items-start gap-3">
                       <span className="text-gray-600 min-w-[140px]">Down Payment</span>
@@ -472,7 +465,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
                         <p className="text-gray-600 min-w-[75px]">Name</p>
                         <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
-                          {saleData.customer_first_name} {saleData.customer_last_name}
+                          {saleData.customer_title ? `${saleData.customer_title} ` : ''}{saleData.customer_name || 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -482,9 +475,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
                         <p className="text-gray-600 min-w-[75px]">Address</p>
                         <span className="text-gray-900">:</span>
                         <p className="font-medium text-gray-900">
-                          {saleData.customer_address && saleData.customer_city
-                            ? `${saleData.customer_address}, ${saleData.customer_city}`
-                            : saleData.customer_address || saleData.customer_city || 'N/A'}
+                          {saleData.customer_address || 'N/A'}
                         </p>
                       </div>
                     </div>

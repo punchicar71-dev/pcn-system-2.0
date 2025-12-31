@@ -70,8 +70,9 @@ export default function PrintDocumentModal({
         }
       }
 
-      // Fetch PCN advance amount from price categories based on selling amount
-      if (sale?.selling_amount) {
+      // Fetch PCN advance amount from price categories based on sale price
+      const sellingPrice = sale?.sale_price ?? sale?.selling_amount ?? 0;
+      if (sellingPrice) {
         const { data: priceCategories } = await supabase
           .from('price_categories')
           .select('*')
@@ -82,8 +83,8 @@ export default function PrintDocumentModal({
           // Find the matching price category
           const matchingCategory = priceCategories.find(
             (cat: any) => 
-              sale.selling_amount >= cat.min_price && 
-              sale.selling_amount <= cat.max_price
+              sellingPrice >= cat.min_price && 
+              sellingPrice <= cat.max_price
           );
 
           if (matchingCategory) {
@@ -91,7 +92,7 @@ export default function PrintDocumentModal({
             console.log('💰 PCN Advance Amount:', matchingCategory.pcn_advance_amount);
             console.log('📊 Price Category:', matchingCategory.name);
           } else {
-            console.log('⚠️ No matching price category found for selling amount:', sale.selling_amount);
+            console.log('⚠️ No matching price category found for selling price:', sellingPrice);
             sale.pcn_advance_amount = 0;
           }
         }
@@ -176,11 +177,11 @@ export default function PrintDocumentModal({
         
         // Customer name with title
         const customerTitle = saleData.customer_title || ''; // Mr, Miss, Mrs, Dr
-        const customerFullName = `${saleData.customer_first_name} ${saleData.customer_last_name}`.toUpperCase();
+        const customerFullName = (saleData.customer_name || '').toUpperCase();
         const customerName = customerTitle ? `${customerTitle} ${customerFullName}` : customerFullName;
         
-        const customerAddress = `${saleData.customer_address}, ${saleData.customer_city}`.toUpperCase();
-        const sellingAmount = `Rs. ${saleData.selling_amount?.toLocaleString() || '0'}`;
+        const customerAddress = (saleData.customer_address || '').toUpperCase();
+        const sellingAmount = `Rs. ${(saleData.sale_price ?? saleData.selling_amount ?? 0)?.toLocaleString() || '0'}`;
         const advanceAmount = `Rs. ${saleData.advance_amount?.toLocaleString() || '0'}`;
         const pcnAdvanceAmount = saleData.pcn_advance_amount 
           ? `Rs. ${saleData.pcn_advance_amount.toLocaleString()}` 
@@ -319,7 +320,7 @@ export default function PrintDocumentModal({
           // Seller NIC
           drawText(sellerNIC, 580, 2360);
           // To Pay Amount (Balance)
-          const balance = (saleData.selling_amount || 0) - (saleData.advance_amount || 0);
+          const balance = (saleData.sale_price ?? saleData.selling_amount ?? 0) - (saleData.advance_amount || 0);
           drawText(`Rs. ${balance.toLocaleString()}`, 1200, 1515);
           // Customer NIC
           drawText(customerNIC, 580, 2840);
@@ -339,7 +340,7 @@ export default function PrintDocumentModal({
           // Advance Amount
           drawText(advanceAmount, 330, 1245);
           // To Pay Amount (Balance)
-          const balanceDealer = (saleData.selling_amount || 0) - (saleData.advance_amount || 0);
+          const balanceDealer = (saleData.sale_price ?? saleData.selling_amount ?? 0) - (saleData.advance_amount || 0);
           drawText(`Rs. ${balanceDealer.toLocaleString()}`, 1840, 1245);
           // Finance Company
           console.log('🏦 Drawing Finance Company (Dealer):', financeCompany);

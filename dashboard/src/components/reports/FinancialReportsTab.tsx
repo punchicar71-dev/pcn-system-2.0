@@ -78,7 +78,7 @@ export default function FinancialReportsTab() {
           brand_name,
           model_name,
           manufacture_year,
-          selling_amount,
+          selling_price,
           advance_amount,
           payment_type,
           updated_at,

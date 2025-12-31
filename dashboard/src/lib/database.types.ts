@@ -231,17 +231,15 @@ export interface PendingVehicleSale {
   brand_name?: string
   model_name?: string
   manufacture_year?: number
+  body_type?: string
   customer_title?: string
-  customer_first_name: string
-  customer_last_name: string
+  customer_name: string // Combined customer name (database column)
   customer_address?: string
-  customer_city?: string
   customer_nic?: string
-  customer_mobile: string
-  customer_landphone?: string
-  customer_email?: string
-  selling_amount: number
+  customer_mobile?: string
+  selling_amount: number // Database column is selling_amount
   advance_amount?: number
+  balance_amount?: number
   payment_type: 'Cash' | 'Leasing' | 'Bank Transfer' | 'Check'
   leasing_company_id?: string
   sales_agent_id?: string
@@ -256,14 +254,10 @@ export interface SoldVehicle {
   id: string
   pending_sale_id: string
   vehicle_id: string
-  customer_first_name: string
-  customer_last_name: string
+  customer_name: string
   customer_address?: string
-  customer_city?: string
   customer_nic?: string
-  customer_mobile: string
-  customer_landphone?: string
-  customer_email?: string
+  customer_mobile?: string
   selling_amount: number
   advance_amount?: number
   payment_type: 'Cash' | 'Leasing' | 'Bank Transfer' | 'Check'
@@ -282,12 +276,11 @@ export interface SalesTransactionView {
   model_name: string
   manufacture_year: number
   customer_name: string
-  customer_mobile: string
+  customer_mobile?: string
   selling_amount: number
   advance_amount?: number
   payment_type: string
   sales_agent_name?: string
-  third_party_agent?: string
   status: string
   created_at: string
 }

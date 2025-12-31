@@ -83,8 +83,8 @@ export default function SoldOutVehiclesTable({
         manufacture_year: sale.manufacture_year || sale.vehicles?.manufacture_year || 'N/A',
         payment_type: sale.payment_type,
         sales_agent_name: sale.sales_agents?.name || sale.third_party_agent || 'N/A',
-        customer_name: `${sale.customer_first_name} ${sale.customer_last_name}`,
-        selling_amount: sale.selling_amount,
+        customer_name: sale.customer_name || 'N/A',
+        selling_amount: sale.sale_price ?? sale.selling_amount ?? 0,
         sold_date: sale.updated_at, // When status changed to 'sold'
         created_at: sale.created_at,
       })) || [];

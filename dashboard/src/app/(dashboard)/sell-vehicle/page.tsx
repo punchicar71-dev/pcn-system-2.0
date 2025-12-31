@@ -97,23 +97,26 @@ export default function SellVehiclePage() {
       }
       
       // Build sale data - snapshot fields are optional (require migration to be applied)
+      // Combine first and last name into customer_name (required by database)
+      const customerName = `${customerData.firstName} ${customerData.lastName}`.trim();
+      
+      // Ensure sale_price is always a valid number
+      let salePrice = parseFloat(sellingData.sellingAmount);
+      if (isNaN(salePrice) || !isFinite(salePrice)) salePrice = 0;
+
       const saleData: Record<string, any> = {
         vehicle_id: sellingData.selectedVehicle?.id,
         customer_title: customerData.title || 'Mr.',
-        customer_first_name: customerData.firstName,
-        customer_last_name: customerData.lastName,
+        customer_name: customerName, // Database requires single customer_name field
         customer_address: customerData.address || null,
-        customer_city: customerData.city || null,
         customer_nic: customerData.nicNumber || null,
-        customer_mobile: customerData.mobileNumber,
-        customer_landphone: customerData.landPhoneNumber || null,
-        customer_email: customerData.emailAddress || null,
-        selling_amount: parseFloat(sellingData.sellingAmount),
+        customer_mobile: customerData.mobileNumber || null,
+        sale_price: salePrice, // Always a valid number
         advance_amount: sellingData.advanceAmount ? parseFloat(sellingData.advanceAmount) : 0,
         payment_type: sellingData.paymentType,
         leasing_company_id: sellingData.leasingCompany || null,
         sales_agent_id: sellingData.inHouseSalesAgent || null,
-        third_party_agent: showroomAgentName || null,
+        third_party_agent: showroomAgentName || '',
         status: 'pending',
       };
       

@@ -167,11 +167,10 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
       ['Seller Mobile', vehicle?.seller?.mobile_number || 'N/A'],
       [''],
       ['Buyer Information', ''],
-      ['Buyer Name', `${saleData.customer_first_name} ${saleData.customer_last_name}`],
-      ['Buyer Address', saleData.customer_address && saleData.customer_city ? `${saleData.customer_address}, ${saleData.customer_city}` : saleData.customer_address || saleData.customer_city || 'N/A'],
+      ['Buyer Name', saleData.customer_name || 'N/A'],
+      ['Buyer Address', saleData.customer_address || 'N/A'],
       ['Buyer Mobile', saleData.customer_mobile || 'N/A'],
       ['Buyer NIC', saleData.customer_nic || 'N/A'],
-      ['Buyer Email', saleData.customer_email || 'N/A'],
     ];
 
     if (vehicle?.vehicle_options && vehicle.vehicle_options.length > 0) {
@@ -250,7 +249,9 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                     <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Selling Price</span>
                       <span className="text-gray-900">:</span>
-                      <span className="font-semibold text-gray-900">Rs. {saleData.selling_amount?.toLocaleString()}</span>
+                      <span className="font-semibold text-gray-900">Rs. {(
+                        saleData.sale_price ?? saleData.selling_price ?? saleData.selling_amount ?? ''
+                      )?.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Payment Type</span>
@@ -263,10 +264,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                       <span className="text-gray-600 min-w-[140px]">Vehicle Showroom Agent</span>
                       <span className="text-gray-900">:</span>
                       <span className="font-semibold text-gray-900">
-                        {(() => {
-                          console.log('🏢 Rendering Vehicle Showroom Agent:', saleData.third_party_agent);
-                          return saleData.third_party_agent || 'N/A';
-                        })()}
+                        {saleData.vehicle_showroom_agent?.name || saleData.third_party_agent || ''}
                       </span>
                     </div>
                   </div>
@@ -274,7 +272,9 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                     <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Customer Price</span>
                       <span className="text-gray-900">:</span>
-                      <span className="font-semibold text-gray-900">Rs. {saleData.selling_amount?.toLocaleString()}</span>
+                      <span className="font-semibold text-gray-900">Rs. {(
+                        saleData.sale_price ?? saleData.selling_price ?? saleData.selling_amount ?? ''
+                      )?.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-gray-600 min-w-[140px]">Down Payment</span>
@@ -344,7 +344,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                       <div>
                         <p className="text-sm text-gray-600">Name</p>
                         <p className="font-medium text-gray-900">
-                          {saleData.customer_first_name} {saleData.customer_last_name}
+                          {saleData.customer_title ? `${saleData.customer_title} ` : ''}{saleData.customer_name || 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -353,9 +353,7 @@ export default function ViewDetailModal({ isOpen, onClose, saleId }: ViewDetailM
                       <div>
                         <p className="text-sm text-gray-600">Address</p>
                         <p className="font-medium text-gray-900">
-                          {saleData.customer_address && saleData.customer_city
-                            ? `${saleData.customer_address}, ${saleData.customer_city}`
-                            : saleData.customer_address || saleData.customer_city || 'N/A'}
+                          {saleData.customer_address || 'N/A'}
                         </p>
                       </div>
                     </div>

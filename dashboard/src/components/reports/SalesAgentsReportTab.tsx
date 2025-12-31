@@ -165,7 +165,7 @@ export default function SalesAgentsReportTab() {
             brand_name: sale.brand_name || vehicle?.vehicle_brands?.name || 'Unknown',
             model_name: sale.model_name || vehicle?.vehicle_models?.name || 'Unknown',
             manufacture_year: sale.manufacture_year || vehicle?.manufacture_year || 0,
-            selling_amount: sale.selling_amount,
+            selling_amount: sale.selling_amount || 0,
             payment_type: sale.payment_type,
             office_sales_agent: officeSalesAgent,
             showroom_agent: showroomAgent,
