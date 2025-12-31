@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { VehicleWithDetails, VehicleCardData } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 // Helper function to transform database vehicle to display format
 function transformToVehicleCard(vehicle: any): VehicleCardData {
