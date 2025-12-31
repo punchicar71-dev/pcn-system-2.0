@@ -35,7 +35,9 @@ export default function ContactPage() {
     const fetchLatestVehicles = async () => {
       try {
         setIsLoadingVehicles(true);
-        const response = await fetch('/api/vehicles?limit=3&sort=newest');
+        const response = await fetch('/api/vehicles?limit=3&sort=newest', {
+          cache: 'no-store',
+        });
         if (response.ok) {
           const data = await response.json();
           setLatestVehicles(data.vehicles || []);

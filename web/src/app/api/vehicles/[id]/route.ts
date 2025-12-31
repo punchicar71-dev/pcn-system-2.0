@@ -19,7 +19,7 @@ export async function GET(
 
     const vehicleId = params.id
 
-    // Fetch vehicle with all related data
+    // Fetch vehicle with all related data - only show vehicles with "In Sale" status
     const { data: vehicle, error } = await supabase
       .from('vehicles')
       .select(`
@@ -72,13 +72,14 @@ export async function GET(
         )
       `)
       .eq('id', vehicleId)
+      .eq('status', 'In Sale')
       .single()
 
     if (error) {
       console.error('Error fetching vehicle:', error)
       if (error.code === 'PGRST116') {
         return NextResponse.json(
-          { error: 'Vehicle not found' },
+          { error: 'Vehicle not found or no longer available' },
           { status: 404 }
         )
       }
@@ -90,7 +91,7 @@ export async function GET(
 
     if (!vehicle) {
       return NextResponse.json(
-        { error: 'Vehicle not found' },
+        { error: 'Vehicle not found or no longer available' },
         { status: 404 }
       )
     }
@@ -154,13 +155,19 @@ export async function GET(
       seller: vehicle.sellers?.[0] || null
     }
 
-    return NextResponse.json(transformedVehicle)
+    return NextResponse.json(transformedVehicle, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    })
 
   } catch (error) {
     console.error('API Error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 }

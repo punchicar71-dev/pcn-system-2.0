@@ -74,8 +74,8 @@ export default function VehicleImageUploadModal({
 
   const checkS3Configuration = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-      const response = await fetch(`${API_URL}/api/upload/status`)
+      // Use Next.js API route as proxy to avoid CORS issues
+      const response = await fetch('/api/upload/status')
       const data = await response.json()
       console.log('🔍 S3 Configuration Status:', data)
       setS3Status({ configured: data.s3Configured, checked: true })

@@ -20,10 +20,16 @@ const app: Application = express();
 const PORT = Number(process.env.PORT) || 4000;
 
 // Middleware
-app.use(helmet());
+// Configure helmet to allow cross-origin requests
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+}));
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || '*',
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(morgan('dev'));
 app.use(express.json());

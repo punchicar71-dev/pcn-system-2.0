@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     const pathname = url.pathname;
 
     // Get the API server URL from environment variables
-    const apiServerUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Use API_SERVER_URL for server-side calls (Docker internal network)
+    const apiServerUrl = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     
     // Get auth token from request header
     let authToken = request.headers.get('authorization');

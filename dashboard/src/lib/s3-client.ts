@@ -1,12 +1,8 @@
 /**
  * AWS S3 Upload Client for Dashboard
  * Handles image uploads to S3 from the browser
- * 
- * MIGRATING: Supabase Auth token retrieval has been updated.
- * TODO: Replace with Better Auth token in Step 2.
+ * Uses Next.js API routes as proxy to avoid CORS issues
  */
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export interface S3UploadResult {
   success: boolean;
@@ -17,21 +13,15 @@ export interface S3UploadResult {
 
 /**
  * Get authentication token
- * TODO: Replace with Better Auth token in Step 2
  */
 const getAuthToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
   
   try {
-    // TODO: Replace with Better Auth token
-    // const session = await auth.getSession()
-    // return session?.accessToken || null
-    
-    // Temporary: Use a placeholder token during migration
+    // Use localStorage user data for auth
     const storedUser = localStorage.getItem('pcn-user')
     if (storedUser) {
       const userData = JSON.parse(storedUser)
-      // Return user ID as a temporary token (API will need to be updated)
       return `migration_${userData.id}`
     }
     return null;
@@ -43,23 +33,12 @@ const getAuthToken = async (): Promise<string | null> => {
 
 /**
  * Check if S3 is configured on the server
+ * Uses Next.js API route as proxy
  */
 export const checkS3Status = async (): Promise<boolean> => {
   try {
-    const token = await getAuthToken();
-    
-    if (!token) {
-      console.warn('⚠️ No auth token available for S3 status check');
-      // During migration, allow S3 operations without strict auth
-      // return false;
-    }
-
-    console.log('📡 Calling API endpoint:', `${API_URL}/api/upload/status`);
-    const response = await fetch(`${API_URL}/api/upload/status`, {
-      headers: token ? {
-        'Authorization': `Bearer ${token}`,
-      } : {},
-    });
+    // Use Next.js API route proxy to avoid CORS issues
+    const response = await fetch('/api/upload/status');
 
     if (!response.ok) {
       console.error('❌ S3 status check failed with status:', response.status);
@@ -77,7 +56,7 @@ export const checkS3Status = async (): Promise<boolean> => {
 
 /**
  * Upload image directly to S3 using presigned URL (Recommended - Faster)
- * File goes directly from browser to S3, bypassing the server
+ * Uses Next.js API route as proxy to get presigned URL, then uploads directly to S3
  */
 export const uploadToS3WithPresignedUrl = async (
   file: File,
@@ -96,10 +75,10 @@ export const uploadToS3WithPresignedUrl = async (
     }
 
     console.log('✅ Auth token obtained');
-    console.log('📡 Requesting presigned URL from:', `${API_URL}/api/upload/presigned-url`);
+    console.log('📡 Requesting presigned URL via Next.js proxy');
 
-    // Step 1: Get presigned URL from server
-    const presignedResponse = await fetch(`${API_URL}/api/upload/presigned-url`, {
+    // Step 1: Get presigned URL via Next.js API route (proxy)
+    const presignedResponse = await fetch('/api/upload/presigned-url', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -177,7 +156,7 @@ export const uploadToS3WithPresignedUrl = async (
 
 /**
  * Upload image via server (Alternative method)
- * File goes through your server first, then to S3
+ * Uses Next.js API route as proxy
  */
 export const uploadToS3ViaServer = async (
   file: File,
@@ -198,7 +177,8 @@ export const uploadToS3ViaServer = async (
     formData.append('vehicleId', vehicleId);
     formData.append('imageType', imageType);
 
-    const response = await fetch(`${API_URL}/api/upload/upload`, {
+    // Use Next.js API route as proxy
+    const response = await fetch('/api/upload', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -251,13 +231,15 @@ export const uploadMultipleToS3 = async (
 
 /**
  * Delete image from S3
+ * Uses Next.js API route as proxy
  */
 export const deleteFromS3 = async (key: string): Promise<boolean> => {
   try {
     const token = await getAuthToken();
     if (!token) return false;
 
-    const response = await fetch(`${API_URL}/api/upload/delete`, {
+    // Use Next.js API route as proxy
+    const response = await fetch('/api/upload/delete', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -276,17 +258,21 @@ export const deleteFromS3 = async (key: string): Promise<boolean> => {
 
 /**
  * Delete all images for a vehicle
+ * Uses Next.js API route as proxy
  */
-export const deleteVehicleImagesFromS3 = async (vehicleId: string): Promise<boolean> => {
+export const deleteVehicleImagesFromS3 = async (vehicleId: string, s3Keys?: string[]): Promise<boolean> => {
   try {
     const token = await getAuthToken();
     if (!token) return false;
 
-    const response = await fetch(`${API_URL}/api/upload/delete-vehicle/${vehicleId}`, {
+    // Use Next.js API route as proxy
+    const response = await fetch(`/api/upload/delete-vehicle/${vehicleId}`, {
       method: 'DELETE',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
+      body: JSON.stringify({ s3Keys: s3Keys || [] }),
     });
 
     const data = await response.json();
@@ -299,6 +285,7 @@ export const deleteVehicleImagesFromS3 = async (vehicleId: string): Promise<bool
 
 /**
  * List all images for a vehicle
+ * Uses Next.js API route as proxy
  */
 export const listVehicleImages = async (
   vehicleId: string,
@@ -308,12 +295,12 @@ export const listVehicleImages = async (
     const token = await getAuthToken();
     if (!token) return [];
 
-    const url = new URL(`${API_URL}/api/upload/list/${vehicleId}`);
+    let url = `/api/upload/list/${vehicleId}`;
     if (imageType) {
-      url.searchParams.append('imageType', imageType);
+      url += `?imageType=${imageType}`;
     }
 
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

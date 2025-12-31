@@ -99,7 +99,14 @@ export default function VehicleDetailPage() {
     const fetchVehicle = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        // Add cache-busting timestamp to prevent stale data
+        const response = await fetch(`/api/vehicles/${vehicleId}?_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
         
         if (!response.ok) {
           throw new Error('Failed to fetch vehicle');
@@ -126,7 +133,13 @@ export default function VehicleDetailPage() {
       
       try {
         // Fetch vehicles from the same brand, get 4 to ensure we have 3 after filtering current
-        const response = await fetch(`/api/vehicles?brand=${vehicle.brand.id}&limit=6`);
+        const response = await fetch(`/api/vehicles?brand=${vehicle.brand.id}&limit=6&_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
         
         if (response.ok) {
           const data = await response.json();

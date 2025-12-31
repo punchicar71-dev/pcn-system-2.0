@@ -51,7 +51,13 @@ export async function GET(request: NextRequest) {
         a.name.localeCompare(b.name)
       )
 
-      return NextResponse.json(countries || [])
+      return NextResponse.json(countries || [], {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      })
     } else {
       // Return all countries
       const { data: countries, error } = await supabase
@@ -67,14 +73,20 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      return NextResponse.json(countries || [])
+      return NextResponse.json(countries || [], {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      })
     }
 
   } catch (error) {
     console.error('API Error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 }

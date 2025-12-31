@@ -31,10 +31,9 @@ export const s3Client = new S3Client({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
   },
-  requestHandler: {
-    requestTimeout: 10000, // 10 second timeout for requests
-  },
-  maxAttempts: 2, // Reduce retry attempts for faster failure
+  // Disable automatic checksum for browser uploads compatibility
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 export const S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || '';

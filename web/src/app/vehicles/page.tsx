@@ -133,7 +133,16 @@ export default function VehiclesPage() {
       if (minPrice) params.append('minPrice', minPrice);
       if (maxPrice) params.append('maxPrice', maxPrice);
       
-      const response = await fetch(`/api/vehicles?${params.toString()}`);
+      // Add cache-busting timestamp
+      params.append('_t', Date.now().toString());
+      
+      const response = await fetch(`/api/vehicles?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch vehicles');
@@ -175,7 +184,9 @@ export default function VehiclesPage() {
   // Fetch brands for filter dropdown
   const fetchBrands = async () => {
     try {
-      const response = await fetch('/api/brands?inventoryOnly=true');
+      const response = await fetch('/api/brands?inventoryOnly=true', {
+        cache: 'no-store',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch brands');
       }
@@ -190,7 +201,9 @@ export default function VehiclesPage() {
   // Fetch countries for filter dropdown
   const fetchCountries = async () => {
     try {
-      const response = await fetch('/api/countries?inventoryOnly=true');
+      const response = await fetch('/api/countries?inventoryOnly=true', {
+        cache: 'no-store',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch countries');
       }

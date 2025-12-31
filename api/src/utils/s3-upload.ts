@@ -99,7 +99,11 @@ export const generatePresignedUploadUrl = async (
 
     console.log(`⏳ Calling getSignedUrl...`);
     // Generate presigned URL valid for 5 minutes
-    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+    // Disable checksum to allow browser uploads without checksum headers
+    const presignedUrl = await getSignedUrl(s3Client, command, { 
+      expiresIn: 300,
+      unhoistableHeaders: new Set(['x-amz-checksum-crc32']),
+    });
     const publicUrl = getS3PublicUrl(key);
 
     const duration = Date.now() - startTime;

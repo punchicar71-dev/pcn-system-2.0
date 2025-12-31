@@ -783,7 +783,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                       
                       {/* Dropdown Menu */}
                       {isTitleDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+                        <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]">
                           {titles.map((title) => (
                             <button
                               key={title}

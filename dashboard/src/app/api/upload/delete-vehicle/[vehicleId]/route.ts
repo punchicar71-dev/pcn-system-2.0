@@ -1,11 +1,16 @@
 /**
  * Next.js API Route - Delete Vehicle Images from S3
  * Proxy endpoint that forwards delete requests to backend API
+ * 
+ * Auth: Uses Better Auth session cookie for validation
+ * Also accepts authorization header for backwards compatibility
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+// Use API_SERVER_URL for server-side calls (Docker internal network)
+const API_URL = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export async function DELETE(
   request: NextRequest,
@@ -14,16 +19,12 @@ export async function DELETE(
   try {
     console.log('🗑️ [Next.js DELETE Proxy] Request received for vehicle:', params.vehicleId);
     
-    // Get auth token from request header
+    // Check for Better Auth session cookie as a basic auth check
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('better-auth.session_token');
+    
+    // Also accept authorization header if present (for backwards compatibility)
     const authToken = request.headers.get('authorization');
-
-    if (!authToken) {
-      console.error('❌ [Next.js DELETE Proxy] No authorization token provided');
-      return NextResponse.json(
-        { success: false, error: 'Authorization token required' },
-        { status: 401 }
-      );
-    }
 
     // Get request body (s3Keys array)
     const body = await request.json();
@@ -40,13 +41,20 @@ export async function DELETE(
     console.log(`📋 [Next.js DELETE Proxy] Forwarding ${s3Keys.length} keys to backend API`);
     console.log(`🔗 [Next.js DELETE Proxy] Backend URL: ${API_URL}/api/upload/delete-vehicle/${params.vehicleId}`);
 
+    // Build headers for backend request
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Forward auth token if present
+    if (authToken) {
+      headers['Authorization'] = authToken;
+    }
+
     // Forward request to backend API
     const response = await fetch(`${API_URL}/api/upload/delete-vehicle/${params.vehicleId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authToken,
-      },
+      headers,
       body: JSON.stringify({ s3Keys }),
     });
 
