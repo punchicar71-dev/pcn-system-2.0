@@ -142,6 +142,7 @@ export default function SalesAgentsReportTab() {
 
       // Process sold out sales data - every sale has both an Office Sales Agent AND a Vehicle Showroom Agent
       // Use stored snapshot first, fallback to joined vehicle data for backwards compatibility
+      // Handle both sale_price (new) and selling_price (old) field names
       const processedSales: SaleRecord[] = soldOutSalesData
         .map((sale: any) => {
           const vehicle = sale.vehicles
@@ -165,7 +166,8 @@ export default function SalesAgentsReportTab() {
             brand_name: sale.brand_name || vehicle?.vehicle_brands?.name || 'Unknown',
             model_name: sale.model_name || vehicle?.vehicle_models?.name || 'Unknown',
             manufacture_year: sale.manufacture_year || vehicle?.manufacture_year || 0,
-            selling_amount: sale.selling_amount || 0,
+            // Support both field names: sale_price (from sell-vehicle page) and selling_price (DB schema)
+            selling_amount: sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0,
             payment_type: sale.payment_type,
             office_sales_agent: officeSalesAgent,
             showroom_agent: showroomAgent,
@@ -284,7 +286,6 @@ export default function SalesAgentsReportTab() {
           } else {
             agentMap.set(sale.office_sales_agent, {
               id: `virtual-office-${sale.office_sales_agent}`,
-              user_id: '',
               name: sale.office_sales_agent,
               email: undefined,
               agent_type: 'Office Sales Agent',
@@ -307,7 +308,6 @@ export default function SalesAgentsReportTab() {
           } else {
             agentMap.set(sale.showroom_agent, {
               id: `virtual-showroom-${sale.showroom_agent}`,
-              user_id: '',
               name: sale.showroom_agent,
               email: undefined,
               agent_type: 'Vehicle Showroom Agent',
@@ -342,7 +342,6 @@ export default function SalesAgentsReportTab() {
         } else {
           agentList.push({
             id: `virtual-office-${name}`,
-            user_id: '',
             name,
             email: undefined,
             agent_type: 'Office Sales Agent',
@@ -373,7 +372,6 @@ export default function SalesAgentsReportTab() {
         } else {
           agentList.push({
             id: `virtual-showroom-${name}`,
-            user_id: '',
             name,
             email: undefined,
             agent_type: 'Vehicle Showroom Agent',

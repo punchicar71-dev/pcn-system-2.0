@@ -27,7 +27,6 @@ export interface PriceCategory {
 
 export interface SalesAgent {
   id: string
-  user_id: string
   name: string
   email?: string
   agent_type: 'Office Sales Agent' | 'Vehicle Showroom Agent'
@@ -237,7 +236,11 @@ export interface PendingVehicleSale {
   customer_address?: string
   customer_nic?: string
   customer_mobile?: string
-  selling_amount: number // Database column is selling_amount
+  // Note: Database uses selling_price, but sell-vehicle page inserts sale_price
+  // Both fields may be present depending on record age
+  selling_price?: number // Database column name
+  sale_price?: number // Field used by sell-vehicle page
+  selling_amount?: number // Legacy alias
   advance_amount?: number
   balance_amount?: number
   payment_type: 'Cash' | 'Leasing' | 'Bank Transfer' | 'Check'

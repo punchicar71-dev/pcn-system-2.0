@@ -435,8 +435,9 @@ export default function InventoryReportsTab() {
       const brandSalesMap = new Map<string, number>()
 
       soldSales?.forEach((sale: any) => {
-        if (sale.vehicles?.vehicle_brands?.name) {
-          const brandName = sale.vehicles.vehicle_brands.name
+        // Use stored snapshot first (brand_name), fallback to joined vehicle data
+        const brandName = sale.brand_name || sale.vehicles?.vehicle_brands?.name
+        if (brandName) {
           brandSalesMap.set(brandName, (brandSalesMap.get(brandName) || 0) + 1)
         }
       })

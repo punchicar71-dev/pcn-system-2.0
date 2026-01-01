@@ -68,20 +68,12 @@ export default function FinancialReportsTab() {
     setLoading(true)
     try {
       // Fetch sold vehicles with all necessary joins
+      // Using select(*) to get all columns including both selling_price and sale_price for compatibility
       // Also fetch stored snapshot columns (vehicle_number, brand_name, model_name, manufacture_year)
       const { data: soldSales, error } = await supabase
         .from('pending_vehicle_sales')
         .select(`
-          id,
-          vehicle_id,
-          vehicle_number,
-          brand_name,
-          model_name,
-          manufacture_year,
-          selling_price,
-          advance_amount,
-          payment_type,
-          updated_at,
+          *,
           vehicles:vehicle_id (
             id,
             vehicle_number,
@@ -116,9 +108,11 @@ export default function FinancialReportsTab() {
 
       // Process the data
       // Use stored snapshot first, fallback to joined vehicle data for backwards compatibility
+      // Handle both sale_price (new) and selling_price (old) field names
       const processedData: FinancialReportData[] = (soldSales || []).map((sale: any) => {
         const vehicle = sale.vehicles
-        const sellingAmount = sale.selling_amount || 0
+        // Support both field names: sale_price (from sell-vehicle page) and selling_price (DB schema)
+        const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
         
         // Find matching price category to get PCN advance
         let pcnAdvance = 0

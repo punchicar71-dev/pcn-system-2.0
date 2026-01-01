@@ -325,6 +325,71 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 ---
 
+## Cache Control Configuration
+
+To ensure vehicle data updates from the dashboard are immediately reflected on the web, all API routes are configured with strict no-cache directives.
+
+### API Route Cache Settings
+
+Each API route includes the following exports to disable Next.js caching:
+
+```typescript
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+```
+
+### Response Headers
+
+API routes return responses with cache control headers:
+
+```typescript
+return NextResponse.json(data, {
+  headers: {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store',
+  }
+})
+```
+
+### Next.js Configuration
+
+The `next.config.js` file includes global cache control headers for all API routes:
+
+```javascript
+async headers() {
+  return [
+    {
+      source: '/api/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' },
+        { key: 'Pragma', value: 'no-cache' },
+        { key: 'Expires', value: '0' },
+        { key: 'Surrogate-Control', value: 'no-store' },
+      ],
+    },
+  ]
+}
+```
+
+### Frontend Cache Busting
+
+Frontend components include cache-busting timestamps when fetching data:
+
+```typescript
+const response = await fetch(`/api/vehicles/${vehicleId}?_t=${Date.now()}`, {
+  cache: 'no-store',
+  headers: {
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+  },
+});
+```
+
+---
+
 ## API Routes & Endpoints
 
 ### 1. GET /api/vehicles

@@ -74,35 +74,6 @@ export default function SalesAgentTab() {
     }
   }
 
-  const generateUserId = async (): Promise<string> => {
-    try {
-      // Fetch all existing user IDs
-      const { data, error } = await supabase
-        .from('sales_agents')
-        .select('user_id')
-        .order('user_id', { ascending: false })
-        .limit(1)
-
-      if (error) throw error
-
-      if (data && data.length > 0) {
-        // Extract the numeric part from the last user ID and increment it
-        const lastUserId = data[0].user_id
-        const numericPart = parseInt(lastUserId.replace(/\D/g, ''))
-        const nextNumber = numericPart + 1
-        // Pad with zeros to maintain 5 digits
-        return nextNumber.toString().padStart(5, '0')
-      } else {
-        // If no agents exist, start with 00001
-        return '00001'
-      }
-    } catch (error) {
-      console.error('Error generating user ID:', error)
-      // Fallback to a random number if something goes wrong
-      return Math.floor(10000 + Math.random() * 90000).toString()
-    }
-  }
-
   const handleAddAgent = async () => {
     if (!formData.name.trim()) {
       alert('Please fill in Sales Agent Name')
@@ -110,13 +81,9 @@ export default function SalesAgentTab() {
     }
 
     try {
-      // Generate a new unique user ID
-      const newUserId = await generateUserId()
-
       const { error } = await supabase
         .from('sales_agents')
         .insert([{
-          user_id: newUserId,
           name: formData.name.trim(),
           email: formData.email.trim() || null,
           agent_type: formData.agent_type,
@@ -208,7 +175,7 @@ export default function SalesAgentTab() {
             <DialogHeader>
               <DialogTitle>Add New Sales Agent</DialogTitle>
               <DialogDescription>
-                Add a new in-house sales agent to the system. User ID will be auto-generated.
+                Add a new in-house sales agent to the system.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -264,7 +231,6 @@ export default function SalesAgentTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User ID</TableHead>
               <TableHead>Sales Agent Name</TableHead>
               <TableHead>Agent Type</TableHead>
               <TableHead>Availability</TableHead>
@@ -274,21 +240,20 @@ export default function SalesAgentTab() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={4} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : agents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                   No sales agents found
                 </TableCell>
               </TableRow>
             ) : (
               agents.map((agent) => (
                 <TableRow key={agent.id} className={!agent.is_active ? 'opacity-50' : ''}>
-                  <TableCell className="font-medium">{agent.user_id}</TableCell>
-                  <TableCell>{agent.name}</TableCell>
+                  <TableCell className="font-medium">{agent.name}</TableCell>
                   <TableCell>{agent.agent_type}</TableCell>
                   <TableCell>
                     <Switch
