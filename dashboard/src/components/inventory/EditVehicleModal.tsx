@@ -453,7 +453,10 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
             const userData = JSON.parse(storedUser)
 
             if (userData) {
-              const userName = `${userData.first_name} ${userData.last_name}`
+              // Handle both camelCase and snake_case formats
+              const firstName = userData.firstName || userData.first_name || ''
+              const lastName = userData.lastName || userData.last_name || ''
+              const userName = `${firstName} ${lastName}`.trim() || 'Unknown User'
               const brandName = brands.find(b => b.id === vehicleData.brand_id)?.name || ''
               const modelName = models.find(m => m.id === vehicleData.model_id)?.name || ''
               const vehicleInfo = `${brandName} ${modelName} (${vehicleData.vehicle_number})`

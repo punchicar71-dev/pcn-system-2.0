@@ -41,7 +41,10 @@ export function useNotify() {
       
       const userData = JSON.parse(storedUser)
 
-      const userName = `${userData.firstName} ${userData.lastName}`
+      // Handle both camelCase (login/page.tsx) and snake_case ((auth)/page.tsx) formats
+      const firstName = userData.firstName || userData.first_name || ''
+      const lastName = userData.lastName || userData.last_name || ''
+      const userName = `${firstName} ${lastName}`.trim() || 'Unknown User'
       
       // Create notification in database
       await notifyVehicleAction(

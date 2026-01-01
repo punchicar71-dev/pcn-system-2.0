@@ -46,7 +46,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Get current user
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUser = () => {
       try {
         // TODO: Replace with Better Auth session check
         // const session = await auth.getSession()
@@ -56,6 +56,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         if (storedUser) {
           const userData = JSON.parse(storedUser)
           setCurrentUserId(userData.id)
+          console.log('🔔 NotificationContext: User ID set:', userData.id)
         }
       } catch (error) {
         console.error('Error fetching current user:', error)
@@ -63,6 +64,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     fetchCurrentUser()
+    
+    // Also poll for user changes (in case localStorage was updated after initial load)
+    const checkUserInterval = setInterval(() => {
+      const storedUser = localStorage.getItem('pcn-user')
+      if (storedUser) {
+        const userData = JSON.parse(storedUser)
+        if (userData.id !== currentUserId) {
+          setCurrentUserId(userData.id)
+          console.log('🔔 NotificationContext: User ID updated:', userData.id)
+        }
+      }
+    }, 2000)
     
     // Listen for storage changes
     const handleStorageChange = (e: StorageEvent) => {
@@ -77,8 +90,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
     
     window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(checkUserInterval)
+    }
+  }, [currentUserId])
 
   // Load notifications
   const refreshNotifications = useCallback(async () => {
@@ -109,23 +125,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Real-time subscription
   useEffect(() => {
-    if (!currentUserId) return
+    if (!currentUserId) {
+      console.log('🔔 Real-time: No user ID, skipping subscription')
+      return
+    }
 
+    console.log('🔔 Real-time: Setting up subscription for user:', currentUserId)
+    
     const channel = subscribeToNotifications(currentUserId, (payload) => {
-      console.log('Notification change:', payload)
+      console.log('🔔 Real-time notification change:', payload.eventType, payload)
       
       if (payload.eventType === 'INSERT') {
         const newNotification = payload.new as Notification
         
         // Add to notifications list
-        setNotifications(prev => [newNotification, ...prev])
+        setNotifications(prev => {
+          // Avoid duplicates
+          if (prev.some(n => n.id === newNotification.id)) {
+            return prev
+          }
+          return [newNotification, ...prev]
+        })
         setUnreadCount(prev => prev + 1)
         
-        // Show toast notification
+        // Show toast notification with more prominent styling
         toast({
-          title: newNotification.title,
+          title: `🔔 ${newNotification.title}`,
           description: newNotification.message,
           variant: getToastVariant(newNotification.type),
+          duration: 5000, // Show for 5 seconds
         })
       } else if (payload.eventType === 'UPDATE') {
         const updatedNotification = payload.new as Notification
@@ -141,6 +169,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     })
 
     return () => {
+      console.log('🔔 Real-time: Cleaning up subscription for user:', currentUserId)
       channel.unsubscribe()
     }
   }, [currentUserId, toast, refreshNotifications])

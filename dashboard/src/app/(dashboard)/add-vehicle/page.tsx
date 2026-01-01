@@ -545,7 +545,10 @@ export default function AddVehiclePage() {
         // MIGRATION: Using localStorage instead of Supabase Auth
         // User data is already available from the earlier localStorage read
         if (user) {
-          const userName = `${user.first_name} ${user.last_name}`
+          // Handle both camelCase and snake_case formats
+          const firstName = user.firstName || user.first_name || ''
+          const lastName = user.lastName || user.last_name || ''
+          const userName = `${firstName} ${lastName}`.trim() || 'Unknown User'
           const brandName = brands.find(b => b.id === vehicleDetails.brandId)?.name || ''
           const modelName = models.find(m => m.id === vehicleDetails.modelId)?.name || ''
           const vehicleInfo = `${brandName} ${modelName} (${vehicleDetails.vehicleNumber})`

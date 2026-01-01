@@ -68,7 +68,19 @@ export default function AuthPage() {
 
       // MIGRATION: Store user data in localStorage for session management
       // TODO: This is temporary - Better Auth will handle sessions properly
-      localStorage.setItem('pcn-user', JSON.stringify(userRecord))
+      // Normalize to consistent format with camelCase keys
+      localStorage.setItem('pcn-user', JSON.stringify({
+        id: userRecord.id,
+        email: userRecord.email,
+        username: userRecord.username,
+        firstName: userRecord.first_name,
+        lastName: userRecord.last_name,
+        first_name: userRecord.first_name,
+        last_name: userRecord.last_name,
+        accessLevel: userRecord.access_level,
+        access_level: userRecord.access_level,
+        role: userRecord.role,
+      }))
 
       // Redirect to dashboard
       router.push('/dashboard')

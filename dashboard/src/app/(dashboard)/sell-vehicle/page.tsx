@@ -177,7 +177,10 @@ export default function SellVehiclePage() {
           const userData = JSON.parse(storedUser)
 
           if (userData) {
-            const userName = `${userData.first_name} ${userData.last_name}`
+            // Handle both camelCase and snake_case formats
+            const firstName = userData.firstName || userData.first_name || ''
+            const lastName = userData.lastName || userData.last_name || ''
+            const userName = `${firstName} ${lastName}`.trim() || 'Unknown User'
             const vehicleInfo = `${sellingData.selectedVehicle.brand_name} ${sellingData.selectedVehicle.model_name} (${sellingData.selectedVehicle.vehicle_number})`
 
             await supabase.from('notifications').insert({

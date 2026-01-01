@@ -245,8 +245,11 @@ export function subscribeToNotifications(
 ) {
   const supabase = createClient()
   
+  // Use unique channel name per user to avoid conflicts
+  const channelName = `notifications-${userId}`
+  
   const channel = supabase
-    .channel('notifications-changes')
+    .channel(channelName)
     .on(
       'postgres_changes',
       {
@@ -255,9 +258,14 @@ export function subscribeToNotifications(
         table: 'notifications',
         filter: `user_id=eq.${userId}`
       },
-      callback
+      (payload) => {
+        console.log('🔔 Real-time notification received:', payload.eventType)
+        callback(payload)
+      }
     )
-    .subscribe()
+    .subscribe((status) => {
+      console.log('🔔 Notification subscription status:', status)
+    })
 
   return channel
 }
