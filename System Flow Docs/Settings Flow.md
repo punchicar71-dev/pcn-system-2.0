@@ -6,6 +6,8 @@ The Settings module provides centralized configuration management for the PCN Ve
 
 **Access Level**: All authenticated users can view; Admin users can modify.
 
+**Last Updated**: January 1, 2026
+
 > **Note**: Authentication is handled via cookie-based sessions. Users must be logged in to access settings.
 
 ---
@@ -608,27 +610,6 @@ const [formData, setFormData] = useState<{
 
 ### 6.5 Functions
 
-#### Generate Sequential User ID
-
-```typescript
-const generateUserId = async (): Promise<string> => {
-  // Fetch the last user ID
-  const { data, error } = await supabase
-    .from('sales_agents')
-    .select('user_id')
-    .order('user_id', { ascending: false })
-    .limit(1)
-
-  if (data && data.length > 0) {
-    const lastUserId = data[0].user_id
-    const numericPart = parseInt(lastUserId.replace(/\D/g, ''))
-    const nextNumber = numericPart + 1
-    return nextNumber.toString().padStart(5, '0') // 00001, 00002...
-  }
-  return '00001' // Start with 00001 if no agents exist
-}
-```
-
 #### Fetch Agents
 
 ```typescript
@@ -651,12 +632,10 @@ const handleAddAgent = async () => {
     return
   }
 
-  const newUserId = await generateUserId()
-
+  // Simplified - no user_id generation required
   const { error } = await supabase
     .from('sales_agents')
     .insert([{
-      user_id: newUserId,
       name: formData.name.trim(),
       email: formData.email.trim() || null,
       agent_type: formData.agent_type,
@@ -668,6 +647,8 @@ const handleAddAgent = async () => {
   fetchAgents()
 }
 ```
+
+> **📝 Note**: As of January 2026, the sequential `user_id` field has been removed. Agent creation is now simplified without ID generation.
 
 #### Toggle Active Status
 

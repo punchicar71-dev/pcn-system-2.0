@@ -4,6 +4,8 @@
 
 The Sales Transactions module manages the complete lifecycle of vehicle sales from pending status to sold completion. It consists of two main tabs: **Pending Sales** and **Sold Out** (completed sales), with comprehensive database tracking, UI components, and document generation.
 
+**Last Updated**: January 1, 2026
+
 > **Note**: This module requires authentication. Users must be logged in with a valid session cookie to access sales transactions.
 
 ---
@@ -43,9 +45,13 @@ The Sales Transactions module manages the complete lifecycle of vehicle sales fr
 | `customer_address` | TEXT | Customer address | - |
 | `customer_nic` | VARCHAR(50) | Customer NIC number | - |
 | `customer_mobile` | VARCHAR(20) | Customer mobile phone | - |
-| `sale_price` | DECIMAL(12,2) | Sale price | ✓ |
+| `sale_price` | DECIMAL(12,2) | Sale price (primary field) | ✓ |
+| `selling_price` | DECIMAL(12,2) | Sale price (database column) | - |
+| `selling_amount` | DECIMAL(12,2) | Sale price (legacy field) | - |
 | `advance_amount` | DECIMAL(12,2) | Down payment (default: 0) | - |
 | `payment_type` | VARCHAR(50) | Cash, Leasing, Bank Transfer, Check | ✓ |
+
+> **📝 Note**: The table has multiple price fields (`sale_price`, `selling_price`, `selling_amount`) due to historical schema evolution. Reports and queries must handle all three variations for data consistency.
 | `leasing_company_id` | UUID | FK to `leasing_companies` (when Leasing) | - |
 | `sales_agent_id` | UUID | FK to `sales_agents` (Office Sales Agent) | - |
 | `third_party_agent` | TEXT | Vehicle Showroom Agent name | - |

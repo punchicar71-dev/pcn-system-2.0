@@ -6,7 +6,11 @@ The Reports & Analytics module provides comprehensive reporting capabilities for
 
 **Access Level**: Admin Only (Role-Based Access Control)
 
+**Last Updated**: January 1, 2026
+
 > **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication. Role verification is performed client-side via `useRoleAccess` hook. Full server-side role validation will be added with Better Auth integration.
+
+> **✅ DATA CONSISTENCY**: All reports now properly handle multiple field name variations (`sale_price`, `selling_price`, `selling_amount`) to ensure accurate data display across historical and new records.
 
 ---
 
@@ -94,13 +98,17 @@ const filteredNavigation = useMemo(() => {
 | `brand_name` | VARCHAR(100) | Brand name (snapshot) |
 | `model_name` | VARCHAR(100) | Model name (snapshot) |
 | `manufacture_year` | INTEGER | Year of manufacture (snapshot) |
-| `selling_amount` | DECIMAL(12,2) | Sale price |
+| `selling_price` | DECIMAL(12,2) | Sale price (database column) |
+| `sale_price` | DECIMAL(12,2) | Sale price (alternate field from sell-vehicle page) |
+| `selling_amount` | DECIMAL(12,2) | Sale price (legacy field name) |
 | `advance_amount` | DECIMAL(12,2) | Down payment |
 | `payment_type` | VARCHAR(50) | Cash, Leasing, Bank Transfer, Check |
 | `status` | VARCHAR(20) | 'pending', 'reserved', 'sold', 'cancelled' |
 | `sales_agent_id` | UUID | Foreign key to sales_agents |
 | `third_party_agent` | VARCHAR(100) | Vehicle Showroom Agent name |
 | `updated_at` | TIMESTAMP | Last update timestamp (used as sold date) |
+
+> **📝 Note**: The table has multiple price fields due to historical schema evolution. Reports must handle all three field names (`sale_price`, `selling_price`, `selling_amount`) for data consistency.
 
 #### `vehicles` Table
 
@@ -124,6 +132,8 @@ const filteredNavigation = useMemo(() => {
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | UUID | Primary key |
+
+> **📝 Note**: The `user_id` field was removed in January 2026 for database simplification.
 | `name` | VARCHAR(100) | Agent name |
 | `agent_type` | VARCHAR(50) | 'Office Sales Agent' or 'Vehicle Showroom Agent' |
 | `is_active` | BOOLEAN | Agent status |
@@ -277,7 +287,16 @@ const { data: soldSales } = await supabase
   .gte('updated_at', startDateStr)
 ```
 
+**Data Processing**:
+```typescript
+// Prioritize snapshot data over joined data
+const brandName = sale.brand_name || sale.vehicles?.vehicle_brands?.name || 'Unknown'
+const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
+```
+
 **Output**: Top 10 brands sorted by sales volume with assigned colors
+
+> **📝 Note**: Uses snapshot data as primary source and handles all price field variations for accuracy.
 
 ### 3.4 Charts & Visualizations
 
@@ -319,17 +338,11 @@ const [currentPage, setCurrentPage] = useState(1)
 const [rowsPerPage, setRowsPerPage] = useState(5)
 ```
 
-### 4.2 Data Fetching: `fetchFinancialData()`
-
-**Database Queries**:
-
-```typescript
-// Fetch sold vehicles with details
+// Using select(*) to get all columns including price field variations
 const { data: soldSales } = await supabase
   .from('pending_vehicle_sales')
   .select(`
-    id, vehicle_id, vehicle_number, brand_name, model_name, manufacture_year,
-    selling_amount, advance_amount, payment_type, updated_at,
+    *,
     vehicles:vehicle_id (
       id, vehicle_number, selling_amount, brand_id, model_id,
       vehicle_brands:brand_id (id, name),
@@ -342,6 +355,21 @@ const { data: soldSales } = await supabase
   .order('updated_at', { ascending: false })
 
 // Fetch price categories for PCN advance calculation
+const { data: priceCategories } = await supabase
+  .from('price_categories')
+  .select('*')
+  .eq('is_active', true)
+  .order('min_price')
+```
+
+**Data Processing**:
+
+```typescript
+// Handle multiple field name variations for backwards compatibility
+const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
+```
+
+> **📝 Note**: The query uses `select(*)` to capture all field variations. The processing logic handles `sale_price` (from sell-vehicle page), `selling_price` (database schema), and `selling_amount` (legacy) for complete backwards compatibility.Fetch price categories for PCN advance calculation
 const { data: priceCategories } = await supabase
   .from('price_categories')
   .select('*')
@@ -433,6 +461,7 @@ const { data: agentsData } = await supabase
 **Step 2**: Fetch all sold sales with vehicle and agent details
 
 ```typescript
+// Using select(*) to capture all field variations
 const { data: soldOutSalesData } = await supabase
   .from('pending_vehicle_sales')
   .select(`
@@ -448,6 +477,8 @@ const { data: soldOutSalesData } = await supabase
   .eq('status', 'sold')
   .order('updated_at', { ascending: false })
 ```
+
+> **📝 Note**: The query includes `*` to capture all price field variations (`sale_price`, `selling_price`, `selling_amount`) for data consistency.
 
 ### 5.4 Data Processing Logic
 
@@ -467,7 +498,8 @@ const processedSales = soldOutSalesData.map((sale) => {
     brand_name: sale.brand_name || vehicle?.vehicle_brands?.name || 'Unknown',
     model_name: sale.model_name || vehicle?.vehicle_models?.name || 'Unknown',
     manufacture_year: sale.manufacture_year || vehicle?.manufacture_year || 0,
-    selling_amount: sale.selling_amount,
+    // Handle multiple field name variations for price
+    selling_amount: sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0,
     payment_type: sale.payment_type,
     office_sales_agent: officeSalesAgent,
     showroom_agent: showroomAgent,
@@ -475,6 +507,8 @@ const processedSales = soldOutSalesData.map((sale) => {
   }
 })
 ```
+
+> **📝 Note**: The price calculation uses nullish coalescing (`??`) to handle all three field name variations in order of preference: `sale_price` → `selling_price` → `selling_amount`.
 
 ### 5.5 Filtering Logic: `filterSalesData()`
 
