@@ -3,17 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, emailTemplates, isValidEmail } from '@/lib/email-service'
 import { checkRateLimit, rateLimiters, getClientIP } from '@/lib/rate-limit'
 
-// Initialize Supabase Admin Client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Lazy initialization of Supabase Admin Client
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-)
+  )
+}
 
 // Generate 6-digit OTP
 function generateOTP(): string {
@@ -21,6 +23,7 @@ function generateOTP(): string {
 }
 
 export async function POST(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
   try {
     const body = await request.json()
     const { email } = body

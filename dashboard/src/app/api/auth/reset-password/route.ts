@@ -11,17 +11,19 @@ import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
 import * as crypto from 'crypto'
 
-// Initialize Supabase Admin Client (for database operations only)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Lazy initialization of Supabase Admin Client (for database operations only)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-)
+  )
+}
 
 // Simple password hashing (temporary until Better Auth is integrated)
 // TODO: Replace with Better Auth password hashing
@@ -39,6 +41,7 @@ interface ResetTokenPayload {
 }
 
 export async function POST(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
   try {
     const body = await request.json()
     const { token, newPassword } = body
