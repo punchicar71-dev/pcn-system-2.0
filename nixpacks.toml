@@ -1,0 +1,11 @@
+# Nixpacks configuration for Railway deployment
+# Forces Node.js detection instead of Deno
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[start]
+cmd = "npm run start"
