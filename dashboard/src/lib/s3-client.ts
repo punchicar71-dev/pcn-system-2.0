@@ -122,11 +122,9 @@ export const uploadToS3WithPresignedUrl = async (
     });
 
     // Step 2: Upload directly to S3
+    // Note: Don't send Content-Type header - it's not signed in the presigned URL
     const uploadResponse = await fetch(presignedUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-      },
       body: file,
     });
 
