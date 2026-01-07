@@ -116,12 +116,16 @@ router.post(
   ],
   async (req: Request, res: Response) => {
     try {
+      console.log('📥 [API UPLOAD] Received upload request');
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.error('❌ [API UPLOAD] Validation errors:', errors.array());
         return res.status(400).json({ errors: errors.array() });
       }
 
       if (!isS3Configured()) {
+        console.error('❌ [API UPLOAD] S3 not configured');
         return res.status(503).json({
           success: false,
           error: 'AWS S3 is not configured',
@@ -129,6 +133,7 @@ router.post(
       }
 
       if (!req.file) {
+        console.error('❌ [API UPLOAD] No file in request');
         return res.status(400).json({
           success: false,
           error: 'No file uploaded',
@@ -136,6 +141,14 @@ router.post(
       }
 
       const { vehicleId, imageType } = req.body;
+      
+      console.log('✅ [API UPLOAD] Processing file:', {
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        vehicleId,
+        imageType,
+      });
 
       const result = await uploadToS3(
         req.file.buffer,
@@ -144,6 +157,8 @@ router.post(
         req.file.originalname,
         req.file.mimetype
       );
+      
+      console.log('📤 [API UPLOAD] S3 upload result:', result);
 
       if (result.success) {
         res.json(result);
@@ -151,7 +166,7 @@ router.post(
         res.status(500).json(result);
       }
     } catch (error) {
-      console.error('Error uploading to S3:', error);
+      console.error('❌ [API UPLOAD] Error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to upload image',
