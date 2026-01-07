@@ -22,46 +22,117 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
+  // Helper function to check if input is a mobile number
+  const isMobileNumber = (input: string): boolean => {
+    const cleaned = input.replace(/\D/g, '')
+    // Check Sri Lankan mobile formats: 07XXXXXXXX, 947XXXXXXXX, +947XXXXXXXX
+    if (cleaned.startsWith('0') && cleaned.length === 10 && cleaned.startsWith('07')) {
+      return true
+    }
+    if (cleaned.startsWith('94') && cleaned.length === 11 && cleaned.substring(2).startsWith('7')) {
+      return true
+    }
+    // Also check if it's just 9 digits starting with 7 (without leading 0 or country code)
+    if (cleaned.startsWith('7') && cleaned.length === 9) {
+      return true
+    }
+    return false
+  }
+
+  // Extract the core 9-digit mobile number (without country code or leading 0)
+  const extractCoreMobile = (input: string): string => {
+    const cleaned = input.replace(/\D/g, '')
+    if (cleaned.startsWith('94') && cleaned.length === 11) {
+      return cleaned.substring(2) // Remove '94', get '778895688'
+    }
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+      return cleaned.substring(1) // Remove '0', get '778895688'
+    }
+    if (cleaned.startsWith('7') && cleaned.length === 9) {
+      return cleaned // Already core format
+    }
+    return cleaned
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     try {
-      // Determine if input is email or username
+      // Determine input type: email, mobile number, or username
       const isEmail = emailOrUsername.includes('@')
+      const isMobile = isMobileNumber(emailOrUsername)
       
-      let email = emailOrUsername
+      let userRecord = null
+      let lookupError = null
       
-      // If username, fetch the email from users table
-      if (!isEmail) {
-        const { data: userData, error: userError } = await supabase
+      if (isEmail) {
+        // Lookup by email
+        const { data, error } = await supabase
           .from('users')
-          .select('email')
-          .eq('username', emailOrUsername)
+          .select('*')
+          .eq('email', emailOrUsername.toLowerCase().trim())
           .single()
+        userRecord = data
+        lookupError = error
+      } else if (isMobile) {
+        // Lookup by mobile number - extract core number and search with pattern
+        const coreMobile = extractCoreMobile(emailOrUsername)
         
-        if (userError || !userData) {
-          setError('Invalid username or password')
-          setLoading(false)
-          return
+        // Generate all possible formats the database might have
+        const mobileFormats = [
+          coreMobile,                    // 778895688
+          '0' + coreMobile,              // 0778895688
+          '94' + coreMobile,             // 94778895688
+          '+94' + coreMobile,            // +94778895688
+          '+94 ' + coreMobile,           // +94 778895688 (with space)
+        ]
+        
+        // Try to find user with any of these mobile formats
+        for (const format of mobileFormats) {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('mobile_number', format)
+            .single()
+          
+          if (data && !error) {
+            userRecord = data
+            lookupError = null
+            break
+          }
+          lookupError = error
         }
         
-        email = userData.email
+        // If still not found, try pattern matching with LIKE
+        if (!userRecord) {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .ilike('mobile_number', `%${coreMobile}`)
+            .single()
+          
+          if (data && !error) {
+            userRecord = data
+            lookupError = null
+          } else {
+            lookupError = error
+          }
+        }
+      } else {
+        // Lookup by username
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', emailOrUsername)
+          .single()
+        userRecord = data
+        lookupError = error
       }
-
-      // MIGRATION: Temporarily using direct user lookup instead of Supabase Auth
-      // TODO: Replace with Better Auth signIn in Step 2
-      // For now, we verify by checking if user exists and password matches
-      // (In production, this would be replaced with proper auth)
-      const { data: userRecord, error: lookupError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single()
       
       if (lookupError || !userRecord) {
-        setError('Invalid email/username or password')
+        setError('Invalid email/mobile number/username or password')
         setLoading(false)
         return
       }
@@ -143,7 +214,7 @@ export default function AuthPage() {
             <div className="space-y-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address or Username
+                  Email Address or Mobile Number
                 </label>
                 <input
                   id="email"
@@ -153,7 +224,7 @@ export default function AuthPage() {
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
-                  placeholder="Enter your email or username"
+                  placeholder="Enter your email or mobile number"
                 />
               </div>
 

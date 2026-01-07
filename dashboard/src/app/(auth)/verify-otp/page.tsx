@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Mail } from 'lucide-react'
+import { Mail, Phone } from 'lucide-react'
 
 export default function VerifyOTPPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -12,6 +12,8 @@ export default function VerifyOTPPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
+  const mobile = searchParams.get('mobile') || ''
+  const method = searchParams.get('method') || (email ? 'email' : 'mobile')
   
   // Refs for input fields
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -87,7 +89,11 @@ export default function VerifyOTPPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, otp: otpCode }),
+        body: JSON.stringify(
+          method === 'email' 
+            ? { email, otp: otpCode, method: 'email' }
+            : { mobileNumber: mobile, otp: otpCode, method: 'mobile' }
+        ),
       })
 
       const data = await response.json()
@@ -108,6 +114,9 @@ export default function VerifyOTPPage() {
 
   // Mask email for display (e.g., j***@example.com)
   const maskedEmail = email ? email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : ''
+  
+  // Mask mobile for display (e.g., 077***4567)
+  const maskedMobile = mobile ? mobile.replace(/(\d{3})(\d*)(\d{4})/, '$1***$3') : ''
 
   return (
     <div className="min-h-screen flex">
@@ -147,12 +156,18 @@ export default function VerifyOTPPage() {
               Verify OTP Code
             </h2>
             <p className="mt-2 text-gray-600">
-              We've sent a 6-digit OTP code to your email address.
+              We've sent a 6-digit OTP code to your {method === 'email' ? 'email address' : 'mobile number'}.
             </p>
-            {email && (
+            {method === 'email' && email && (
               <div className="mt-3 flex items-center justify-center gap-2 text-gray-700">
                 <Mail className="w-4 h-4" />
                 <span className="font-medium">{maskedEmail}</span>
+              </div>
+            )}
+            {method === 'mobile' && mobile && (
+              <div className="mt-3 flex items-center justify-center gap-2 text-gray-700">
+                <Phone className="w-4 h-4" />
+                <span className="font-medium">{maskedMobile}</span>
               </div>
             )}
           </div>
@@ -200,7 +215,7 @@ export default function VerifyOTPPage() {
           {/* Contact Information Box */}
           <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-sm text-gray-700 text-center leading-relaxed">
-              Didn't receive the email? Check your spam folder or contact support.
+              Didn't receive the {method === 'email' ? 'email' : 'SMS'}? {method === 'email' ? 'Check your spam folder or' : 'Please wait and'} contact support.
             </p>
             <div className="mt-4 space-y-1 text-sm text-gray-700">
               <p>

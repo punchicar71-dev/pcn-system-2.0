@@ -35,6 +35,50 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
+  // Helper function to detect if input is a phone number
+  const isPhoneNumber = (input: string): boolean => {
+    const cleaned = input.replace(/\D/g, '')
+    // Sri Lankan mobile: starts with 0 and has 10 digits, or starts with 94 and has 11 digits
+    if (cleaned.startsWith('0') && cleaned.length === 10 && cleaned.startsWith('07')) {
+      return true
+    }
+    if (cleaned.startsWith('94') && cleaned.length === 11 && cleaned.substring(2).startsWith('7')) {
+      return true
+    }
+    // Also handle if just 9 digits starting with 7 (missing leading 0)
+    if (cleaned.startsWith('7') && cleaned.length === 9) {
+      return true
+    }
+    return false
+  }
+
+  // Helper function to get all possible phone number formats for database lookup
+  const getPhoneFormatsForLookup = (input: string): string[] => {
+    let cleaned = input.replace(/\D/g, '')
+    const formats: string[] = []
+    
+    // If starts with 0, we have 10 digit local format (e.g., 0778895688)
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+      formats.push(cleaned) // 0778895688
+      formats.push('94' + cleaned.substring(1)) // 94778895688
+      formats.push('+94' + cleaned.substring(1)) // +94778895688
+    }
+    // If starts with 94, we have international format without +
+    else if (cleaned.startsWith('94') && cleaned.length === 11) {
+      formats.push(cleaned) // 94778895688
+      formats.push('0' + cleaned.substring(2)) // 0778895688
+      formats.push('+' + cleaned) // +94778895688
+    }
+    // If starts with 7 and has 9 digits (missing leading 0)
+    else if (cleaned.startsWith('7') && cleaned.length === 9) {
+      formats.push('0' + cleaned) // 0778895688
+      formats.push('94' + cleaned) // 94778895688
+      formats.push('+94' + cleaned) // +94778895688
+    }
+    
+    return formats
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -43,19 +87,45 @@ export default function LoginPage() {
     try {
       console.log('Login attempt with:', emailOrUsername)
       
-      // Determine if input is email or username
+      // Determine input type: email, phone number, or username
       const isEmail = emailOrUsername.includes('@')
+      const isPhone = isPhoneNumber(emailOrUsername)
       
-      // Look up user in database
-      let query = supabase.from('users').select('id, email, username, password_hash, first_name, last_name, access_level, role, status')
+      let userData = null
+      let userError = null
       
       if (isEmail) {
-        query = query.eq('email', emailOrUsername)
+        // Look up by email
+        const result = await supabase
+          .from('users')
+          .select('id, email, username, mobile_number, password_hash, first_name, last_name, access_level, role, status')
+          .eq('email', emailOrUsername)
+          .single()
+        userData = result.data
+        userError = result.error
+      } else if (isPhone) {
+        // Try multiple phone number formats
+        const phoneFormats = getPhoneFormatsForLookup(emailOrUsername)
+        console.log('Searching by mobile_number formats:', phoneFormats)
+        
+        // Use 'in' filter to check all possible formats at once
+        const result = await supabase
+          .from('users')
+          .select('id, email, username, mobile_number, password_hash, first_name, last_name, access_level, role, status')
+          .in('mobile_number', phoneFormats)
+          .single()
+        userData = result.data
+        userError = result.error
       } else {
-        query = query.eq('username', emailOrUsername)
+        // Look up by username
+        const result = await supabase
+          .from('users')
+          .select('id, email, username, mobile_number, password_hash, first_name, last_name, access_level, role, status')
+          .eq('username', emailOrUsername)
+          .single()
+        userData = result.data
+        userError = result.error
       }
-      
-      const { data: userData, error: userError } = await query.single()
       
       if (userError || !userData) {
         console.error('User lookup error:', userError)
@@ -195,7 +265,7 @@ export default function LoginPage() {
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
-                  placeholder="Enter your email or username"
+                  placeholder="Enter email, username, or mobile number"
                 />
               </div>
 

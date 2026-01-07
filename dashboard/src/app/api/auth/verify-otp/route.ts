@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
+import { formatPhoneNumber } from '@/lib/sms-service'
 
 // Lazy initialization of Supabase Admin Client
 function getSupabaseAdmin() {
@@ -20,27 +21,58 @@ export async function POST(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
     const body = await request.json()
-    const { email, otp } = body
+    const { email, mobileNumber, otp, method = 'email' } = body
 
-    if (!email || !otp) {
+    if (!otp) {
       return NextResponse.json(
-        { error: 'Email and OTP are required' },
+        { error: 'OTP is required' },
         { status: 400 }
       )
     }
 
-    const normalizedEmail = email.toLowerCase().trim()
+    if (method === 'email' && !email) {
+      return NextResponse.json(
+        { error: 'Email is required' },
+        { status: 400 }
+      )
+    }
 
-    console.log('Verifying OTP for email:', normalizedEmail)
+    if (method === 'mobile' && !mobileNumber) {
+      return NextResponse.json(
+        { error: 'Mobile number is required' },
+        { status: 400 }
+      )
+    }
 
-    // Find OTP record by email
-    const { data: otpRecord, error: otpError } = await supabaseAdmin
-      .from('password_reset_otps')
-      .select('*')
-      .ilike('email', normalizedEmail)
-      .eq('otp_code', otp)
-      .eq('verified', false)
-      .single()
+    const identifier = method === 'email' ? email.toLowerCase().trim() : formatPhoneNumber(mobileNumber)
+
+    console.log(`Verifying OTP for ${method}:`, identifier)
+
+    // Find OTP record by email or mobile number
+    let otpRecord = null
+    let otpError = null
+
+    if (method === 'email') {
+      const result = await supabaseAdmin
+        .from('password_reset_otps')
+        .select('*')
+        .ilike('email', identifier)
+        .eq('otp_code', otp)
+        .eq('verified', false)
+        .single()
+      otpRecord = result.data
+      otpError = result.error
+    } else {
+      const result = await supabaseAdmin
+        .from('password_reset_otps')
+        .select('*')
+        .eq('mobile_number', identifier)
+        .eq('otp_code', otp)
+        .eq('verified', false)
+        .single()
+      otpRecord = result.data
+      otpError = result.error
+    }
 
     if (otpError || !otpRecord) {
       console.error('OTP lookup error:', otpError)
@@ -75,11 +107,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user info from the users table by email
+    // Get user info from the users table - use email from OTP record if available
+    const userEmail = otpRecord.email
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id, auth_id')
-      .ilike('email', normalizedEmail)
+      .ilike('email', userEmail)
       .single()
 
     if (userError || !user) {
@@ -94,7 +127,7 @@ export async function POST(request: NextRequest) {
       { 
         userId: user.id,
         authId: user.auth_id,
-        email: normalizedEmail,
+        email: userEmail,
         otpId: otpRecord.id,
         type: 'password_reset'
       },
@@ -102,7 +135,7 @@ export async function POST(request: NextRequest) {
       { expiresIn: '15m' }
     )
 
-    console.log('OTP verified successfully for:', normalizedEmail)
+    console.log(`OTP verified successfully for ${method}:`, identifier)
 
     return NextResponse.json({
       success: true,

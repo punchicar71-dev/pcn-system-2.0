@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, emailTemplates, isValidEmail } from '@/lib/email-service'
+import { sendSMS, formatPhoneNumber, isValidSriLankanPhone } from '@/lib/sms-service'
 import { checkRateLimit, rateLimiters, getClientIP } from '@/lib/rate-limit'
 
 // Lazy initialization of Supabase Admin Client
@@ -26,42 +27,63 @@ export async function POST(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
     const body = await request.json()
-    const { email } = body
+    const { email, mobileNumber, method = 'email' } = body
 
-    if (!email) {
+    // Validate based on method
+    if (method === 'email') {
+      if (!email) {
+        return NextResponse.json(
+          { error: 'Email address is required' },
+          { status: 400 }
+        )
+      }
+
+      if (!isValidEmail(email)) {
+        return NextResponse.json(
+          { error: 'Invalid email address format' },
+          { status: 400 }
+        )
+      }
+    } else if (method === 'mobile') {
+      if (!mobileNumber) {
+        return NextResponse.json(
+          { error: 'Mobile number is required' },
+          { status: 400 }
+        )
+      }
+
+      if (!isValidSriLankanPhone(mobileNumber)) {
+        return NextResponse.json(
+          { error: 'Invalid Sri Lankan mobile number format' },
+          { status: 400 }
+        )
+      }
+    } else {
       return NextResponse.json(
-        { error: 'Email address is required' },
+        { error: 'Invalid method. Use "email" or "mobile"' },
         { status: 400 }
       )
     }
 
-    // Validate email format
-    if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email address format' },
-        { status: 400 }
-      )
-    }
+    const identifier = method === 'email' ? email.toLowerCase().trim() : formatPhoneNumber(mobileNumber)
 
-    const normalizedEmail = email.toLowerCase().trim()
-
-    // Rate limiting: Check by email AND by IP
-    const emailRateLimit = checkRateLimit(normalizedEmail, rateLimiters.otp)
+    // Rate limiting: Check by identifier AND by IP
+    const identifierRateLimit = checkRateLimit(identifier, rateLimiters.otp)
     const ipRateLimit = checkRateLimit(getClientIP(request), rateLimiters.otp)
     
-    if (!emailRateLimit.allowed) {
-      console.warn(`Rate limit exceeded for email: ${normalizedEmail}`)
+    if (!identifierRateLimit.allowed) {
+      console.warn(`Rate limit exceeded for ${method}: ${identifier}`)
       return NextResponse.json(
         { 
           error: 'Too many OTP requests. Please wait before trying again.',
-          retryAfter: emailRateLimit.retryAfter 
+          retryAfter: identifierRateLimit.retryAfter 
         },
         { 
           status: 429,
           headers: {
-            'Retry-After': String(emailRateLimit.retryAfter),
+            'Retry-After': String(identifierRateLimit.retryAfter),
             'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': String(emailRateLimit.resetInSeconds)
+            'X-RateLimit-Reset': String(identifierRateLimit.resetInSeconds)
           }
         }
       )
@@ -85,20 +107,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Searching for user with email:', normalizedEmail)
+    console.log(`Searching for user with ${method}:`, identifier)
 
-    // Check if user exists with this email
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
-      .select('id, first_name, email')
-      .ilike('email', normalizedEmail)
-      .single()
+    // Check if user exists with this email or mobile number
+    let userData = null
+    let userError = null
+
+    if (method === 'email') {
+      const result = await supabaseAdmin
+        .from('users')
+        .select('id, first_name, email, mobile_number')
+        .ilike('email', identifier)
+        .single()
+      userData = result.data
+      userError = result.error
+    } else {
+      // Try multiple mobile number formats
+      const cleaned = mobileNumber.replace(/\D/g, '')
+      let mobileFormats: string[] = []
+      
+      if (cleaned.startsWith('0')) {
+        mobileFormats = [cleaned, '94' + cleaned.substring(1), '+94' + cleaned.substring(1)]
+      } else if (cleaned.startsWith('94')) {
+        mobileFormats = [cleaned, '0' + cleaned.substring(2), '+' + cleaned]
+      } else {
+        mobileFormats = [cleaned]
+      }
+
+      for (const format of mobileFormats) {
+        const result = await supabaseAdmin
+          .from('users')
+          .select('id, first_name, email, mobile_number')
+          .eq('mobile_number', format)
+          .single()
+        
+        if (result.data && !result.error) {
+          userData = result.data
+          userError = null
+          break
+        }
+        userError = result.error
+      }
+    }
 
     if (userError || !userData) {
       console.error('User lookup error:', userError)
-      console.log('No user found with email:', normalizedEmail)
+      console.log(`No user found with ${method}:`, identifier)
       return NextResponse.json(
-        { error: 'No account found with this email address' },
+        { error: `No account found with this ${method === 'email' ? 'email address' : 'mobile number'}` },
         { status: 404 }
       )
     }
@@ -109,18 +165,25 @@ export async function POST(request: NextRequest) {
     const otpCode = generateOTP()
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
 
-    // Clean up any existing OTPs for this email
-    await supabaseAdmin
-      .from('password_reset_otps')
-      .delete()
-      .ilike('email', normalizedEmail)
+    // Clean up any existing OTPs for this user (by email or mobile)
+    if (method === 'email') {
+      await supabaseAdmin
+        .from('password_reset_otps')
+        .delete()
+        .ilike('email', identifier)
+    } else {
+      await supabaseAdmin
+        .from('password_reset_otps')
+        .delete()
+        .eq('mobile_number', identifier)
+    }
 
-    // Store OTP in database (using email instead of mobile_number)
+    // Store OTP in database
     const { error: otpError } = await supabaseAdmin
       .from('password_reset_otps')
       .insert({
-        email: normalizedEmail,
-        mobile_number: null, // Keep for backwards compatibility
+        email: method === 'email' ? identifier : userData.email, // Always store email for reference
+        mobile_number: method === 'mobile' ? identifier : null,
         otp_code: otpCode,
         user_id: null, // Set to null to avoid FK constraint issues
         expires_at: expiresAt.toISOString(),
@@ -144,61 +207,91 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('OTP stored successfully:', {
-      email: normalizedEmail,
+      method,
+      identifier,
       expires: expiresAt.toISOString()
     })
 
-    // Send OTP via email using Resend
-    const emailContent = emailTemplates.passwordResetOTP(userData.first_name, otpCode)
-    
-    const emailResult = await sendEmail({
-      to: normalizedEmail,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text
-    })
+    // Send OTP via the selected method
+    if (method === 'email') {
+      // Send OTP via email using Resend
+      const emailContent = emailTemplates.passwordResetOTP(userData.first_name, otpCode)
+      
+      const emailResult = await sendEmail({
+        to: identifier,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text
+      })
 
-    if (emailResult.status === 'error') {
-      console.error('Failed to send OTP email:', emailResult.message)
-      console.error('Email error details:', emailResult.error)
+      if (emailResult.status === 'error') {
+        console.error('Failed to send OTP email:', emailResult.message)
+        console.error('Email error details:', emailResult.error)
+        
+        // Check if it's a Resend domain verification issue
+        const isDomainError = emailResult.message?.includes('verify a domain') || 
+                              emailResult.message?.includes('testing emails') ||
+                              emailResult.message?.includes('can only send')
+        
+        if (isDomainError) {
+          // In development/testing mode, still return success with OTP stored
+          console.log('='.repeat(50))
+          console.log('🔐 DEV MODE - OTP CODE:', otpCode)
+          console.log('📧 For email:', identifier)
+          console.log('⏰ Expires at:', expiresAt.toISOString())
+          console.log('='.repeat(50))
+          
+          return NextResponse.json({
+            success: true,
+            message: 'OTP generated successfully. Check server console for OTP code (dev mode).',
+            expiresIn: 300,
+            devMode: true,
+            devOtp: otpCode
+          })
+        }
+        
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to send OTP email. Please try again.',
+          details: emailResult.message
+        }, { status: 500 })
+      }
+
+      console.log('OTP sent successfully via email to:', identifier)
+    } else {
+      // Send OTP via SMS
+      const smsMessage = `Your PCN System password reset code is: ${otpCode}. Valid for 5 minutes. Do not share this code.`
       
-      // Check if it's a Resend domain verification issue
-      const isDomainError = emailResult.message?.includes('verify a domain') || 
-                            emailResult.message?.includes('testing emails') ||
-                            emailResult.message?.includes('can only send')
-      
-      if (isDomainError) {
-        // In development/testing mode, still return success with OTP stored
-        // The user can check the server console for the OTP
+      const smsResult = await sendSMS({
+        to: identifier,
+        message: smsMessage
+      })
+
+      if (smsResult.status === 'error') {
+        console.error('Failed to send OTP SMS:', smsResult.message)
+        
+        // In development mode, still return success with OTP stored
         console.log('='.repeat(50))
         console.log('🔐 DEV MODE - OTP CODE:', otpCode)
-        console.log('📧 For email:', normalizedEmail)
+        console.log('📱 For mobile:', identifier)
         console.log('⏰ Expires at:', expiresAt.toISOString())
         console.log('='.repeat(50))
         
-        // Return success so the user can proceed to OTP verification page
         return NextResponse.json({
           success: true,
-          message: 'OTP generated successfully. Check server console for OTP code (dev mode).',
+          message: 'OTP generated but SMS delivery may have failed. Check server console for OTP code (dev mode).',
           expiresIn: 300,
-          // Include OTP in response for development testing
           devMode: true,
           devOtp: otpCode
         })
       }
-      
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to send OTP email. Please try again.',
-        details: emailResult.message
-      }, { status: 500 })
-    }
 
-    console.log('OTP sent successfully to:', normalizedEmail)
+      console.log('OTP sent successfully via SMS to:', identifier)
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'OTP sent successfully to your email address',
+      message: `OTP sent successfully to your ${method === 'email' ? 'email address' : 'mobile number'}`,
       expiresIn: 300 // 5 minutes in seconds
     })
 
