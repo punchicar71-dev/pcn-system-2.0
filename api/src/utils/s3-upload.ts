@@ -84,19 +84,19 @@ export const generatePresignedUploadUrl = async (
     const key = generateS3Key(vehicleId, imageType, fileName);
     console.log(`📁 S3 Key: ${key}`);
 
-    // Create minimal PutObjectCommand - no ContentType or Metadata
-    // This avoids SignatureDoesNotMatch errors when browser sends different headers
+    // Create PutObjectCommand with ContentType to match what browser will send
+    // This ensures the signature includes the Content-Type header
     const command = new PutObjectCommand({
       Bucket: S3_BUCKET_NAME,
       Key: key,
+      ContentType: mimeType,
     });
 
-    console.log(`⏳ Calling getSignedUrl...`);
+    console.log(`⏳ Calling getSignedUrl with ContentType: ${mimeType}...`);
     // Generate presigned URL valid for 5 minutes
-    // signableHeaders restricts what headers are included in signature
+    // Don't restrict signableHeaders - let AWS SDK include all necessary headers
     const presignedUrl = await getSignedUrl(s3Client, command, { 
       expiresIn: 300,
-      signableHeaders: new Set(['host']),
     });
     const publicUrl = getS3PublicUrl(key);
 

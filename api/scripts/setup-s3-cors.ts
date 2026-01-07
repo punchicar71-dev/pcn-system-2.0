@@ -29,6 +29,8 @@ const corsConfiguration = {
         'http://localhost:3000',
         'https://*.punchicar.lk',
         'https://punchicar.lk',
+        'https://app.punchicar.lk',
+        'https://*.railway.app',
       ],
       ExposeHeaders: ['ETag'],
       MaxAgeSeconds: 3600,
