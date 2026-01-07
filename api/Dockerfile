@@ -1,28 +1,48 @@
-FROM node:20-alpine
+# Stage 1: Build
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy root package files for workspace
 COPY package*.json ./
+COPY api/package*.json ./api/
+COPY shared/package*.json ./shared/
 
-# Install dependencies
-RUN npm install --only=production --legacy-peer-deps
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
 
-# Copy TypeScript configuration
-COPY tsconfig.json ./
+# Copy source files
+COPY api/ ./api/
+COPY shared/ ./shared/
 
-# Copy source code
-COPY src ./src
-
-# Install TypeScript for building
-RUN npm install -D typescript @types/node
-
-# Build TypeScript
+# Build the API
+WORKDIR /app/api
 RUN npm run build
 
-# Remove dev dependencies
-RUN npm prune --production
+# Stage 2: Production
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Copy root package files
+COPY package*.json ./
+COPY api/package*.json ./api/
+COPY shared/package*.json ./shared/
+
+# Install only production dependencies
+RUN npm ci --omit=dev
+
+# Copy built files from builder
+COPY --from=builder /app/api/dist ./api/dist
+COPY --from=builder /app/shared ./shared
+
+WORKDIR /app
+
+# Railway sets PORT dynamically
+ENV PORT=4000
+ENV NODE_ENV=production
 
 EXPOSE 4000
 
-CMD ["npm", "start"]
+# Start the server
+CMD ["node", "api/dist/index.js"]
