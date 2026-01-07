@@ -18,6 +18,7 @@
     "build:dashboard": "cd dashboard && npm run build",
     "build:web": "cd web && npm run build",
     "build:api": "cd api && npm run build",
+    "start:api": "node api/dist/index.js",
     "lint": "npm run lint:dashboard && npm run lint:web && npm run lint:api",
     "lint:dashboard": "cd dashboard && npm run lint",
     "lint:web": "cd web && npm run lint",

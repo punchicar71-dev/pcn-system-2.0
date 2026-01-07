@@ -1,5 +1,5 @@
 # Nixpacks configuration for Railway deployment
-# Forces Node.js detection instead of Deno
+# This is the root-level config - each service should configure its own build/start commands
 
 [phases.setup]
 nixPkgs = ["nodejs_20"]
@@ -7,5 +7,8 @@ nixPkgs = ["nodejs_20"]
 [phases.install]
 cmds = ["npm ci"]
 
+[phases.build]
+cmds = ["npm run build --workspace=pcn-api"]
+
 [start]
-cmd = "npm run start"
+cmd = "node api/dist/index.js"
