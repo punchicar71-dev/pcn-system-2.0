@@ -84,25 +84,18 @@ export const generatePresignedUploadUrl = async (
     const key = generateS3Key(vehicleId, imageType, fileName);
     console.log(`📁 S3 Key: ${key}`);
 
+    // Note: Do NOT include Metadata for presigned URLs
+    // Metadata requires exact header matching which causes SignatureDoesNotMatch errors
     const command = new PutObjectCommand({
       Bucket: S3_BUCKET_NAME,
       Key: key,
       ContentType: mimeType,
-      CacheControl: 'max-age=31536000',
-      Metadata: {
-        vehicleId,
-        imageType,
-        originalFileName: fileName,
-        uploadedAt: new Date().toISOString(),
-      },
     });
 
     console.log(`⏳ Calling getSignedUrl...`);
     // Generate presigned URL valid for 5 minutes
-    // Disable checksum to allow browser uploads without checksum headers
     const presignedUrl = await getSignedUrl(s3Client, command, { 
       expiresIn: 300,
-      unhoistableHeaders: new Set(['x-amz-checksum-crc32']),
     });
     const publicUrl = getS3PublicUrl(key);
 
