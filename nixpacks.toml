@@ -1,5 +1,5 @@
 # Nixpacks configuration for Railway deployment
-# This is the root-level config - each service should configure its own build/start commands
+# Explicitly configure build and start to avoid workspace auto-detection issues
 
 [phases.setup]
 nixPkgs = ["nodejs_20"]
@@ -11,4 +11,4 @@ cmds = ["npm ci"]
 cmds = ["npm run build --workspace=pcn-api"]
 
 [start]
-cmd = "node api/dist/index.js"
+cmd = "npm run start"
