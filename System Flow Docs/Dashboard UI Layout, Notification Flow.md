@@ -4,11 +4,36 @@
 
 This document covers the complete dashboard UI layout architecture, user access control system, and notification system for the PCN Vehicle Selling Management System. The dashboard provides a centralized interface for vehicle inventory management, sales tracking, and real-time notifications.
 
-> **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication with server-side session validation. API routes are protected with authentication middleware and rate limiting (updated December 29, 2025).
+> **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication with server-side session validation. API routes are protected with authentication middleware and rate limiting.
+
+**Last Updated**: January 3, 2026
 
 ---
 
-## 📢 LATEST UPDATE - December 29, 2025 (API Security & Rate Limiting)
+## 📢 LATEST UPDATE - January 1, 2026 (Reports Data Sync & RBAC Updates)
+
+### 🔄 Reports & Analytics Data Consistency
+
+**Update: All reports now properly handle multiple price field variations for accurate data display!**
+
+#### Key Changes:
+- Financial Reports Tab uses universal price handling pattern
+- Sales Agents Report correctly calculates commissions with any price field
+- Summary Reports handles vehicle snapshots and multiple sold-out records
+
+#### Price Field Pattern:
+```typescript
+const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
+```
+
+#### Modified Files:
+- `dashboard/src/components/reports/FinancialReportsTab.tsx` ✅
+- `dashboard/src/components/reports/SalesAgentsReportTab.tsx` ✅
+- `dashboard/src/components/reports/SummaryReportsTab.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - December 29, 2025 (API Security & Rate Limiting)
 
 ### 🔐 Security Enhancements
 

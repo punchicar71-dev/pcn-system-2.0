@@ -5,48 +5,20 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-// Create or update user session
+// Create or update user session - updates last_activity in users table
 export async function createUserSession(userId: string, authId: string, sessionToken: string) {
   try {
-    // Check if session already exists
-    const { data: existingSession } = await supabase
-      .from('user_sessions')
-      .select('id')
-      .eq('auth_id', authId)
-      .eq('is_active', true)
-      .single()
+    // Update last_activity in users table using user's id
+    const { error } = await supabase
+      .from('users')
+      .update({
+        last_activity: new Date().toISOString()
+      })
+      .eq('id', userId)
 
-    if (existingSession) {
-      // Update existing session
-      const { error } = await supabase
-        .from('user_sessions')
-        .update({
-          last_activity: new Date().toISOString(),
-          session_token: sessionToken
-        })
-        .eq('id', existingSession.id)
-
-      if (error) {
-        console.error('Error updating session:', error)
-        return false
-      }
-    } else {
-      // Create new session
-      const { error } = await supabase
-        .from('user_sessions')
-        .insert({
-          user_id: userId,
-          auth_id: authId,
-          session_token: sessionToken,
-          is_active: true,
-          last_activity: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
-        })
-
-      if (error) {
-        console.error('Error creating session:', error)
-        return false
-      }
+    if (error) {
+      console.error('Error updating user activity:', error)
+      return false
     }
 
     return true
@@ -56,16 +28,15 @@ export async function createUserSession(userId: string, authId: string, sessionT
   }
 }
 
-// Update session activity (heartbeat)
-export async function updateSessionActivity(authId: string) {
+// Update session activity (heartbeat) - updates last_activity in users table
+export async function updateSessionActivity(userId: string) {
   try {
     const { error } = await supabase
-      .from('user_sessions')
+      .from('users')
       .update({
         last_activity: new Date().toISOString()
       })
-      .eq('auth_id', authId)
-      .eq('is_active', true)
+      .eq('id', userId)
 
     if (error) {
       console.error('Error updating session activity:', error)
@@ -79,17 +50,16 @@ export async function updateSessionActivity(authId: string) {
   }
 }
 
-// End user session
-export async function endUserSession(authId: string) {
+// End user session - clears last_activity to mark user as offline
+export async function endUserSession(userId: string) {
   try {
+    // Set last_activity to null or a past time to mark as offline
     const { error } = await supabase
-      .from('user_sessions')
+      .from('users')
       .update({
-        is_active: false,
-        last_activity: new Date().toISOString()
+        last_activity: null
       })
-      .eq('auth_id', authId)
-      .eq('is_active', true)
+      .eq('id', userId)
 
     if (error) {
       console.error('Error ending session:', error)
@@ -103,19 +73,16 @@ export async function endUserSession(authId: string) {
   }
 }
 
-// Check if user is online
+// Check if user is online based on last_activity
 export async function isUserOnline(userId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
-      .from('user_sessions')
+      .from('users')
       .select('last_activity')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('last_activity', { ascending: false })
-      .limit(1)
+      .eq('id', userId)
       .single()
 
-    if (error || !data) {
+    if (error || !data || !data.last_activity) {
       return false
     }
 
@@ -130,22 +97,22 @@ export async function isUserOnline(userId: string): Promise<boolean> {
   }
 }
 
-// Get all active users
+// Get all active users (users with last_activity within 5 minutes)
 export async function getActiveUsers(): Promise<string[]> {
   try {
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
     const { data, error } = await supabase
-      .from('user_sessions')
-      .select('user_id')
-      .eq('is_active', true)
+      .from('users')
+      .select('id')
+      .not('last_activity', 'is', null)
       .gte('last_activity', fiveMinutesAgo)
 
     if (error || !data) {
       return []
     }
 
-    return data.map(session => session.user_id)
+    return data.map(user => user.id)
   } catch (error) {
     console.error('Error getting active users:', error)
     return []

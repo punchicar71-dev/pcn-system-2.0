@@ -6,9 +6,39 @@ The Settings module provides centralized configuration management for the PCN Ve
 
 **Access Level**: All authenticated users can view; Admin users can modify.
 
-**Last Updated**: January 1, 2026
+**Last Updated**: January 3, 2026
 
 > **Note**: Authentication is handled via cookie-based sessions. Users must be logged in to access settings.
+
+---
+
+## 📢 LATEST UPDATE - January 1, 2026 (Sales Agent Tab Cleanup)
+
+### ⚙️ Sales Agent Tab Database Alignment
+
+**Update: Removed deprecated `user_id` field from Sales Agent Tab UI!**
+
+#### What's Changed:
+
+1. **Removed `user_id` Field**:
+   - The `user_id` field was deprecated and has been removed from the UI
+   - Cleaner database schema alignment
+   - Sales agents no longer require direct user account linkage
+
+2. **Sales Agent Fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Primary key |
+| `name` | VARCHAR | Agent name |
+| `agent_type` | VARCHAR | 'Office Sales Agent' or 'Vehicle Showroom Agent' |
+| `is_active` | BOOLEAN | Agent status |
+| `email` | VARCHAR | Contact email |
+| `created_at` | TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | Last update timestamp |
+
+#### Modified Files:
+- `dashboard/src/components/settings/SalesAgentTab.tsx` ✅
 
 ---
 

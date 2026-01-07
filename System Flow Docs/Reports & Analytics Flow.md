@@ -6,11 +6,57 @@ The Reports & Analytics module provides comprehensive reporting capabilities for
 
 **Access Level**: Admin Only (Role-Based Access Control)
 
-**Last Updated**: January 1, 2026
+**Last Updated**: January 3, 2026
 
 > **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication. Role verification is performed client-side via `useRoleAccess` hook. Full server-side role validation will be added with Better Auth integration.
 
 > **✅ DATA CONSISTENCY**: All reports now properly handle multiple field name variations (`sale_price`, `selling_price`, `selling_amount`) to ensure accurate data display across historical and new records.
+
+---
+
+## 📢 LATEST UPDATE - January 1, 2026 (Data Synchronization Fix)
+
+### 🔄 Reports & Analytics Data Consistency Fix
+
+**Critical Update: Resolved field name inconsistencies across reports to ensure accurate data display!**
+
+#### What's Fixed:
+
+1. **📊 Financial Reports Tab**:
+   - Fixed database query to use `select(*)` to capture all field variations
+   - Proper handling of `sale_price`, `selling_price`, and `selling_amount` fields
+   - PCN advance calculations work correctly with all field name variations
+
+2. **📈 Sales Agents Report Tab**:
+   - Fixed selling amount calculation to support multiple field name formats
+   - Agent commission reports now display accurate pricing
+   - CSV export includes correct pricing data
+
+3. **📉 Summary Reports Tab**:
+   - Fixed brand sales calculation to use snapshot data first
+   - Handles multiple sold-out records per vehicle correctly
+   - Handles deleted/re-added vehicles correctly
+
+#### Field Name Mapping Reference:
+
+| Source | Field Name | Usage |
+|--------|------------|-------|
+| Database Schema | `selling_price` | Standard column name |
+| Sell Vehicle Page | `sale_price` | Used during sale creation |
+| Legacy Code | `selling_amount` | Old field name |
+
+#### Universal Price Handling Pattern:
+
+```typescript
+// Used across all reports for consistent data
+const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
+```
+
+#### Modified Files:
+- `dashboard/src/components/reports/FinancialReportsTab.tsx` ✅
+- `dashboard/src/components/reports/SalesAgentsReportTab.tsx` ✅
+- `dashboard/src/components/reports/SummaryReportsTab.tsx` ✅
+- `dashboard/src/lib/database.types.ts` ✅
 
 ---
 

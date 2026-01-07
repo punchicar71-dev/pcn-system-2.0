@@ -9,6 +9,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { sendSMS, formatPhoneNumber, isValidSriLankanPhone, smsTemplates } from '@/lib/sms-service'
+import { sendEmail as sendEmailService, emailTemplates } from '@/lib/email-service'
 import * as crypto from 'crypto'
 
 // Simple password hashing (temporary until Better Auth is integrated)
@@ -32,12 +33,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Return users without auth-specific status (will be updated with Better Auth)
-    const usersWithStatus = users.map((user) => ({
-      ...user,
-      last_sign_in_at: user.last_sign_in_at || null,
-      is_online: false // Will be implemented with Better Auth sessions
-    }))
+    // Determine online status based on last_activity field
+    // Consider users active if they have activity within the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).getTime()
+
+    // Map users with real online status from last_activity
+    const usersWithStatus = users.map((user) => {
+      const lastActivity = user.last_activity ? new Date(user.last_activity).getTime() : 0
+      const isOnline = lastActivity > fiveMinutesAgo
+      
+      return {
+        ...user,
+        last_sign_in_at: user.last_sign_in_at || user.last_activity || null,
+        is_online: isOnline
+      }
+    })
 
     return NextResponse.json({ users: usersWithStatus }, { status: 200 })
   } catch (error) {
@@ -140,24 +150,24 @@ export async function POST(request: Request) {
     }
 
     // Step 3: Send email notification if requested
+    let emailSent = false
     if (sendEmail) {
       try {
-        // Call email service to send credentials
-        await fetch(`${request.url.replace('/api/users', '/api/users/send-credentials')}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email,
-            firstName,
-            lastName,
-            username,
-            password,
-            accessLevel,
-            role
-          })
+        // Use Resend email service with welcome template
+        const emailTemplate = emailTemplates.welcome(firstName, username, email, password)
+        const emailResult = await sendEmailService({
+          to: email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
         })
+        
+        if (emailResult.status === 'success') {
+          console.log('Welcome email sent successfully to:', email)
+          emailSent = true
+        } else {
+          console.error('Failed to send welcome email:', emailResult.message)
+        }
       } catch (emailError) {
         console.error('Error sending email:', emailError)
         // Don't fail the whole operation if email fails
@@ -165,6 +175,7 @@ export async function POST(request: Request) {
     }
 
     // Step 4: Send SMS notification if requested and mobile number provided
+    let smsSent = false
     if (shouldSendSMS && mobileNumber) {
       try {
         // Validate phone number
@@ -181,6 +192,7 @@ export async function POST(request: Request) {
           
           if (smsResult.status === 'success') {
             console.log('Welcome SMS sent successfully to:', formattedPhone)
+            smsSent = true
           } else {
             console.error('Failed to send SMS:', smsResult.message)
           }
@@ -197,7 +209,9 @@ export async function POST(request: Request) {
       { 
         success: true, 
         user: userData,
-        message: 'User created successfully'
+        message: 'User created successfully',
+        emailSent,
+        smsSent
       },
       { status: 201 }
     )

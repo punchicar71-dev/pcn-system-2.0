@@ -33,6 +33,40 @@ The Sell Vehicle flow is a comprehensive 3-step wizard that allows users to reco
 - **Notification System**: Real-time notifications for sales transactions
 - **Vehicle Snapshot**: Preserves vehicle information at time of sale
 
+**Last Updated**: January 3, 2026
+
+---
+
+## 📢 LATEST UPDATE - December 31, 2025 (Database Column Fix)
+
+### 🔧 Sell Vehicle Flow Database Column Fix
+
+**Critical Update: Fixed database column name mismatches in sell vehicle flow!**
+
+#### Database Column Mapping:
+
+| Frontend Field | Actual DB Column | Notes |
+|---------------|-----------------|-------|
+| `firstName` + `lastName` | `customer_name` | Combined into single field |
+| `salePrice` | `sale_price` | Primary selling price column |
+| `showroomAgentName` | `third_party_agent` | External agent name |
+
+#### Price Field Handling:
+
+The sell vehicle page now correctly maps to `sale_price` column. Reports and other components handle multiple field names for backwards compatibility:
+
+```typescript
+// Used in reports for data consistency
+const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
+```
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/sell-vehicle/page.tsx` - Fixed DB column names ✅
+- `dashboard/src/components/sell-vehicle/SellingInfo.tsx` - Updated data handling ✅
+- `dashboard/src/lib/database.types.ts` - Updated interfaces ✅
+
+---
+
 ### Technology Stack
 - **Frontend**: Next.js 14+ (React, TypeScript)
 - **Backend API**: Express.js (Node.js)

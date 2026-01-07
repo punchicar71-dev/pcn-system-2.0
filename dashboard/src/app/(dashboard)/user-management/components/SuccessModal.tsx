@@ -1,20 +1,46 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { X, Mail, MessageSquare, CheckCircle, XCircle } from 'lucide-react'
 import React from 'react'
 
 interface SuccessModalProps {
   isOpen: boolean
   onClose: () => void
   userName: string
+  emailSent?: boolean
+  smsSent?: boolean
+  requestedEmail?: boolean
+  requestedSMS?: boolean
 }
 
 export default function SuccessModal({
   isOpen,
   onClose,
-  userName
+  userName,
+  emailSent = false,
+  smsSent = false,
+  requestedEmail = false,
+  requestedSMS = false
 }: SuccessModalProps) {
   if (!isOpen) return null
+
+  // Determine credential delivery status message
+  const getCredentialStatusMessage = () => {
+    const messages: string[] = []
+    
+    if (requestedEmail && emailSent) {
+      messages.push('email')
+    }
+    if (requestedSMS && smsSent) {
+      messages.push('SMS')
+    }
+    
+    if (messages.length === 0) {
+      return 'The user account has been created successfully.'
+    }
+    
+    return `Login credentials have been sent via ${messages.join(' and ')}.`
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -48,15 +74,49 @@ export default function SuccessModal({
 
         {/* Success Message */}
         <h3 className="text-2xl font-bold text-gray-900 mb-2">
-          User Adding Successfully
+          User Added Successfully
         </h3>
         <p className="text-xl text-green-600 font-semibold">
           {userName}
         </p>
 
         <p className="text-gray-600 text-sm mt-4">
-          The user account has been created and login details have been sent to their email.
+          {getCredentialStatusMessage()}
         </p>
+
+        {/* Credential Delivery Status - Only show if something was requested */}
+        {(requestedEmail || requestedSMS) && (
+          <div className="mt-4 space-y-2">
+            {requestedEmail && emailSent && (
+              <div className="flex items-center justify-center gap-2 text-sm text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                <Mail className="w-4 h-4" />
+                <span>Email sent successfully</span>
+              </div>
+            )}
+            {requestedEmail && !emailSent && (
+              <div className="flex items-center justify-center gap-2 text-sm text-amber-500">
+                <XCircle className="w-4 h-4" />
+                <Mail className="w-4 h-4" />
+                <span>Email delivery pending</span>
+              </div>
+            )}
+            {requestedSMS && smsSent && (
+              <div className="flex items-center justify-center gap-2 text-sm text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
+                <span>SMS sent successfully</span>
+              </div>
+            )}
+            {requestedSMS && !smsSent && (
+              <div className="flex items-center justify-center gap-2 text-sm text-amber-500">
+                <XCircle className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
+                <span>SMS delivery pending</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

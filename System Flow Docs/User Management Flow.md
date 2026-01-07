@@ -8,9 +8,24 @@ The User Management module allows administrators to add, edit, view, and manage 
 
 > **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication with server-side session validation. API routes are protected with authentication middleware and rate limiting.
 
+**Last Updated**: January 3, 2026
+
 ---
 
-## 📢 LATEST UPDATE - December 29, 2025 (API Security)
+## 📢 LATEST UPDATE - January 1, 2026 (Database Alignment)
+
+### 🔄 User & Agent Data Updates
+
+**Update: Database schema aligned with simplified user management!**
+
+#### Key Changes:
+- Sales Agent Tab removed deprecated `user_id` field
+- User roles properly mapped: `admin` and `editor`
+- Session-based authentication with secure cookie handling
+
+---
+
+## 📢 PREVIOUS UPDATE - December 29, 2025 (API Security)
 
 ### 🔐 Security Enhancements
 

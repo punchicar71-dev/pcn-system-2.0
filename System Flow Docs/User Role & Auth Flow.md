@@ -20,6 +20,28 @@ The PCN (Punchi Car Niwasa) System implements a comprehensive authentication and
 
 > **⚠️ MIGRATION STATUS**: The system is currently migrating from Supabase Auth to **Better Auth**. Step 1 (Supabase Auth removal) is complete. The current implementation uses a temporary custom authentication mechanism with cookie-based sessions, preparing for Better Auth integration in Step 2.
 
+**Last Updated**: January 3, 2026
+
+---
+
+## 📢 LATEST UPDATE - January 1, 2026 (Data Field Updates)
+
+### 🔄 Authentication & Data Consistency Updates
+
+**Update: System continues to use secure cookie-based sessions with enhanced data field handling!**
+
+#### Session Security:
+- Sessions table with secure token storage
+- 7-day session duration with automatic cleanup
+- Rate limiting on sensitive API endpoints
+- Template-based SMS messaging for security
+
+#### Key Security Features:
+- OTP rate limiting: 3 requests per 60 seconds
+- Login attempts: 5 per 15 minutes per IP
+- SMS sending: 10 per hour per user
+- General API: 100 requests per minute per IP
+
 ---
 
 ## Authentication System

@@ -38,6 +38,45 @@ The Inventory flow is a comprehensive vehicle management system that allows user
 - **Storage**: AWS S3
 - **Authentication**: Custom Auth (Migration to Better Auth in progress)
 
+**Last Updated**: January 3, 2026
+
+---
+
+## 📢 LATEST UPDATE - January 1, 2026 (Performance & Data Sync)
+
+### 🚀 Performance Optimizations & Web Data Sync
+
+**Update: Enhanced performance and fixed web app data synchronization!**
+
+#### Key Improvements:
+
+1. **Performance Optimizations**:
+   - Memoized expensive operations in inventory page
+   - Optimized search with proper debouncing
+   - Reduced re-renders with React hooks best practices
+
+2. **Web App Data Sync**:
+   - Fixed vehicle data not updating on web after dashboard edits
+   - Added cache control headers to API routes
+   - Vehicle updates now reflect immediately
+
+3. **Multiple Sold-Out Records**:
+   - Vehicles can now have multiple sold-out records for complete transaction history
+   - Maintains audit trail when vehicles are re-added and sold again
+
+#### Cache Control Configuration:
+```typescript
+response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+response.headers.set('Pragma', 'no-cache')
+response.headers.set('Expires', '0')
+```
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/inventory/page.tsx` ✅
+- `web/next.config.js` ✅
+- `web/src/app/api/vehicles/route.ts` ✅
+- `web/src/app/api/vehicles/[id]/route.ts` ✅
+
 ---
 
 ## Complete Flow Process

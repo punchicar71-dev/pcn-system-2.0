@@ -66,6 +66,17 @@ export default function DashboardPage() {
       )
       .subscribe()
 
+    // Set up real-time subscription for user sessions (online status)
+    const sessionsChannel = supabase
+      .channel('dashboard-sessions')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'user_sessions' },
+        () => {
+          fetchActiveUsers()
+        }
+      )
+      .subscribe()
+
     // Set up real-time subscription for vehicles
     const vehiclesChannel = supabase
       .channel('dashboard-vehicles')
@@ -88,17 +99,23 @@ export default function DashboardPage() {
       )
       .subscribe()
 
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 10 seconds for real-time active users
     const interval = setInterval(() => {
       fetchActiveUsers()
+    }, 10000)
+
+    // Auto-refresh dashboard data every 30 seconds
+    const dashboardInterval = setInterval(() => {
       fetchDashboardData()
     }, 30000)
 
     return () => {
       supabase.removeChannel(usersChannel)
+      supabase.removeChannel(sessionsChannel)
       supabase.removeChannel(vehiclesChannel)
       supabase.removeChannel(salesChannel)
       clearInterval(interval)
+      clearInterval(dashboardInterval)
     }
   }, [])
 
@@ -306,21 +323,24 @@ export default function DashboardPage() {
 
   const fetchActiveUsers = async () => {
     try {
-      // MIGRATION: Get current user from localStorage to identify logged-in user
-      const storedUser = localStorage.getItem('pcn-user')
-      const currentUserData = storedUser ? JSON.parse(storedUser) : null
-
+      // Get users with last_activity to determine online status
       const { data: usersData, error } = await supabase
         .from('users')
-        .select('id, first_name, last_name, email, profile_picture_url, auth_id')
+        .select('id, first_name, last_name, email, profile_picture_url, auth_id, last_activity')
         .order('first_name', { ascending: true })
 
       if (!error && usersData) {
-        // Mark current logged-in user and recently active users as online
-        const usersWithStatus = usersData.map((user) => ({
-          ...user,
-          is_online: currentUserData ? (user.auth_id === currentUserData.auth_id || user.id === currentUserData.id) : false
-        }))
+        // Consider users active if they have activity within the last 5 minutes
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).getTime()
+        
+        // Mark users as online based on last_activity
+        const usersWithStatus = usersData.map((user) => {
+          const lastActivity = user.last_activity ? new Date(user.last_activity).getTime() : 0
+          return {
+            ...user,
+            is_online: lastActivity > fiveMinutesAgo
+          }
+        })
 
         // Filter only online users
         const onlineUsers = usersWithStatus.filter(user => user.is_online)

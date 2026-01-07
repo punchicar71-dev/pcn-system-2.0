@@ -261,7 +261,22 @@ export default function AddUserModal({
             </div>
           </div>
 
-          {/* Checkbox for SMS */}
+          {/* Checkbox for Email Credentials */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="sendEmail"
+              name="sendEmail"
+              checked={formData.sendEmail}
+              onChange={onInputChange}
+              className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="sendEmail" className="text-sm cursor-pointer text-gray-700">
+              Send login credentials via Email
+            </label>
+          </div>
+
+          {/* Checkbox for SMS Credentials */}
           <div className="flex items-center gap-3">
             <input
               type="checkbox"

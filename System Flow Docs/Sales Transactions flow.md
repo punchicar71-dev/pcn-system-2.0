@@ -4,9 +4,48 @@
 
 The Sales Transactions module manages the complete lifecycle of vehicle sales from pending status to sold completion. It consists of two main tabs: **Pending Sales** and **Sold Out** (completed sales), with comprehensive database tracking, UI components, and document generation.
 
-**Last Updated**: January 1, 2026
+**Last Updated**: January 3, 2026
 
 > **Note**: This module requires authentication. Users must be logged in with a valid session cookie to access sales transactions.
+
+---
+
+## 📢 LATEST UPDATE - January 1, 2026 (Field Name Consistency Fix)
+
+### 🔄 Price Field Mapping & Data Consistency
+
+**Critical Update: Fixed field name inconsistencies in pending_vehicle_sales table!**
+
+#### Database Field Mapping:
+
+| Frontend Field | Actual DB Column | Notes |
+|---------------|-----------------|-------|
+| `firstName` + `lastName` | `customer_name` | Combined into single field |
+| `salePrice` | `sale_price` | Primary selling price column |
+| `showroomAgentName` | `third_party_agent` | External agent name |
+
+#### Multiple Price Fields:
+
+The `pending_vehicle_sales` table has multiple price fields due to historical schema evolution:
+
+```typescript
+// Universal price handling in components
+const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
+```
+
+| Field | Source | Description |
+|-------|--------|-------------|
+| `sale_price` | Sell Vehicle Page | Primary field used in new sales |
+| `selling_price` | Database Schema | Standard column name |
+| `selling_amount` | Legacy Code | Old field name for compatibility |
+
+#### Modified Components:
+- `PendingVehicleModal.tsx` - Fixed price display ✅
+- `SoldOutVehicleModal.tsx` - Fixed price display ✅
+- `PrintDocumentModal.tsx` - Fixed calculations ✅
+- `ViewDetailModal.tsx` - Fixed price fallback ✅
+- `PendingVehiclesTable.tsx` - Fixed data transform ✅
+- `SoldOutVehiclesTable.tsx` - Fixed data transform ✅
 
 ---
 

@@ -4,6 +4,50 @@ This document provides a comprehensive overview of how inventory data flows from
 
 > **Note**: The web application is public-facing and does not require authentication. The dashboard inventory management uses cookie-based session authentication.
 
+**Last Updated**: January 3, 2026
+
+---
+
+## 📢 LATEST UPDATE - December 31, 2025 (Web Cache Fix)
+
+### 🔄 Web App Real-time Data Sync Fix
+
+**Critical Update: Fixed vehicle data not updating on web after dashboard edits!**
+
+#### What's Fixed:
+
+1. **Cache Control Headers**:
+   - Added `Cache-Control: no-cache, no-store, must-revalidate` to API routes
+   - Vehicle updates now reflect immediately without cache delays
+
+2. **Next.js Configuration**:
+   - Updated `web/next.config.js` with cache control headers
+   - Added image domains configuration for S3 bucket
+
+#### Modified Files:
+
+**Web API Routes:**
+- `web/src/app/api/vehicles/route.ts` - Added no-cache directives ✅
+- `web/src/app/api/vehicles/[id]/route.ts` - Added no-cache directives ✅
+- `web/src/app/api/brands/route.ts` - Added no-cache directives ✅
+- `web/src/app/api/countries/route.ts` - Added no-cache directives ✅
+
+**Configuration:**
+- `web/next.config.js` - Cache control headers and image domains ✅
+
+#### Cache Control Implementation:
+
+```typescript
+// API route example with cache control
+export async function GET() {
+  const response = NextResponse.json(data)
+  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
+  return response
+}
+```
+
 ---
 
 ## Table of Contents

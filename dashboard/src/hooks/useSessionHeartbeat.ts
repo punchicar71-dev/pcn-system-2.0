@@ -43,14 +43,14 @@ export function useSessionHeartbeat() {
           // Create initial session
           await createUserSession(user.id, user.id, 'migration-token')
 
-          // Set up heartbeat to update activity every 2 minutes
+          // Set up heartbeat to update activity every 30 seconds for real-time status
           heartbeatInterval = setInterval(async () => {
             const currentUser = localStorage.getItem('pcn-user')
             if (currentUser) {
               const userData = JSON.parse(currentUser)
               await updateSessionActivity(userData.id)
             }
-          }, 2 * 60 * 1000) // 2 minutes
+          }, 30 * 1000) // 30 seconds for real-time status tracking
 
           // Track user activity (mouse move, keyboard, clicks)
           const updateActivity = () => {

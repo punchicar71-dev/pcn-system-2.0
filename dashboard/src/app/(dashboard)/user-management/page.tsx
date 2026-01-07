@@ -81,6 +81,12 @@ function UserManagementContent() {
   })
   const [formLoading, setFormLoading] = useState(false)
   const [successUserName, setSuccessUserName] = useState('')
+  const [credentialStatus, setCredentialStatus] = useState({
+    emailSent: false,
+    smsSent: false,
+    requestedEmail: false,
+    requestedSMS: false
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Fetch current user on mount (only once)
@@ -92,7 +98,7 @@ function UserManagementContent() {
   useEffect(() => {
     fetchUsers()
     
-    // Set up real-time subscription for user changes
+    // Set up real-time subscription for user changes (including last_activity updates)
     const usersChannel = supabase
       .channel('users-changes')
       .on('postgres_changes', 
@@ -104,10 +110,10 @@ function UserManagementContent() {
       )
       .subscribe()
 
-    // Auto-refresh every 30 seconds to update status
+    // Auto-refresh every 10 seconds to update status in real-time
     const intervalId = setInterval(() => {
       fetchUsers()
-    }, 30000) // 30 seconds
+    }, 10000) // 10 seconds for more real-time feel
 
     return () => {
       supabase.removeChannel(usersChannel)
@@ -151,20 +157,9 @@ function UserManagementContent() {
       if (response.ok && data.users) {
         console.log('Users fetched successfully:', data.users.length, 'users')
         
-        // MIGRATION: Get current user from localStorage to identify logged-in user
-        const storedUser = localStorage.getItem('pcn-user')
-        const currentUserData = storedUser ? JSON.parse(storedUser) : null
-        
-        // Mark the current logged-in user as active
-        const usersWithCurrentStatus = data.users.map((user: User) => {
-          if (currentUserData && (user.auth_id === currentUserData.auth_id || user.id === currentUserData.id)) {
-            return { ...user, is_online: true }
-          }
-          return user
-        })
-        
-        setUsers(usersWithCurrentStatus)
-        setTotalPages(Math.ceil(usersWithCurrentStatus.length / itemsPerPage))
+        // Users now have real-time online status from API (based on users.last_activity field)
+        setUsers(data.users)
+        setTotalPages(Math.ceil(data.users.length / itemsPerPage))
       } else {
         console.error('Failed to fetch users:', data.error)
       }
@@ -390,6 +385,14 @@ function UserManagementContent() {
       }
 
       const data = await response.json()
+
+      // Update credential status from response
+      setCredentialStatus({
+        emailSent: data.emailSent || false,
+        smsSent: data.smsSent || false,
+        requestedEmail: formData.sendEmail,
+        requestedSMS: formData.sendSMS && !!formData.mobileNumber
+      })
 
       // Show success modal
       setSuccessUserName(`${formData.firstName} ${formData.lastName}`)
@@ -660,6 +663,10 @@ function UserManagementContent() {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         userName={successUserName}
+        emailSent={credentialStatus.emailSent}
+        smsSent={credentialStatus.smsSent}
+        requestedEmail={credentialStatus.requestedEmail}
+        requestedSMS={credentialStatus.requestedSMS}
       />
 
       {/* Delete User Modal Component */}
