@@ -1,4 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
+
+// Resolve paths relative to the compiled file's directory
+const routesPath = path.join(__dirname, '../routes/*.js');
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -86,7 +90,7 @@ const options: swaggerJsdoc.Options = {
       { name: 'Upload', description: 'File upload endpoints' },
     ],
   },
-  apis: ['./src/routes/*.ts', './dist/routes/*.js'],
+  apis: [routesPath],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
