@@ -153,8 +153,8 @@ export const uploadToS3WithPresignedUrl = async (
 };
 
 /**
- * Upload image via server (Alternative method)
- * Uses Next.js API route as proxy
+ * Upload image via server (Recommended - More reliable than presigned URLs)
+ * Uses Next.js API route as proxy to backend API which uploads to S3
  */
 export const uploadToS3ViaServer = async (
   file: File,
@@ -162,29 +162,26 @@ export const uploadToS3ViaServer = async (
   imageType: 'gallery' | 'image_360' | 'cr_paper'
 ): Promise<S3UploadResult> => {
   try {
-    const token = await getAuthToken();
-    if (!token) {
-      return {
-        success: false,
-        error: 'Authentication required',
-      };
-    }
+    console.log('📤 Uploading via server:', {
+      fileName: file.name,
+      fileSize: file.size,
+      vehicleId,
+      imageType,
+    });
 
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file); // API expects 'file' field name
     formData.append('vehicleId', vehicleId);
     formData.append('imageType', imageType);
 
-    // Use Next.js API route as proxy
-    const response = await fetch('/api/upload', {
+    // Use Next.js API route as proxy - calls backend /api/upload/upload endpoint
+    const response = await fetch('/api/upload/server', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
 
     const data = await response.json();
+    console.log('📥 Server upload response:', data);
 
     if (!response.ok || !data.success) {
       throw new Error(data.error || 'Upload failed');
@@ -216,7 +213,8 @@ export const uploadMultipleToS3 = async (
   const results: S3UploadResult[] = [];
   
   for (let i = 0; i < files.length; i++) {
-    const result = await uploadToS3WithPresignedUrl(files[i], vehicleId, imageType);
+    // Use server upload instead of presigned URLs (more reliable)
+    const result = await uploadToS3ViaServer(files[i], vehicleId, imageType);
     results.push(result);
     
     if (onProgress) {

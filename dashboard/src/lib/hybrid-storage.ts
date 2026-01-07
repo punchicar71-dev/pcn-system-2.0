@@ -4,7 +4,7 @@
  */
 
 import {
-  uploadToS3WithPresignedUrl,
+  uploadToS3ViaServer,
   deleteFromS3,
   checkS3Status,
   type S3UploadResult,
@@ -79,8 +79,8 @@ export const saveImage = async (
       imageType,
     });
 
-    // Upload to S3
-    const result = await uploadToS3WithPresignedUrl(file, vehicleId, imageType);
+    // Upload to S3 via server (more reliable than presigned URLs)
+    const result = await uploadToS3ViaServer(file, vehicleId, imageType);
     
     console.log('📥 S3 Upload result:', result);
     
