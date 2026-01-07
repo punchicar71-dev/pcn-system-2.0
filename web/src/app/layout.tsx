@@ -5,8 +5,20 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { siteConfig, structuredData } from "@/lib/seo-config";
 
-const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-poppins" });
-const notoSansSinhala = Noto_Sans_Sinhala({ subsets: ["sinhala"], weight: ["400", "500", "600", "700", "800"], variable: "--font-sinhala" });
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins',
+  display: 'swap',
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+});
+
+const notoSansSinhala = Noto_Sans_Sinhala({
+  subsets: ['sinhala'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-sinhala',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   width: "device-width",

@@ -12,8 +12,15 @@ RUN npm install --legacy-peer-deps
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source files first
 COPY . .
+
+# Then copy node_modules from deps stage (overwrites any node_modules from COPY . .)
+COPY --from=deps /app/node_modules ./node_modules
+
+# Add node_modules/.bin to PATH
+ENV PATH=/app/node_modules/.bin:$PATH
 
 # Accept build arguments for environment variables
 ARG NEXT_PUBLIC_SUPABASE_URL

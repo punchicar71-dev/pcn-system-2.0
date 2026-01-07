@@ -38,10 +38,10 @@ COPY --from=builder /app/shared ./shared
 
 WORKDIR /app
 
-# Railway sets PORT dynamically
-ENV PORT=4000
+# Environment defaults (Railway will override PORT)
 ENV NODE_ENV=production
 
+# Expose default port (Railway will use its own PORT env var)
 EXPOSE 4000
 
 # Start the server
