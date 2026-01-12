@@ -30,7 +30,7 @@ export interface S3UploadResult {
 /**
  * Parse AWS S3 error for detailed logging
  */
-const parseS3Error = (error: any): S3UploadResult['errorDetails'] => {
+const parseS3Error = (error: any): NonNullable<S3UploadResult['errorDetails']> => {
   return {
     statusCode: error.$metadata?.httpStatusCode,
     requestId: error.$metadata?.requestId,
@@ -111,9 +111,9 @@ export const uploadToS3 = async (
     console.error(`\u274c [S3 UPLOAD] Upload failed after ${duration}ms`);
     console.error(`   Error Name: ${error.name}`);
     console.error(`   Error Message: ${error.message}`);
-    console.error(`   HTTP Status: ${errorDetails.statusCode}`);
-    console.error(`   Request ID: ${errorDetails.requestId}`);
-    console.error(`   Error Code: ${errorDetails.code}`);
+    console.error(`   HTTP Status: ${errorDetails.statusCode ?? 'N/A'}`);
+    console.error(`   Request ID: ${errorDetails.requestId ?? 'N/A'}`);
+    console.error(`   Error Code: ${errorDetails.code ?? 'N/A'}`);
     
     // Log helpful messages based on error type
     if (errorDetails.statusCode === 403) {
@@ -138,7 +138,7 @@ export const uploadToS3 = async (
     return {
       success: false,
       error: error.message || 'Unknown error',
-      errorCode: errorDetails.statusCode || errorDetails.code,
+      errorCode: errorDetails.statusCode ?? errorDetails.code ?? 'UNKNOWN',
       errorDetails,
     };
   }
