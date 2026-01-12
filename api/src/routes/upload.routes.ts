@@ -6,7 +6,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { body, validationResult } from 'express-validator';
-import { isS3Configured } from '../config/aws';
+import { isS3Configured, testS3Connection, S3_BUCKET_NAME, S3_REGION } from '../config/aws';
 import {
   uploadToS3,
   generatePresignedUploadUrl,
@@ -35,17 +35,52 @@ const upload = multer({
 });
 
 /**
- * Check S3 configuration status
+ * Check S3 configuration status (basic check)
  * NOTE: This endpoint doesn't require authentication since it's just checking config
  */
 router.get('/status', (req: Request, res: Response) => {
   const configured = isS3Configured();
   res.json({
     s3Configured: configured,
+    bucket: S3_BUCKET_NAME ? `${S3_BUCKET_NAME.substring(0, 3)}***` : 'NOT SET',
+    region: S3_REGION,
     message: configured
       ? 'AWS S3 is properly configured'
       : 'AWS S3 is not configured. Please set environment variables.',
   });
+});
+
+/**
+ * Test S3 connectivity - actually tries to connect to S3
+ * Use this to debug permission and credential issues
+ */
+router.get('/test-connection', async (req: Request, res: Response) => {
+  console.log('\ud83d\udd0d [API] Testing S3 connection...');
+  
+  const result = await testS3Connection();
+  
+  if (result.success) {
+    res.json({
+      success: true,
+      message: 'S3 connection successful! Bucket is accessible.',
+      bucket: S3_BUCKET_NAME,
+      region: S3_REGION,
+    });
+  } else {
+    res.status(500).json({
+      success: false,
+      message: 'S3 connection failed',
+      error: result.error,
+      details: result.details,
+      troubleshooting: {
+        '403 Forbidden': 'Check IAM permissions: s3:PutObject, s3:GetObject, s3:DeleteObject, s3:ListBucket, s3:HeadBucket',
+        '404 Not Found': 'Bucket does not exist or is in a different region',
+        'InvalidAccessKeyId': 'AWS_ACCESS_KEY_ID is invalid',
+        'SignatureDoesNotMatch': 'AWS_SECRET_ACCESS_KEY is invalid or has special characters not properly escaped',
+        'CredentialsProviderError': 'No credentials found - check environment variables',
+      },
+    });
+  }
 });
 
 /**
@@ -115,39 +150,43 @@ router.post(
       .withMessage('Invalid image type'),
   ],
   async (req: Request, res: Response) => {
+    const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    console.log(`📥 [API UPLOAD] [${requestId}] Received upload request`);
+    
     try {
-      console.log('📥 [API UPLOAD] Received upload request');
-      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        console.error('❌ [API UPLOAD] Validation errors:', errors.array());
+        console.error(`❌ [API UPLOAD] [${requestId}] Validation errors:`, errors.array());
         return res.status(400).json({ errors: errors.array() });
       }
 
       if (!isS3Configured()) {
-        console.error('❌ [API UPLOAD] S3 not configured');
+        console.error(`❌ [API UPLOAD] [${requestId}] S3 not configured`);
         return res.status(503).json({
           success: false,
           error: 'AWS S3 is not configured',
+          requestId,
         });
       }
 
       if (!req.file) {
-        console.error('❌ [API UPLOAD] No file in request');
+        console.error(`❌ [API UPLOAD] [${requestId}] No file in request`);
         return res.status(400).json({
           success: false,
           error: 'No file uploaded',
+          requestId,
         });
       }
 
       const { vehicleId, imageType } = req.body;
       
-      console.log('✅ [API UPLOAD] Processing file:', {
+      console.log(`✅ [API UPLOAD] [${requestId}] Processing file:`, {
         fileName: req.file.originalname,
-        fileSize: req.file.size,
+        fileSize: `${(req.file.size / 1024).toFixed(2)} KB`,
         mimeType: req.file.mimetype,
         vehicleId,
         imageType,
+        bufferLength: req.file.buffer?.length,
       });
 
       const result = await uploadToS3(
@@ -158,18 +197,42 @@ router.post(
         req.file.mimetype
       );
       
-      console.log('📤 [API UPLOAD] S3 upload result:', result);
+      console.log(`📤 [API UPLOAD] [${requestId}] S3 upload result:`, {
+        success: result.success,
+        url: result.url,
+        key: result.key,
+        error: result.error,
+        errorCode: result.errorCode,
+      });
 
       if (result.success) {
-        res.json(result);
+        res.json({ ...result, requestId });
       } else {
-        res.status(500).json(result);
+        // Return detailed error info for debugging
+        res.status(500).json({
+          ...result,
+          requestId,
+          debug: {
+            hint: 'Check Railway logs for detailed S3 error information',
+            possibleCauses: [
+              result.errorCode === 403 ? 'IAM permission denied - check bucket policy and IAM user permissions' : null,
+              result.errorCode === 404 ? 'Bucket not found - verify AWS_S3_BUCKET_NAME and AWS_REGION' : null,
+              'Network timeout - Railway may have connectivity issues to AWS',
+              'Invalid credentials - verify AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY',
+            ].filter(Boolean),
+          },
+        });
       }
-    } catch (error) {
-      console.error('❌ [API UPLOAD] Error:', error);
+    } catch (error: any) {
+      console.error(`❌ [API UPLOAD] [${requestId}] Unhandled error:`, {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
       res.status(500).json({
         success: false,
-        error: 'Failed to upload image',
+        error: error.message || 'Failed to upload image',
+        requestId,
       });
     }
   }

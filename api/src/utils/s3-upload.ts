@@ -18,7 +18,26 @@ export interface S3UploadResult {
   url?: string;
   key?: string;
   error?: string;
+  errorCode?: string | number;
+  errorDetails?: {
+    statusCode?: number;
+    requestId?: string;
+    message?: string;
+    code?: string;
+  };
 }
+
+/**
+ * Parse AWS S3 error for detailed logging
+ */
+const parseS3Error = (error: any): S3UploadResult['errorDetails'] => {
+  return {
+    statusCode: error.$metadata?.httpStatusCode,
+    requestId: error.$metadata?.requestId,
+    message: error.message,
+    code: error.Code || error.name,
+  };
+};
 
 /**
  * Upload image to S3
@@ -30,8 +49,27 @@ export const uploadToS3 = async (
   fileName: string,
   mimeType: string
 ): Promise<S3UploadResult> => {
+  const startTime = Date.now();
+  console.log(`\ud83d\udce4 [S3 UPLOAD] Starting upload...`);
+  console.log(`   Vehicle ID: ${vehicleId}`);
+  console.log(`   Image Type: ${imageType}`);
+  console.log(`   File Name: ${fileName}`);
+  console.log(`   MIME Type: ${mimeType}`);
+  console.log(`   File Size: ${(file.length / 1024).toFixed(2)} KB`);
+  console.log(`   Bucket: ${S3_BUCKET_NAME}`);
+  
+  if (!S3_BUCKET_NAME) {
+    console.error('\u274c [S3 UPLOAD] Bucket name is empty! Check AWS_S3_BUCKET_NAME or AWS_BUCKET_NAME env vars');
+    return {
+      success: false,
+      error: 'S3 bucket name not configured',
+      errorCode: 'CONFIG_ERROR',
+    };
+  }
+  
   try {
     const key = generateS3Key(vehicleId, imageType, fileName);
+    console.log(`   S3 Key: ${key}`);
 
     const command = new PutObjectCommand({
       Bucket: S3_BUCKET_NAME,
@@ -49,20 +87,59 @@ export const uploadToS3 = async (
       },
     });
 
-    await s3Client.send(command);
+    console.log(`\u23f3 [S3 UPLOAD] Sending PutObjectCommand to S3...`);
+    const response = await s3Client.send(command);
+    const duration = Date.now() - startTime;
+    
+    console.log(`\u2705 [S3 UPLOAD] Upload successful in ${duration}ms`);
+    console.log(`   ETag: ${response.ETag}`);
+    console.log(`   Request ID: ${response.$metadata?.requestId}`);
+    console.log(`   HTTP Status: ${response.$metadata?.httpStatusCode}`);
 
     const publicUrl = getS3PublicUrl(key);
+    console.log(`   Public URL: ${publicUrl}`);
 
     return {
       success: true,
       url: publicUrl,
       key,
     };
-  } catch (error) {
-    console.error('Error uploading to S3:', error);
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    const errorDetails = parseS3Error(error);
+    
+    console.error(`\u274c [S3 UPLOAD] Upload failed after ${duration}ms`);
+    console.error(`   Error Name: ${error.name}`);
+    console.error(`   Error Message: ${error.message}`);
+    console.error(`   HTTP Status: ${errorDetails.statusCode}`);
+    console.error(`   Request ID: ${errorDetails.requestId}`);
+    console.error(`   Error Code: ${errorDetails.code}`);
+    
+    // Log helpful messages based on error type
+    if (errorDetails.statusCode === 403) {
+      console.error('   \ud83d\udd10 PERMISSION DENIED - Check IAM user has s3:PutObject permission on bucket');
+      console.error(`   \ud83d\udce6 Bucket: ${S3_BUCKET_NAME}`);
+    } else if (errorDetails.statusCode === 404) {
+      console.error(`   \ud83d\udce6 Bucket '${S3_BUCKET_NAME}' not found - verify bucket exists and region is correct`);
+    } else if (error.name === 'CredentialsProviderError' || error.name === 'InvalidAccessKeyId') {
+      console.error('   \ud83d\udd11 INVALID CREDENTIALS - Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY');
+    } else if (error.name === 'TimeoutError' || error.name === 'RequestTimeout') {
+      console.error('   \u23f1\ufe0f TIMEOUT - Network issue or S3 service problem');
+    }
+    
+    // Log the full error stack for debugging
+    console.error('   Full error:', JSON.stringify({
+      name: error.name,
+      message: error.message,
+      code: error.Code,
+      metadata: error.$metadata,
+    }, null, 2));
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error.message || 'Unknown error',
+      errorCode: errorDetails.statusCode || errorDetails.code,
+      errorDetails,
     };
   }
 };
