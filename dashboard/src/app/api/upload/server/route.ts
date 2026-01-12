@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiServerUrl } from '@/lib/api-url';
 
 /**
  * Server-side upload endpoint - proxies file uploads to backend API
@@ -6,8 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get the API server URL
-    const apiServerUrl = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Get the properly formatted API server URL
+    const apiServerUrl = getApiServerUrl();
 
     // Get form data from request
     const formData = await request.formData();

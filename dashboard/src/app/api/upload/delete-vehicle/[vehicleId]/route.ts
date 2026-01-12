@@ -8,15 +8,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-
-// Use API_SERVER_URL for server-side calls (Docker internal network)
-const API_URL = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { getApiServerUrl } from '@/lib/api-url';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { vehicleId: string } }
 ) {
   try {
+    // Get the properly formatted API server URL
+    const apiServerUrl = getApiServerUrl();
+    
     console.log('🗑️ [Next.js DELETE Proxy] Request received for vehicle:', params.vehicleId);
     
     // Check for Better Auth session cookie as a basic auth check
@@ -39,7 +40,7 @@ export async function DELETE(
     }
 
     console.log(`📋 [Next.js DELETE Proxy] Forwarding ${s3Keys.length} keys to backend API`);
-    console.log(`🔗 [Next.js DELETE Proxy] Backend URL: ${API_URL}/api/upload/delete-vehicle/${params.vehicleId}`);
+    console.log(`🔗 [Next.js DELETE Proxy] Backend URL: ${apiServerUrl}/api/upload/delete-vehicle/${params.vehicleId}`);
 
     // Build headers for backend request
     const headers: Record<string, string> = {
@@ -52,7 +53,7 @@ export async function DELETE(
     }
 
     // Forward request to backend API
-    const response = await fetch(`${API_URL}/api/upload/delete-vehicle/${params.vehicleId}`, {
+    const response = await fetch(`${apiServerUrl}/api/upload/delete-vehicle/${params.vehicleId}`, {
       method: 'DELETE',
       headers,
       body: JSON.stringify({ s3Keys }),

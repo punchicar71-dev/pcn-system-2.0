@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getApiServerUrl } from '@/lib/api-url';
 
 /**
  * Presigned URL endpoint for S3 direct uploads
@@ -12,10 +13,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Get the API server URL from environment variables
-    // Use API_SERVER_URL for server-side calls (Docker internal network)
-    // Falls back to NEXT_PUBLIC_API_URL for local development
-    const apiServerUrl = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Get the properly formatted API server URL
+    const apiServerUrl = getApiServerUrl();
 
     // Check for Better Auth session cookie as a basic auth check
     // This ensures only logged-in users can request presigned URLs

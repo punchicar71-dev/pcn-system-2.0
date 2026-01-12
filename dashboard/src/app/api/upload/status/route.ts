@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiServerUrl } from '@/lib/api-url';
 
 /**
  * S3 Status endpoint - proxies to backend API
  */
 export async function GET(request: NextRequest) {
   try {
-    // Use API_SERVER_URL for server-side calls (Docker internal network)
-    const apiServerUrl = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Use helper to get properly formatted API URL
+    const apiServerUrl = getApiServerUrl();
 
     const response = await fetch(`${apiServerUrl}/api/upload/status`);
 

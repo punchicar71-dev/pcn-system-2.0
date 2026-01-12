@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getApiServerUrl } from '@/lib/api-url';
 
 /**
  * Proxy endpoint for uploading files to S3 through the backend API
@@ -10,9 +11,8 @@ export async function POST(request: NextRequest) {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // Get the API server URL from environment variables
-    // Use API_SERVER_URL for server-side calls (Docker internal network)
-    const apiServerUrl = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Get the properly formatted API server URL
+    const apiServerUrl = getApiServerUrl();
     
     // Get auth token from request header
     let authToken = request.headers.get('authorization');

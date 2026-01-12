@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiServerUrl } from '@/lib/api-url';
 
 /**
  * Delete single S3 object - proxies to backend API
@@ -15,8 +16,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Use API_SERVER_URL for server-side calls (Docker internal network)
-    const apiServerUrl = process.env.API_SERVER_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Get the properly formatted API server URL
+    const apiServerUrl = getApiServerUrl();
 
     // Get auth token from request header
     const authToken = request.headers.get('authorization');
