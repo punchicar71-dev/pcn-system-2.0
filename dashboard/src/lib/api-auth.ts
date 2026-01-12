@@ -27,6 +27,11 @@ export interface AuthResult {
 /**
  * Validate session and get user from API route
  * Call this at the start of protected API routes
+ * 
+ * NOTE: Current login flow stores user.id as the session token in cookies.
+ * This function handles both:
+ * 1. User ID directly in cookie (current implementation)
+ * 2. Session token lookup in sessions table (future Better Auth implementation)
  */
 export async function validateApiSession(request: NextRequest): Promise<AuthResult> {
   try {
@@ -35,6 +40,7 @@ export async function validateApiSession(request: NextRequest): Promise<AuthResu
     const sessionToken = cookieStore.get('pcn-dashboard.session_token')?.value
 
     if (!sessionToken) {
+      console.log('❌ API Auth: No session token found in cookies')
       return {
         authenticated: false,
         user: null,
@@ -42,7 +48,32 @@ export async function validateApiSession(request: NextRequest): Promise<AuthResu
       }
     }
 
-    // Look up the session in database
+    console.log('🔐 API Auth: Session token found, validating...')
+
+    // First, try to find user directly by ID (current login flow stores user.id as token)
+    // This handles the case where sessionToken IS the user ID
+    const { data: userDirect, error: userDirectError } = await supabaseAdmin
+      .from('users')
+      .select('id, email, role, access_level, first_name, last_name')
+      .eq('id', sessionToken)
+      .single()
+
+    if (!userDirectError && userDirect) {
+      console.log('✅ API Auth: User authenticated directly by ID:', userDirect.email)
+      return {
+        authenticated: true,
+        user: {
+          id: userDirect.id,
+          email: userDirect.email,
+          role: userDirect.role,
+          accessLevel: userDirect.access_level,
+          firstName: userDirect.first_name,
+          lastName: userDirect.last_name
+        }
+      }
+    }
+
+    // Fallback: Try looking up session in sessions table (for future Better Auth)
     const { data: session, error: sessionError } = await supabaseAdmin
       .from('sessions')
       .select('user_id, expires_at')
