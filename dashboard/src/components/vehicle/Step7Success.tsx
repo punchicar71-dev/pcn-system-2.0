@@ -21,6 +21,7 @@ interface Step7SuccessProps {
     city: string;
     nicNumber: string;
     mobileNumber: string;
+    landPhoneNumber?: string;
   };
   vehicleOptions: {
     standardOptions: { [key: string]: boolean };
@@ -64,6 +65,9 @@ export default function Step7Success({
       year: 'numeric'
     });
 
+    // Get the base URL for absolute paths
+    const baseUrl = window.location.origin;
+    
     // Prepare the HTML content with the template
     const htmlContent = `
       <!DOCTYPE html>
@@ -81,28 +85,33 @@ export default function Step7Success({
               size: A4;
               margin: 0;
             }
-            body {
-              font-family: 'FMMalithi', Arial, sans-serif;
+            html, body {
+              font-family: Arial, sans-serif;
               text-transform: capitalize;
               width: 210mm;
               height: 297mm;
               margin: 0;
               padding: 0;
               position: relative;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
             }
             .template-container {
               position: relative;
-              width: 100%;
-              height: 100%;
+              width: 210mm;
+              height: 297mm;
             }
             .template-image {
               position: absolute;
               top: 0;
               left: 0;
-              width: 100%;
-              height: 100%;
+              width: 210mm;
+              height: 297mm;
               object-fit: contain;
               z-index: 1;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             .content-overlay {
               position: absolute;
@@ -112,55 +121,69 @@ export default function Step7Success({
               height: 100%;
               z-index: 2;
             }
-            /* Field positions - precisely matched to template */
             .field {
               position: absolute;
               font-size: 14px;
-              font-weight: 500;
+              font-weight: 600;
               color: #000;
               line-height: 1.2;
             }
+            /* Name & Address - top area */
+            .name-address {
+              top: 240px;
+              left: 240px;
+              font-size: 14px;
+              max-width: 400px;
+            }
+            /* Date field */
             .date {
-              top: 304px;
-              right: 180px;
-              font-size: 16px;
+              top: 95px;
+              left: 87px;
+              font-size: 11px;
             }
-            .address-city {
-              top: 384px;
-              left: 195px;
-              font-size: 16px;
-              max-width: 500px;
-            }
-            .seller-name {
-              top: 416px;
-              left: 305px;
-              font-size: 16px;
-            }
+            /* Vehicle Number - right side */
             .vehicle-number {
-              top: 450px;
-              left: 510px;
-              font-size: 16px;
+              top: 295px;
+              left: 100px;
+              font-size: 14px;
               font-weight: 600;
             }
+            /* Brand and Model - left side */
             .brand-model {
-              top: 484px;
-              left: 200px;
-              font-size: 16px;
-            }
-            .id-number {
-              top: 884px;
-              left: 590px;
+              top: 295px;
+              left: 280px;
               font-size: 14px;
             }
+            /* Mobile Number - bottom left */
             .mobile-number {
-              top: 920px;
-              left: 590px;
+              top: 600px;
+              left: 150px;
               font-size: 14px;
             }
+            /* Land Phone Number - below mobile */
+            .land-phone {
+              top: 600px;
+              left: 350px;
+              font-size: 14px;
+            }
+            /* ID Number (NIC) */
+            .id-number {
+              top: 275px;
+              left: 250px;
+              font-size: 14px;
+            }
+            
             @media print {
-              body {
+              html, body {
                 width: 210mm;
                 height: 297mm;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .template-image {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
               .no-print {
                 display: none;
@@ -171,42 +194,36 @@ export default function Step7Success({
         <body>
           <div class="template-container">
             <!-- Background Template Image -->
-            <img src="/documents/BARAGANIIMA.png" alt="Acceptance Template" class="template-image" />
+            <img src="${baseUrl}/documents/BARAGANIIMA.jpg" alt="Acceptance Template" class="template-image" />
             
-            <!-- Content Overlay -->
             <div class="content-overlay">
-              <!-- Date -->
-              <div class="field date">${currentDate}</div>
-              
-              <!-- Address and City -->
-              <div class="field address-city">${sellerDetails.address}, ${sellerDetails.city}</div>
-              
-              <!-- Seller First and Last Name with Title -->
-              <div class="field seller-name">${sellerDetails.title} ${sellerDetails.firstName} ${sellerDetails.lastName}</div>
-              
-              <!-- Vehicle Number -->
+              <!-- Name & Address - (Name & Adress) field -->
+              <div class="field name-address">${sellerDetails.title} ${sellerDetails.firstName} ${sellerDetails.lastName}, ${sellerDetails.address}, ${sellerDetails.city}</div>
+
+              <!-- Vehicle Number in section 2 -->
               <div class="field vehicle-number">${vehicleNumber}</div>
               
-              <!-- Brand and Model -->
-              <div class="field brand-model">${brandName}, ${modelName}</div>
+              <!-- Brand and Model in section 3 -->
+              <div class="field brand-model">${brandName} ${modelName}</div>
+              
+              <!-- Mobile Number in section 9 -->
+              <div class="field mobile-number">${sellerDetails.mobileNumber}</div>
+              
+              <!-- Land Phone Number -->
+              ${sellerDetails.landPhoneNumber ? `<div class="field land-phone">${sellerDetails.landPhoneNumber}</div>` : ''}
               
               <!-- ID Number (NIC) -->
               <div class="field id-number">${sellerDetails.nicNumber}</div>
-              
-              <!-- Mobile Number -->
-              <div class="field mobile-number">${sellerDetails.mobileNumber}</div>
             </div>
           </div>
           
           <script>
-            // Auto print when loaded
             window.onload = function() {
               setTimeout(function() {
                 window.print();
               }, 500);
             };
             
-            // Close window after printing or canceling
             window.onafterprint = function() {
               window.close();
             };
@@ -258,72 +275,6 @@ export default function Step7Success({
       return num.toLocaleString('en-US');
     };
 
-    // Split options into chunks for multiple pages if needed
-    const optionsPerPage = 15; // Show 15 options per page max
-    const optionPages: string[][] = [];
-    for (let i = 0; i < allOptions.length; i += optionsPerPage) {
-      optionPages.push(allOptions.slice(i, i + optionsPerPage));
-    }
-
-    // If no options on first page, at least create one page
-    if (optionPages.length === 0) {
-      optionPages.push([]);
-    }
-
-    // Generate HTML for each page
-    const generatePage = (pageOptions: string[], isFirstPage: boolean) => `
-      <div class="page">
-        ${isFirstPage ? `
-        <div class="header">
-          <h1 class="brand">${brandName.toUpperCase()}</h1>
-          <h2 class="model">${modelName.toUpperCase()}</h2>
-          <div class="color">${exteriorColor.toUpperCase()}</div>
-        </div>
-        
-        <div class="divider"></div>
-        
-        <div class="price-section">
-          <div class="price-label">Price :</div>
-          <div class="price-value">${formatPrice(sellingAmount)}</div>
-        </div>
-        
-        <div class="divider"></div>
-        
-        <div class="details-grid">
-          <div class="detail-row">
-            <div class="detail-label">Mfg. Year</div>
-            <div class="detail-label">Reg. Year</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-value">${year}</div>
-            <div class="detail-value">${registeredYear}</div>
-          </div>
-        </div>
-        
-        <div class="divider"></div>
-        
-        <div class="engine-section">
-          <div class="engine-label">Eng. Cap.</div>
-          <div class="engine-value">${engineCapacity}</div>
-        </div>
-        
-        <div class="divider"></div>
-        ` : ''}
-        
-        <div class="options-section">
-          ${pageOptions.map(option => `
-            <div class="option-item">* ${option}</div>
-          `).join('')}
-        </div>
-        
-        ${!isFirstPage && pageOptions.length === 0 ? '' : ''}
-      </div>
-    `;
-
-    const allPagesHtml = optionPages.map((pageOptions, index) => 
-      generatePage(pageOptions, index === 0)
-    ).join('');
-
     // Prepare the HTML content
     const htmlContent = `
       <!DOCTYPE html>
@@ -340,143 +291,153 @@ export default function Step7Success({
             
             @page {
               size: A4;
-              margin: 20mm;
+              margin: 10mm;
             }
             
             body {
               font-family: Arial, sans-serif;
               text-transform: uppercase;
+              padding: 20px;
             }
             
-            .page {
-              page-break-after: always;
-              padding: 40px;
-              min-height: 100vh;
-            }
-            
-            .page:last-child {
-              page-break-after: auto;
+            /* Hide browser default headers and footers */
+            @media print {
+              @page {
+                margin-top: 0;
+                margin-bottom: 0;
+              }
+              body {
+                padding-top: 20px;
+                padding-bottom: 20px;
+              }
             }
             
             .header {
               text-align: center;
-              margin-bottom: 30px;
+              margin-bottom: 10px;
             }
             
             .brand {
-              font-size: 72px;
+              font-size: 48px;
               font-weight: bold;
-              margin-bottom: 10px;
-              letter-spacing: 2px;
-            }
-            
-            .model {
-              font-size: 56px;
-              font-weight: bold;
-              margin-bottom: 15px;
+              margin-bottom: 0;
               letter-spacing: 1px;
             }
             
-            .color {
-              font-size: 48px;
-              font-weight: normal;
+            .model {
+              font-size: 42px;
+              font-weight: bold;
+              margin-bottom: 5px;
             }
             
-            .divider {
-              border-bottom: 3px solid #000;
-              margin: 30px 0;
+            .color {
+              font-size: 28px;
+              font-weight: normal;
+              text-decoration: underline;
+              margin-bottom: 10px;
             }
             
             .price-section {
               text-align: center;
-              margin: 40px 0;
+              margin: 15px 0;
+              padding-bottom: 10px;
+              border-bottom: 2px solid #000;
             }
             
-            .price-label {
-              font-size: 42px;
-              margin-bottom: 10px;
-            }
-            
-            .price-value {
-              font-size: 64px;
+            .price-text {
+              font-size: 32px;
               font-weight: bold;
-              letter-spacing: 2px;
+              text-decoration: underline;
             }
             
-            .details-grid {
-              margin: 40px 0;
-            }
-            
-            .detail-row {
+            .content-wrapper {
               display: flex;
-              justify-content: space-around;
-              margin-bottom: 15px;
+              margin-top: 20px;
             }
             
-            .detail-label {
-              font-size: 36px;
+            .options-column {
               flex: 1;
-              text-align: center;
+              padding-right: 20px;
             }
             
-            .detail-value {
-              font-size: 48px;
-              font-weight: bold;
-              flex: 1;
-              text-align: center;
-            }
-            
-            .engine-section {
-              text-align: center;
-              margin: 40px 0;
-            }
-            
-            .engine-label {
-              font-size: 36px;
-              margin-bottom: 10px;
-            }
-            
-            .engine-value {
-              font-size: 52px;
-              font-weight: bold;
-            }
-            
-            .options-section {
-              margin-top: 40px;
+            .details-column {
+              width: 200px;
+              text-align: left;
             }
             
             .option-item {
-              font-size: 32px;
-              margin-bottom: 20px;
-              padding-left: 20px;
-              line-height: 1.4;
+              font-size: 22px;
+              font-style: italic;
+              margin-bottom: 12px;
               font-weight: 500;
+            }
+            
+            .detail-label {
+              font-size: 20px;
+              font-style: italic;
+              margin-bottom: 5px;
+            }
+            
+            .detail-value {
+              font-size: 26px;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            
+            .detail-underline {
+              border-bottom: 1px solid #000;
+              margin-bottom: 15px;
+              width: 100%;
             }
             
             @media print {
               body {
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
-              }
-              
-              .page {
-                padding: 20px;
+                padding: 10px;
               }
             }
           </style>
         </head>
         <body>
-          ${allPagesHtml}
+          <div class="header">
+            <div class="brand">${brandName.toUpperCase()}</div>
+            <div class="model">${modelName.toUpperCase()}</div>
+            <div class="color">${exteriorColor.toUpperCase()}</div>
+          </div>
+          
+          <div class="price-section">
+            <div class="price-text">Price : ${formatPrice(sellingAmount)}</div>
+          </div>
+          
+          <div class="content-wrapper">
+            <div class="options-column">
+              ${allOptions.map(option => `
+                <div class="option-item">* ${option}</div>
+              `).join('')}
+            </div>
+            
+            <div class="details-column">
+              <div class="detail-label">Mfg. Year</div>
+              <div class="detail-value">${year}</div>
+              <div class="detail-underline"></div>
+              
+              <div class="detail-label">Reg. Year</div>
+              <div class="detail-value">${registeredYear}</div>
+              <div style="height: 30px;"></div>
+              
+              <div class="detail-label">Eng. Cap.</div>
+              <div class="detail-value">${engineCapacity}</div>
+            </div>
+          </div>
           
           <script>
-            // Auto print when loaded
             window.onload = function() {
               setTimeout(function() {
                 window.print();
               }, 500);
             };
             
-            // Close window after printing or canceling
             window.onafterprint = function() {
               window.close();
             };
@@ -494,7 +455,7 @@ export default function Step7Success({
   };
 
   return (
-    <div className=" w-full  bg-slate-50 pt-24 text-center">
+    <div className=" w-full  bg-white pt-24 text-center">
       {/* Success Animation */}
       <div className="mb-6 flex justify-center items-center">
         <Image 

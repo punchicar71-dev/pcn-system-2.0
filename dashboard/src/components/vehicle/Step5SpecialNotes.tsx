@@ -18,12 +18,12 @@ export default function Step5SpecialNotes({ data, onChange, onNext, onBack }: St
   };
 
   return (
-    <div className="bg-slate-50  p-6">
+    <div className="bg-slate-50 px-6 pt-6 pb-0">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Special Notes</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Tag Notes */}
-        <div>
+        <div className='max-w-7xl'>
           <Label htmlFor="tagNotes">Tag Notes</Label>
           <p className="text-sm text-gray-500 mb-2">
             Add brief notes about the vehicle (visible internally)
@@ -42,7 +42,7 @@ export default function Step5SpecialNotes({ data, onChange, onNext, onBack }: St
         </div>
 
         {/* Special Note for Print */}
-        <div>
+        <div className='max-w-7xl'>
           <Label htmlFor="specialNotePrint">Special Not for print</Label>
           <p className="text-sm text-gray-500 mb-2">
             Add detailed description for printing (visible to customers)
@@ -60,20 +60,24 @@ export default function Step5SpecialNotes({ data, onChange, onNext, onBack }: St
           </p>
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-start gap-4 pt-6">
-          <Button
-            type="button"
-            onClick={onBack}
-            variant="outline"
-          >
-            Back
-          </Button>
-          <Button
-            type="submit"
-          >
-            Next
-          </Button>
+        {/* Navigation Buttons - Sticky Bottom */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t py-4 px-6 -mx-6 mt-6">
+          <div className="flex justify-start gap-4">
+            <Button
+              type="button"
+              onClick={onBack}
+              variant="outline"
+              className='px-6 py-2'
+            >
+              Back
+            </Button>
+            <Button
+              type="submit"
+              className='px-6 py-2'
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </form>
     </div>

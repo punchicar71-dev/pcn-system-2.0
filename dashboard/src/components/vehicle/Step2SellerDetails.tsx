@@ -83,12 +83,12 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
   };
 
   return (
-    <div className="bg-slate-50 max-w-4xl p-6">
+    <div className="bg-slate-50 px-6 pt-6 pb-0 ">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Seller Details</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6  ">
         {/* Row 1: Name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
           <div>
             <Label htmlFor="firstName">
               First Name <span className="text-red-500">*</span>
@@ -157,7 +157,7 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
         </div>
 
         {/* Row 2: Address */}
-        <div>
+        <div className='max-w-4xl'>
           <Label htmlFor="address">Address</Label>
           <Input
             id="address"
@@ -170,7 +170,7 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
         </div>
 
         {/* Row 3: City & NIC */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
           <div>
             <Label htmlFor="city">City</Label>
             <Input
@@ -197,7 +197,7 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
         </div>
 
         {/* Row 4: Phone Numbers */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
           <div>
             <Label htmlFor="mobileNumber">
               Mobile Number <span className="text-red-500">*</span>
@@ -227,7 +227,7 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
         </div>
 
         {/* Row 5: Email */}
-        <div>
+        <div className='max-w-4xl'>
           <Label htmlFor="emailAddress">Email Address</Label>
           <Input
             id="emailAddress"
@@ -239,21 +239,24 @@ export default function Step2SellerDetails({ data, onChange, onNext, onBack }: S
           />
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-start gap-4 pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-          >
-            Back
-          </Button>
-          <Button
-            type="submit"
-            className="bg-black text-white hover:bg-gray-800"
-          >
-            Next
-          </Button>
+        {/* Navigation Buttons - Sticky Bottom */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t py-4 px-6 -mx-6 mt-6">
+          <div className="flex justify-start gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              className='px-6 py-2'
+            >
+              Back
+            </Button>
+            <Button
+              type="submit"
+              className="bg-black text-white hover:bg-gray-800 px-6 py-2  "
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </form>
     </div>

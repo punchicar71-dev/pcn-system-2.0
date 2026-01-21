@@ -38,11 +38,111 @@ The Inventory flow is a comprehensive vehicle management system that allows user
 - **Storage**: AWS S3
 - **Authentication**: Custom Auth (Migration to Better Auth in progress)
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 16, 2026
 
 ---
 
-## 📢 LATEST UPDATE - January 1, 2026 (Performance & Data Sync)
+## 📢 LATEST UPDATE - January 16, 2026 (Inventory Table & Filters Enhancement)
+
+### 🔍 Advanced Filtering & Table Columns Update
+
+**Update: Major inventory table enhancement with new columns and real-time filtering!**
+
+#### New Table Columns:
+
+| Column | Width | Description |
+|--------|-------|-------------|
+| Image | 80x50px | Primary vehicle image with thumbnail display |
+| M Year | - | Manufacture Year |
+| Reg Year | - | Registered Year |
+| Color | - | Exterior Color |
+
+#### New Real-Time Filter System:
+
+| Filter | Type | Options |
+|--------|------|----------|
+| Search | Text Input | Vehicle Number, Brand, Model |
+| Price Range | Min/Max Inputs | Numeric price filtering |
+| Transmission | Select Dropdown | All, Auto, Manual |
+| Ownership | Select Dropdown | All, Open Papers, Registered Owner |
+| Vehicle Type | Select Dropdown | All, Registered, Unregistered |
+| Country | Select Dropdown | Dynamic from countries table |
+
+#### Filter Implementation:
+```typescript
+const filteredVehicles = useMemo(() => {
+  return vehicles.filter((vehicle) => {
+    // Search filter
+    const matchesSearch = searchQuery === '' || 
+      vehicle.vehicle_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vehicle.brand_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vehicle.model_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    // Price range filter
+    const matchesPrice = 
+      (priceMin === '' || vehicle.selling_amount >= parseFloat(priceMin)) &&
+      (priceMax === '' || vehicle.selling_amount <= parseFloat(priceMax))
+    
+    // Transmission filter
+    const matchesTransmission = transmissionFilter === 'all' || 
+      vehicle.transmission === transmissionFilter
+    
+    // Ownership filter
+    const matchesOwnership = ownershipFilter === 'all' || 
+      vehicle.ownership === ownershipFilter
+    
+    // Vehicle type filter
+    const matchesVehicleType = vehicleTypeFilter === 'all' || 
+      vehicle.vehicle_type === vehicleTypeFilter
+    
+    // Country filter
+    const matchesCountry = countryFilter === 'all' || 
+      vehicle.country_name === countryFilter
+    
+    return matchesSearch && matchesPrice && matchesTransmission && 
+           matchesOwnership && matchesVehicleType && matchesCountry
+  })
+}, [vehicles, searchQuery, priceMin, priceMax, transmissionFilter, 
+    ownershipFilter, vehicleTypeFilter, countryFilter])
+```
+
+#### Database Fields Added:
+- `vehicle_type` - Values: 'Registered' or 'Unregistered'
+- `ownership` - Values: 'Open Papers' or 'Registered Owner'
+
+#### UI Components Used:
+- shadcn/ui Select, Input, Button components
+- Filter icon with "Clear Filters" button
+- Real-time result count display
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/inventory/page.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 16, 2026 (Print Documents Update)
+
+### 🖨️ Print Acceptance & Price Tag Enhancements
+
+**Update: Updated print document templates with new field positions and layout!**
+
+#### Print Acceptance Changes:
+- Added Land Phone Number field display
+- Fixed field positions for better alignment
+- Updated field mapping: `land_phone_number` instead of `phone_number`
+
+#### Price Tag Redesign:
+- **Two-column layout**: Options on left, Year/Engine details on right
+- Removed browser date/time from print using CSS `@page` rules
+- Added `-webkit-print-color-adjust: exact` for background colors
+
+#### Modified Files:
+- `dashboard/src/components/inventory/PrintDocumentsModal.tsx` ✅
+- `dashboard/src/components/vehicle/Step7Success.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 1, 2026 (Performance & Data Sync)
 
 ### 🚀 Performance Optimizations & Web Data Sync
 
@@ -1384,9 +1484,9 @@ Appears in Inventory (vehicle_inventory_view)
 - Image upload logic (presigned URLs)
 - Master data (brands, models, countries)
 
-### 2. Sell Vehicle Flow
+### 2. Reserve Vehicle Flow
 
-**Connection**: Vehicles from Inventory can be selected for sale
+**Connection**: Vehicles from Inventory can be selected for reservation
 
 **Data Flow**:
 ```
@@ -1394,7 +1494,7 @@ Inventory Page
     │
     │ (User selects vehicle)
     ▼
-Sell Vehicle Page
+Reserve Vehicle Page
     │
     │ (Search by vehicle number)
     ▼
@@ -1402,7 +1502,7 @@ Select Vehicle from Inventory
     │
     │ (Fetch vehicle data)
     ▼
-Complete Sale Transaction
+Complete Reservation Transaction
     │
     │ (Update status to 'Sold')
     ▼
@@ -1415,8 +1515,8 @@ Vehicle removed from Inventory (status filter)
 - Seller information from `sellers` table
 
 **Status Updates**:
-- When vehicle is sold, status changes to `'Sold'`
-- Inventory only shows `'In Sale'` and `'In Transit'` vehicles
+- When vehicle is reserved/sold, status changes to `'Sold'`
+- Inventory only shows `'In Sale'` and `'Taken Out'` vehicles
 - Sold vehicles automatically removed from inventory view
 
 ### 3. Sales Transactions Flow

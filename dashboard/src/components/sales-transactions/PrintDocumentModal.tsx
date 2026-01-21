@@ -70,30 +70,48 @@ export default function PrintDocumentModal({
         }
       }
 
-      // Fetch PCN advance amount from price categories based on sale price
+      // Fetch commission amount from sales commissions based on sale price
       const sellingPrice = sale?.sale_price ?? sale?.selling_amount ?? 0;
       if (sellingPrice) {
-        const { data: priceCategories } = await supabase
-          .from('price_categories')
+        const { data: salesCommissions } = await supabase
+          .from('sales_commissions')
           .select('*')
           .eq('is_active', true)
           .order('min_price');
 
-        if (priceCategories && priceCategories.length > 0) {
-          // Find the matching price category
-          const matchingCategory = priceCategories.find(
-            (cat: any) => 
-              sellingPrice >= cat.min_price && 
-              sellingPrice <= cat.max_price
+        if (salesCommissions && salesCommissions.length > 0) {
+          // Find the matching sales commission - Improved matching logic
+          let matchingCommission = salesCommissions.find(
+            (comm: any) => 
+              sellingPrice >= comm.min_price && 
+              sellingPrice <= comm.max_price
           );
 
-          if (matchingCategory) {
-            sale.pcn_advance_amount = matchingCategory.pcn_advance_amount;
-            console.log('💰 PCN Advance Amount:', matchingCategory.pcn_advance_amount);
-            console.log('📊 Price Category:', matchingCategory.name);
+          // If no exact match, check if amount exceeds all ranges (use highest)
+          if (!matchingCommission) {
+            const sortedByMaxPrice = [...salesCommissions].sort((a: any, b: any) => b.max_price - a.max_price);
+            const highestCategory = sortedByMaxPrice[0];
+            if (highestCategory && sellingPrice > highestCategory.max_price) {
+              matchingCommission = highestCategory;
+            }
+          }
+          
+          // If amount is below all ranges (use lowest)
+          if (!matchingCommission) {
+            const sortedByMinPrice = [...salesCommissions].sort((a: any, b: any) => a.min_price - b.min_price);
+            const lowestCategory = sortedByMinPrice[0];
+            if (lowestCategory && sellingPrice < lowestCategory.min_price) {
+              matchingCommission = lowestCategory;
+            }
+          }
+
+          if (matchingCommission) {
+            sale.commission_amount = matchingCommission.commission_amount;
+            console.log('💰 Commission Amount:', matchingCommission.commission_amount);
+            console.log('📊 Sales Commission:', matchingCommission.name);
           } else {
-            console.log('⚠️ No matching price category found for selling price:', sellingPrice);
-            sale.pcn_advance_amount = 0;
+            console.log('⚠️ No matching sales commission found for selling price:', sellingPrice);
+            sale.commission_amount = 0;
           }
         }
       }
@@ -183,8 +201,8 @@ export default function PrintDocumentModal({
         const customerAddress = (saleData.customer_address || '').toUpperCase();
         const sellingAmount = `Rs. ${(saleData.sale_price ?? saleData.selling_amount ?? 0)?.toLocaleString() || '0'}`;
         const advanceAmount = `Rs. ${saleData.advance_amount?.toLocaleString() || '0'}`;
-        const pcnAdvanceAmount = saleData.pcn_advance_amount 
-          ? `Rs. ${saleData.pcn_advance_amount.toLocaleString()}` 
+        const commissionAmount = saleData.commission_amount 
+          ? `Rs. ${saleData.commission_amount.toLocaleString()}` 
           : 'Rs. 0';
         const closeDate = new Date(saleData.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
@@ -279,8 +297,8 @@ export default function PrintDocumentModal({
           drawText(customerName, 1150, 852);
           // Selling Amount
           drawText(sellingAmount, 630, 932);
-          // PCN Advance Amount
-          drawText(pcnAdvanceAmount, 1820, 932);
+          // Commission Amount
+          drawText(commissionAmount, 1820, 932);
           // Close Date
           drawText(closeDate, 1200, 995);
           // Customer Mobile at bottom

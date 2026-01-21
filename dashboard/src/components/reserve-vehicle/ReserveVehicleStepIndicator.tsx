@@ -1,20 +1,20 @@
 'use client';
 
-interface SellVehicleStepIndicatorProps {
+interface ReserveVehicleStepIndicatorProps {
   currentStep: 1 | 2 | 3;
   completedSteps: number[];
 }
 
 const steps = [
   { number: 1, title: 'Details' },
-  { number: 2, title: 'Selling Info' },
+  { number: 2, title: 'Reserve Info' },
   { number: 3, title: 'Confirmation' },
 ];
 
-export default function SellVehicleStepIndicator({ 
+export default function ReserveVehicleStepIndicator({ 
   currentStep, 
   completedSteps 
-}: SellVehicleStepIndicatorProps) {
+}: ReserveVehicleStepIndicatorProps) {
   const getStepStatus = (stepNumber: number) => {
     if (completedSteps.includes(stepNumber)) return 'completed';
     if (stepNumber === currentStep) return 'current';

@@ -14,12 +14,12 @@ export interface VehicleModel {
   updated_at: string
 }
 
-export interface PriceCategory {
+export interface SalesCommission {
   id: string
   name: string
   min_price: number
   max_price: number
-  pcn_advance_amount: number
+  commission_amount: number
   is_active: boolean
   created_at: string
   updated_at: string
@@ -70,6 +70,8 @@ export interface Vehicle {
   engine_capacity?: string
   exterior_color?: string
   registered_year?: number
+  vehicle_type?: 'Unregistered' | 'Registered'
+  ownership?: 'Open Papers' | 'Registered Owner'
   selling_amount: number
   mileage?: number
   entry_type: string
@@ -231,6 +233,13 @@ export interface PendingVehicleSale {
   model_name?: string
   manufacture_year?: number
   body_type?: string
+  // New snapshot fields for Advance Paid tab display
+  registered_year?: number
+  mileage?: number
+  country_name?: string
+  transmission?: string
+  image_url?: string // Primary vehicle image URL
+  sales_commission_id?: string // Reference to sales commission tier
   customer_title?: string
   customer_name: string // Combined customer name (database column)
   customer_address?: string
@@ -247,7 +256,7 @@ export interface PendingVehicleSale {
   leasing_company_id?: string
   sales_agent_id?: string
   third_party_agent?: string
-  status: 'pending' | 'sold'
+  status: 'advance_paid' | 'sold'
   created_at: string
   updated_at: string
   created_by?: string

@@ -24,145 +24,145 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { supabase } from '@/lib/supabase-client'
-import { PriceCategory } from '@/lib/database.types'
+import { SalesCommission } from '@/lib/database.types'
 
-export default function PriceCategoryTab() {
-  const [categories, setCategories] = useState<PriceCategory[]>([])
+export default function SalesCommissionTab() {
+  const [commissions, setCommissions] = useState<SalesCommission[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null)
-  const [editingCategory, setEditingCategory] = useState<PriceCategory | null>(null)
+  const [commissionToDelete, setCommissionToDelete] = useState<string | null>(null)
+  const [editingCommission, setEditingCommission] = useState<SalesCommission | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     min_price: '',
     max_price: '',
-    pcn_advance_amount: '',
+    commission_amount: '',
   })
 
   useEffect(() => {
-    fetchCategories()
+    fetchCommissions()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchCommissions = async () => {
     try {
       const { data, error } = await supabase
-        .from('price_categories')
+        .from('sales_commissions')
         .select('*')
         .order('min_price')
 
       if (error) throw error
-      setCategories(data || [])
+      setCommissions(data || [])
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      console.error('Error fetching sales commissions:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleAddCategory = async () => {
-    if (!formData.name.trim() || !formData.min_price || !formData.max_price || !formData.pcn_advance_amount) return
+  const handleAddCommission = async () => {
+    if (!formData.name.trim() || !formData.min_price || !formData.max_price || !formData.commission_amount) return
 
     try {
       const { error } = await supabase
-        .from('price_categories')
+        .from('sales_commissions')
         .insert([{
           name: formData.name,
           min_price: parseFloat(formData.min_price),
           max_price: parseFloat(formData.max_price),
-          pcn_advance_amount: parseFloat(formData.pcn_advance_amount),
+          commission_amount: parseFloat(formData.commission_amount),
           is_active: true,
         }])
 
       if (error) {
-        console.error('Error adding category:', error)
+        console.error('Error adding sales commission:', error)
         alert(`Error: ${error.message}`)
         throw error
       }
 
-      setFormData({ name: '', min_price: '', max_price: '', pcn_advance_amount: '' })
+      setFormData({ name: '', min_price: '', max_price: '', commission_amount: '' })
       setIsAddDialogOpen(false)
-      fetchCategories()
+      fetchCommissions()
     } catch (error) {
-      console.error('Error adding category:', error)
+      console.error('Error adding sales commission:', error)
     }
   }
 
-  const handleEditCategory = async () => {
-    if (!editingCategory || !formData.name.trim() || !formData.min_price || !formData.max_price || !formData.pcn_advance_amount) return
+  const handleEditCommission = async () => {
+    if (!editingCommission || !formData.name.trim() || !formData.min_price || !formData.max_price || !formData.commission_amount) return
 
     try {
       const { error } = await supabase
-        .from('price_categories')
+        .from('sales_commissions')
         .update({
           name: formData.name,
           min_price: parseFloat(formData.min_price),
           max_price: parseFloat(formData.max_price),
-          pcn_advance_amount: parseFloat(formData.pcn_advance_amount),
+          commission_amount: parseFloat(formData.commission_amount),
         })
-        .eq('id', editingCategory.id)
+        .eq('id', editingCommission.id)
 
       if (error) {
-        console.error('Error updating category:', error)
+        console.error('Error updating sales commission:', error)
         alert(`Error: ${error.message}`)
         throw error
       }
 
-      setFormData({ name: '', min_price: '', max_price: '', pcn_advance_amount: '' })
-      setEditingCategory(null)
+      setFormData({ name: '', min_price: '', max_price: '', commission_amount: '' })
+      setEditingCommission(null)
       setIsEditDialogOpen(false)
-      fetchCategories()
+      fetchCommissions()
     } catch (error) {
-      console.error('Error updating category:', error)
+      console.error('Error updating sales commission:', error)
     }
   }
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from('price_categories')
+        .from('sales_commissions')
         .update({ is_active: !currentStatus })
         .eq('id', id)
 
       if (error) throw error
-      fetchCategories()
+      fetchCommissions()
     } catch (error) {
-      console.error('Error updating category:', error)
+      console.error('Error updating sales commission:', error)
     }
   }
 
   const handleDelete = async (id: string) => {
-    setCategoryToDelete(id)
+    setCommissionToDelete(id)
     setIsDeleteDialogOpen(true)
   }
 
   const confirmDelete = async () => {
-    if (!categoryToDelete) return
+    if (!commissionToDelete) return
 
     try {
       const { error } = await supabase
-        .from('price_categories')
+        .from('sales_commissions')
         .delete()
-        .eq('id', categoryToDelete)
+        .eq('id', commissionToDelete)
 
       if (error) throw error
-      fetchCategories()
+      fetchCommissions()
     } catch (error) {
-      console.error('Error deleting category:', error)
+      console.error('Error deleting sales commission:', error)
     } finally {
       setIsDeleteDialogOpen(false)
-      setCategoryToDelete(null)
+      setCommissionToDelete(null)
     }
   }
 
-  const openEditDialog = (category: PriceCategory) => {
-    setEditingCategory(category)
+  const openEditDialog = (commission: SalesCommission) => {
+    setEditingCommission(commission)
     setFormData({
-      name: category.name,
-      min_price: category.min_price.toString(),
-      max_price: category.max_price.toString(),
-      pcn_advance_amount: category.pcn_advance_amount.toString(),
+      name: commission.name,
+      min_price: commission.min_price.toString(),
+      max_price: commission.max_price.toString(),
+      commission_amount: commission.commission_amount.toString(),
     })
     setIsEditDialogOpen(true)
   }
@@ -178,28 +178,28 @@ export default function PriceCategoryTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Available Price Category</h2>
-          <p className="text-sm text-gray-500">Manage vehicle price ranges</p>
+          <h2 className="text-xl font-semibold">Sales Commission</h2>
+          <p className="text-sm text-gray-500">Manage sales commission based on vehicle price ranges</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Category
+              Add Commission
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Price Category</DialogTitle>
+              <DialogTitle>Add New Sales Commission</DialogTitle>
               <DialogDescription>
-                Create a new price range category
+                Create a new sales commission based on price range
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="category-name">Category Name</Label>
+                <Label htmlFor="commission-name">Commission Name</Label>
                 <Input
-                  id="category-name"
+                  id="commission-name"
                   placeholder="e.g., Low Level"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -228,13 +228,13 @@ export default function PriceCategoryTab() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pcn-advance-amount">PCN Advance Amount</Label>
+                <Label htmlFor="commission-amount">Commission Amount</Label>
                 <Input
-                  id="pcn-advance-amount"
+                  id="commission-amount"
                   type="number"
                   placeholder="e.g., 25000"
-                  value={formData.pcn_advance_amount}
-                  onChange={(e) => setFormData({ ...formData, pcn_advance_amount: e.target.value })}
+                  value={formData.commission_amount}
+                  onChange={(e) => setFormData({ ...formData, commission_amount: e.target.value })}
                 />
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function PriceCategoryTab() {
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddCategory}>Save</Button>
+              <Button onClick={handleAddCommission}>Save</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -252,9 +252,9 @@ export default function PriceCategoryTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Category Name</TableHead>
+              <TableHead>Commission Name</TableHead>
               <TableHead>Price Range</TableHead>
-              <TableHead>PCN Advance Amount</TableHead>
+              <TableHead>Commission Amount</TableHead>
               <TableHead>Availability</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
@@ -266,24 +266,24 @@ export default function PriceCategoryTab() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : categories.length === 0 ? (
+            ) : commissions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  No price categories found
+                  No sales commissions found
                 </TableCell>
               </TableRow>
             ) : (
-              categories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.name}</TableCell>
+              commissions.map((commission) => (
+                <TableRow key={commission.id}>
+                  <TableCell className="font-medium">{commission.name}</TableCell>
                   <TableCell>
-                    {formatPrice(category.min_price)} - {formatPrice(category.max_price)}
+                    {formatPrice(commission.min_price)} - {formatPrice(commission.max_price)}
                   </TableCell>
-                  <TableCell>{formatPrice(category.pcn_advance_amount)}</TableCell>
+                  <TableCell>{formatPrice(commission.commission_amount)}</TableCell>
                   <TableCell>
                     <Switch
-                      checked={category.is_active}
-                      onCheckedChange={() => handleToggleActive(category.id, category.is_active)}
+                      checked={commission.is_active}
+                      onCheckedChange={() => handleToggleActive(commission.id, commission.is_active)}
                     />
                   </TableCell>
                   <TableCell className="text-right">
@@ -291,14 +291,14 @@ export default function PriceCategoryTab() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => openEditDialog(category)}
+                        onClick={() => openEditDialog(commission)}
                       >
                         Edit
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => handleDelete(commission.id)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         Delete
@@ -316,16 +316,16 @@ export default function PriceCategoryTab() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Price Category</DialogTitle>
+            <DialogTitle>Edit Sales Commission</DialogTitle>
             <DialogDescription>
-              Update the price range category
+              Update the sales commission details
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-category-name">Category Name</Label>
+              <Label htmlFor="edit-commission-name">Commission Name</Label>
               <Input
-                id="edit-category-name"
+                id="edit-commission-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -351,12 +351,12 @@ export default function PriceCategoryTab() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-pcn-advance-amount">PCN Advance Amount</Label>
+              <Label htmlFor="edit-commission-amount">Commission Amount</Label>
               <Input
-                id="edit-pcn-advance-amount"
+                id="edit-commission-amount"
                 type="number"
-                value={formData.pcn_advance_amount}
-                onChange={(e) => setFormData({ ...formData, pcn_advance_amount: e.target.value })}
+                value={formData.commission_amount}
+                onChange={(e) => setFormData({ ...formData, commission_amount: e.target.value })}
               />
             </div>
           </div>
@@ -364,7 +364,7 @@ export default function PriceCategoryTab() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleEditCategory}>Save Changes</Button>
+            <Button onClick={handleEditCommission}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -373,12 +373,12 @@ export default function PriceCategoryTab() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Delete Price Category</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Delete Sales Commission</DialogTitle>
           </DialogHeader>
           <div className="py-6">
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <p className="text-gray-700">
-                Are you sure you want to delete this price category?
+                Are you sure you want to delete this sales commission?
               </p>
             </div>
           </div>

@@ -6,11 +6,92 @@ This document covers the complete dashboard UI layout architecture, user access 
 
 > **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication with server-side session validation. API routes are protected with authentication middleware and rate limiting.
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 20, 2026
 
 ---
 
-## 📢 LATEST UPDATE - January 1, 2026 (Reports Data Sync & RBAC Updates)
+## 📢 LATEST UPDATE - January 20, 2026 (Dashboard & Sales Transactions UI Enhancement)
+
+### 📊 Complete "Pending" to "Advance Paid" Rename
+
+**Update: System-wide rename from "Pending Vehicle" to "Advance Paid" completed!**
+
+#### Dashboard Page Changes:
+| Old Name | New Name |
+|----------|----------|
+| Pending Selling Vehicles Card | **Advance Paid Vehicles** Card |
+| `pendingVehicles` state variable | `advancePaidVehicles` |
+
+#### Sales Transactions Tab Rename:
+| Old Name | New Name |
+|----------|----------|
+| Pending Vehicles Tab | **Advance Paid** Tab |
+| "Pending Vehicle Details" modal | "Advance Paid Vehicle Details" modal |
+
+#### Status Value Change:
+| Old Status | New Status |
+|------------|------------|
+| `'pending'` | `'advance_paid'` |
+
+#### New Table Columns (Advance Paid Tab):
+| Column | Size | Description |
+|--------|------|-------------|
+| Image | 80x50px | Primary vehicle thumbnail |
+| Vehicle No. | Auto | Registration number |
+| Brand | Auto | Vehicle brand |
+| Model | Auto | Vehicle model |
+| M.Year | Auto | Manufacture year |
+| Reg.Year | Auto | Registration year |
+| Mileage | Auto | Mileage in km |
+| Country | Auto | Manufacturing country |
+| Trans. | Auto | Transmission type |
+| Selling Price | Auto | Sale price (Rs.) |
+| Payment | Auto | Payment type badge |
+| Actions | Auto | Action buttons |
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/dashboard/page.tsx` ✅
+- `dashboard/src/app/(dashboard)/sales-transactions/page.tsx` ✅
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx` ✅
+- `dashboard/src/components/sales-transactions/PendingVehicleModal.tsx` ✅
+- `api/src/routes/sales.routes.ts` ✅
+- `shared/types.ts` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 16, 2026 (Inventory Page Enhancements)
+
+### 📊 Inventory Table & Filter System Update
+
+**Update: Major inventory page enhancement with new columns and real-time filtering!**
+
+#### New Table Columns:
+| Column | Size | Description |
+|--------|------|-------------|
+| Image | 80x50px | Primary vehicle thumbnail |
+| M Year | Auto | Manufacture Year |
+| Reg Year | Auto | Registered Year |
+| Color | Auto | Exterior Color |
+
+#### New Filter System:
+- **Price Range**: Min/Max inputs for price filtering
+- **Transmission**: Auto/Manual dropdown filter
+- **Ownership**: Open Papers / Registered Owner filter
+- **Vehicle Type**: Registered / Unregistered filter
+- **Country**: Dynamic country dropdown from database
+- **Clear Filters**: One-click reset all filters
+
+#### UI Components:
+- shadcn/ui Select, Input, Button components
+- Real-time filtering without page reload
+- Result count display when filters active
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/inventory/page.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 1, 2026 (Reports Data Sync & RBAC Updates)
 
 ### 🔄 Reports & Analytics Data Consistency
 
@@ -285,7 +366,7 @@ export function useRoleAccess(): UseRoleAccessReturn {
 | Dashboard | `/dashboard` | ✅ | ✅ |
 | Add Vehicle | `/add-vehicle` | ✅ | ✅ |
 | Inventory | `/inventory` | ✅ | ✅ |
-| Sell Vehicle | `/sell-vehicle` | ✅ | ✅ |
+| Reserve Vehicle | `/reserve-vehicle` | ✅ | ✅ |
 | Sales Transactions | `/sales-transactions` | ✅ | ✅ |
 | Reports & Analytics | `/reports` | ✅ | ❌ |
 | User Management | `/user-management` | ✅ | ❌ |
@@ -307,7 +388,7 @@ const navigation: Array<{
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Add Vehicle', href: '/add-vehicle', icon: PlusCircle },
   { name: 'Inventory', href: '/inventory', icon: Package },
-  { name: 'Sell Vehicle', href: '/sell-vehicle', icon: DollarSign },
+  { name: 'Reserve Vehicle', href: '/reserve-vehicle', icon: DollarSign },
   { name: 'Sales Transactions', href: '/sales-transactions', icon: FileText },
   { name: 'Reports & Analytics', href: '/reports', icon: BarChart3, allowedRoles: ['admin'] },
   { name: 'User Management', href: '/user-management', icon: Users, allowedRoles: ['admin'] },
@@ -325,7 +406,7 @@ const navigation: Array<{
 │ 📊 Dashboard          │  <- Navigation Items
 │ ➕ Add Vehicle        │     (Role-filtered)
 │ 📦 Inventory          │
-│ 💰 Sell Vehicle       │
+│ 💰 Reserve Vehicle    │
 │ 📄 Sales Transactions │
 │ 📈 Reports & Analytics│  <- Admin Only
 │ 👥 User Management    │  <- Admin Only
@@ -1418,7 +1499,7 @@ dashboard/src/
 │   │   │   └── page.tsx            # Dashboard homepage
 │   │   ├── add-vehicle/
 │   │   ├── inventory/
-│   │   ├── sell-vehicle/
+│   │   ├── reserve-vehicle/
 │   │   ├── sales-transactions/
 │   │   ├── reports/                # Admin only
 │   │   ├── user-management/        # Admin only

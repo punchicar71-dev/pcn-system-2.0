@@ -82,6 +82,58 @@ export default function AddVehiclePage() {
     }
   };
 
+  // Handler to add new brand - saves to vehicle_brands table (Available Vehicle Brands in Settings)
+  const handleAddBrand = async (name: string): Promise<{ id: string; name: string } | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_brands')
+        .insert([{ name: name.trim() }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding brand:', error);
+        throw new Error(error.message);
+      }
+
+      if (data) {
+        // Update local brands state with the new brand (sorted alphabetically)
+        setBrands(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        return { id: data.id, name: data.name };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error adding brand:', error);
+      throw error;
+    }
+  };
+
+  // Handler to add new model - saves to vehicle_models table (linked to brand in Settings)
+  const handleAddModel = async (name: string, brandId: string): Promise<{ id: string; name: string } | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_models')
+        .insert([{ brand_id: brandId, name: name.trim() }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding model:', error);
+        throw new Error(error.message);
+      }
+
+      if (data) {
+        // Update local models state with the new model (sorted alphabetically)
+        setModels(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        return { id: data.id, name: data.name };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error adding model:', error);
+      throw error;
+    }
+  };
+
   const updateVehicleDetails = (data: Partial<VehicleDetailsData>) => {
     setFormState((prev) => ({
       ...prev,
@@ -481,8 +533,10 @@ export default function AddVehiclePage() {
           engine_capacity: vehicleDetails.engineCapacity?.trim() || null,
           exterior_color: vehicleDetails.exteriorColor?.trim() || null,
           registered_year: vehicleDetails.registeredYear || null,
+          vehicle_type: vehicleDetails.vehicleType?.trim() || null,
+          ownership: vehicleDetails.ownership?.trim() || null,
+          mileage: vehicleDetails.mileage ? parseFloat(vehicleDetails.mileage.replace(/,/g, '')) : null,
           selling_amount: parseFloat(sellingDetails.sellingAmount.replace(/,/g, '')) || 0,
-          mileage: sellingDetails.mileage ? parseFloat(sellingDetails.mileage.replace(/,/g, '')) : null,
           entry_type: sellingDetails.entryType, // Required - validated above
           entry_date: sellingDetails.entryDate || new Date().toISOString().split('T')[0],
           status: sellingDetails.status || 'In Sale',
@@ -783,15 +837,19 @@ export default function AddVehiclePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       <div className="w-full mx-auto">
         {/* Step Indicator */}
         {formState.currentStep < 7 && (
-          <StepIndicator currentStep={formState.currentStep} completedSteps={completedSteps} />
+          <StepIndicator 
+            currentStep={formState.currentStep} 
+            completedSteps={completedSteps}
+            onStepClick={goToStep}
+          />
         )}
 
         {/* Step Content */}
-        <div className=" max-w-7xl ">
+        <div className=" w-full ">
         {formState.currentStep === 1 && (
           <Step1VehicleDetails
             data={formState.vehicleDetails}
@@ -801,6 +859,8 @@ export default function AddVehiclePage() {
             brands={brands}
             models={models}
             countries={countries}
+            onAddBrand={handleAddBrand}
+            onAddModel={handleAddModel}
           />
         )}
 

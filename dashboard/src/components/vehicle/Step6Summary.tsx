@@ -48,7 +48,7 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
   };
 
   return (
-    <div className="bg-slate-50  p-6">
+    <div className="bg-slate-50 px-6 pt-6 pb-0">
       <h2 className="text-xl font-bold text-gray-900 mb-6">All Data Summary</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -112,6 +112,12 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Registered Year</dt>
                   <dd className="font-semibold text-gray-900">{vehicleDetails.registeredYear}</dd>
+                </div>
+              )}
+              {vehicleDetails.mileage && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">Mileage</dt>
+                  <dd className="font-semibold text-gray-900">Km. {vehicleDetails.mileage}</dd>
                 </div>
               )}
             </dl>
@@ -191,12 +197,6 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
                 <dt className="text-gray-600">Selling Amount</dt>
                 <dd className="font-semibold text-gray-900">Rs. {sellingDetails.sellingAmount}</dd>
               </div>
-              {sellingDetails.mileage && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-600">Milage</dt>
-                  <dd className="font-semibold text-gray-900">KM. {sellingDetails.mileage}</dd>
-                </div>
-              )}
               <div className="flex justify-between">
                 <dt className="text-gray-600">Entry Type</dt>
                 <dd className="font-semibold text-gray-900">{sellingDetails.entryType}</dd>
@@ -249,32 +249,34 @@ export default function Step6Summary({ formState, onPublish, onBack, brands, mod
         </div>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-start gap-4 pt-6 mt-6 border-t">
-        <Button
-          type="button"
-          onClick={onBack}
-          disabled={isPublishing}
-          variant="outline"
-          size="lg"
-        >
-          Back
-        </Button>
-        <Button
-          type="button"
-          onClick={handlePublish}
-          disabled={isPublishing}
-          size="lg"
-        >
-          {isPublishing ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Publishing...
-            </>
-          ) : (
-            'Publish'
-          )}
-        </Button>
+      {/* Navigation Buttons - Sticky Bottom */}
+      <div className="sticky bottom-0 left-0 right-0 bg-white border-t py-4 px-6 -mx-6 mt-6">
+        <div className="flex justify-start gap-4">
+          <Button
+            type="button"
+            onClick={onBack}
+            disabled={isPublishing}
+            variant="outline"
+            size="lg"
+          >
+            Back
+          </Button>
+          <Button
+            type="button"
+            onClick={handlePublish}
+            disabled={isPublishing}
+            size="lg"
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Publishing...
+              </>
+            ) : (
+              'Publish'
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

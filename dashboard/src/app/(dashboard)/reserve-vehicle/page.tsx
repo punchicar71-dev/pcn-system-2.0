@@ -8,16 +8,16 @@
 
 import { DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import SellVehicleStepIndicator from '@/components/sell-vehicle/SellVehicleStepIndicator';
-import CustomerDetails from '@/components/sell-vehicle/CustomerDetails';
-import SellingInfo from '@/components/sell-vehicle/SellingInfo';
-import Confirmation from '@/components/sell-vehicle/Confirmation';
+import ReserveVehicleStepIndicator from '@/components/reserve-vehicle/ReserveVehicleStepIndicator';
+import CustomerDetails from '@/components/reserve-vehicle/CustomerDetails';
+import SellingInfo from '@/components/reserve-vehicle/SellingInfo';
+import Confirmation from '@/components/reserve-vehicle/Confirmation';
 import { createClient } from '@/lib/supabase-client';
-import { sendSellVehicleConfirmationSMS } from '@/lib/vehicle-sms-service';
+import { sendReserveVehicleConfirmationSMS } from '@/lib/vehicle-sms-service';
 import { useVehicleLock } from '@/hooks/use-vehicle-lock';
 import { VehicleLockWarning } from '@/components/ui/vehicle-lock-warning';
 
-export default function SellVehiclePage() {
+export default function ReserveVehiclePage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [createdSaleId, setCreatedSaleId] = useState<string>('');  
@@ -39,11 +39,11 @@ export default function SellVehiclePage() {
     searchVehicle: '',
     selectedVehicle: null as any,
     sellingAmount: '',
-    advanceAmount: '',
-    paymentType: '',
+    salesCommissionId: '',
     leasingCompany: '',
     inHouseSalesAgent: '',
     thirdPartySalesAgent: '',
+    tagNotes: '', // Internal notes - recalled from vehicle and can be updated
   });
 
   // 🔒 Vehicle locking to prevent concurrent edits
@@ -112,15 +112,27 @@ export default function SellVehiclePage() {
         customer_nic: customerData.nicNumber || null,
         customer_mobile: customerData.mobileNumber || null,
         sale_price: salePrice, // Always a valid number
-        advance_amount: sellingData.advanceAmount ? parseFloat(sellingData.advanceAmount) : 0,
-        payment_type: sellingData.paymentType,
         leasing_company_id: sellingData.leasingCompany || null,
         sales_agent_id: sellingData.inHouseSalesAgent || null,
         third_party_agent: showroomAgentName || '',
-        status: 'pending',
+        status: 'advance_paid',
       };
       
-      // Try to add vehicle snapshot fields if columns exist (after migration)
+      // Try to add sales_commission_id if column exists (after migration)
+      try {
+        const testCommissionColumn = await supabase
+          .from('pending_vehicle_sales')
+          .select('sales_commission_id')
+          .limit(0);
+        
+        if (!testCommissionColumn.error && sellingData.salesCommissionId) {
+          saleData.sales_commission_id = sellingData.salesCommissionId;
+        }
+      } catch (e) {
+        console.log('sales_commission_id column not available - run migration to enable');
+      }
+      
+      // Try to add basic vehicle snapshot fields if columns exist (after migration)
       // These fields preserve vehicle info even if vehicle is re-added later
       try {
         const testQuery = await supabase
@@ -128,16 +140,42 @@ export default function SellVehiclePage() {
           .select('vehicle_number')
           .limit(0);
         
-        // If no error, columns exist - add snapshot data
+        // If no error, basic snapshot columns exist - add snapshot data
         if (!testQuery.error) {
           saleData.vehicle_number = sellingData.selectedVehicle?.vehicle_number || null;
           saleData.brand_name = sellingData.selectedVehicle?.brand_name || null;
           saleData.model_name = sellingData.selectedVehicle?.model_name || null;
           saleData.manufacture_year = sellingData.selectedVehicle?.manufacture_year || null;
+          saleData.body_type = sellingData.selectedVehicle?.body_type || null;
         }
       } catch (e) {
-        // Columns don't exist yet, skip snapshot fields
-        console.log('Vehicle snapshot columns not available - run migration to enable');
+        // Basic snapshot columns don't exist yet
+        console.log('Basic vehicle snapshot columns not available - run migration to enable');
+      }
+      
+      // Try to add NEW snapshot fields (registered_year, mileage, country_name, transmission, image_url)
+      // These require the 2026_01_20_add_vehicle_details_snapshot.sql migration
+      try {
+        const testNewColumns = await supabase
+          .from('pending_vehicle_sales')
+          .select('country_name')
+          .limit(0);
+        
+        // If no error, new snapshot columns exist
+        if (!testNewColumns.error) {
+          saleData.registered_year = sellingData.selectedVehicle?.registered_year || null;
+          saleData.mileage = sellingData.selectedVehicle?.mileage || null;
+          saleData.country_name = sellingData.selectedVehicle?.country_name || null;
+          saleData.transmission = sellingData.selectedVehicle?.transmission || null;
+          // Save primary image URL
+          if (sellingData.selectedVehicle?.images?.length > 0) {
+            const primaryImg = sellingData.selectedVehicle.images.find((img: any) => img.is_primary);
+            saleData.image_url = primaryImg?.image_url || sellingData.selectedVehicle.images[0]?.image_url || null;
+          }
+        }
+      } catch (e) {
+        // New snapshot columns don't exist yet
+        console.log('New vehicle snapshot columns (country_name, etc.) not available - run 2026_01_20_add_vehicle_details_snapshot.sql migration');
       }
 
       // Insert into pending_vehicle_sales table
@@ -158,10 +196,20 @@ export default function SellVehiclePage() {
         setCreatedSaleId(data.id);
       }
 
-      // Update vehicle status to 'Reserved' so it disappears from inventory
+      // Update vehicle status to 'Reserved' and save updated tag_notes
+      const vehicleUpdate: Record<string, any> = { 
+        status: 'Reserved',
+        updated_at: new Date().toISOString()
+      };
+      
+      // Update tag_notes if changed
+      if (sellingData.tagNotes !== undefined) {
+        vehicleUpdate.tag_notes = sellingData.tagNotes || null;
+      }
+      
       const { error: updateError } = await supabase
         .from('vehicles')
-        .update({ status: 'Reserved' })
+        .update(vehicleUpdate)
         .eq('id', sellingData.selectedVehicle?.id);
 
       if (updateError) {
@@ -219,7 +267,7 @@ export default function SellVehiclePage() {
         } else {
           console.log('📱 Sending SMS confirmation to original vehicle seller...');
           
-          const smsResult = await sendSellVehicleConfirmationSMS({
+          const smsResult = await sendReserveVehicleConfirmationSMS({
             seller: {
               title: sellerData.title || 'Mr.',
               firstName: sellerData.first_name,
@@ -270,7 +318,7 @@ export default function SellVehiclePage() {
     <div className="min-h-screen bg-slate-50">
       
 
-      <SellVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />
+      <ReserveVehicleStepIndicator currentStep={currentStep} completedSteps={completedSteps} />
 
       <div className="max-w-7xl  ">
         {/* 🔒 Show lock warning on step 2 if vehicle is locked */}

@@ -38,7 +38,7 @@ interface ActiveUser {
 
 export default function DashboardPage() {
   const [availableVehicles, setAvailableVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
-  const [pendingVehicles, setPendingVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
+  const [advancePaidVehicles, setAdvancePaidVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
   const [soldVehicles, setSoldVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
   const [chartData, setChartData] = useState<SalesData[]>([])
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([])
@@ -132,7 +132,7 @@ export default function DashboardPage() {
         setAvailableVehicles(stats)
       }
 
-      // Fetch Pending Vehicles from pending_vehicle_sales table (status: 'pending')
+      // Fetch Advance Paid Vehicles from pending_vehicle_sales table (status: 'advance_paid')
       const { data: pendingSalesData, error: pendingError } = await supabase
         .from('pending_vehicle_sales')
         .select(`
@@ -142,7 +142,7 @@ export default function DashboardPage() {
             body_type
           )
         `)
-        .eq('status', 'pending')
+        .eq('status', 'advance_paid')
 
       if (!pendingError && pendingSalesData) {
         // Extract vehicles data and calculate stats
@@ -150,7 +150,7 @@ export default function DashboardPage() {
           .filter(sale => sale.vehicles)
           .map(sale => ({ body_type: (sale.vehicles as any).body_type }))
         const stats = calculateBodyTypeStats(vehiclesData)
-        setPendingVehicles(stats)
+        setAdvancePaidVehicles(stats)
       }
 
       // Fetch Sold-Out Vehicles from pending_vehicle_sales (status: 'sold') - ALL TIME
@@ -449,34 +449,34 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Pending Selling Vehicles Card */}
+            {/* Advance Paid Vehicles Card */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Pending Selling Vehicles</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Advance Paid Vehicles</h3>
               {loading ? (
                 <p className="text-4xl font-bold text-gray-900">...</p>
               ) : (
                 <>
-                  <p className="text-5xl font-bold text-gray-900 mb-4">{pendingVehicles.total}</p>
+                  <p className="text-5xl font-bold text-gray-900 mb-4">{advancePaidVehicles.total}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Sedan:</span>
-                      <span className="font-semibold text-gray-900">{pendingVehicles.sedan}</span>
+                      <span className="font-semibold text-gray-900">{advancePaidVehicles.sedan}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Hatchback:</span>
-                      <span className="font-semibold text-gray-900">{pendingVehicles.hatchback}</span>
+                      <span className="font-semibold text-gray-900">{advancePaidVehicles.hatchback}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">SUV:</span>
-                      <span className="font-semibold text-gray-900">{pendingVehicles.suv}</span>
+                      <span className="font-semibold text-gray-900">{advancePaidVehicles.suv}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Wagon:</span>
-                      <span className="font-semibold text-gray-900">{pendingVehicles.wagon}</span>
+                      <span className="font-semibold text-gray-900">{advancePaidVehicles.wagon}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Coupe:</span>
-                      <span className="font-semibold text-gray-900">{pendingVehicles.coupe}</span>
+                      <span className="font-semibold text-gray-900">{advancePaidVehicles.coupe}</span>
                     </div>
                   </div>
                 </>

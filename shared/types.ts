@@ -16,7 +16,7 @@ export interface Vehicle {
   images: string[];
   features?: string[];
   description?: string;
-  status: 'available' | 'pending' | 'sold';
+  status: 'available' | 'advance_paid' | 'reserved' | 'sold';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,7 +76,7 @@ export interface Sale {
   leasingAmount?: number;
   leasingPeriod?: number;
   interestRate?: number;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: 'advance_paid' | 'completed' | 'cancelled';
   saleDate: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -102,7 +102,7 @@ export interface DashboardStats {
     hatchback: number;
     suv: number;
   };
-  pendingVehicles: {
+  advancePaidVehicles: {
     total: number;
     sedan: number;
     hatchback: number;

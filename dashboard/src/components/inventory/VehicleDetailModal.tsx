@@ -62,6 +62,8 @@ interface VehicleDetailModalProps {
     status?: string
     entry_date?: string
     entry_type?: string
+    tag_notes?: string
+    special_note_print?: string
   }
 }
 
@@ -73,6 +75,7 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
   const [crImages, setCrImages] = useState<VehicleImage[]>([])
   const [sellerData, setSellerData] = useState<SellerData | null>(null)
   const [vehicleOptions, setVehicleOptions] = useState<VehicleOption[]>([])
+  const [notesData, setNotesData] = useState<{ tag_notes: string | null; special_note_print: string | null }>({ tag_notes: null, special_note_print: null })
   
   const supabase = createClient()
 
@@ -169,6 +172,20 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
 
       console.log('📊 Total options found:', allOptions.length, allOptions)
       setVehicleOptions(allOptions)
+
+      // Fetch notes data
+      const { data: vehicleData } = await supabase
+        .from('vehicles')
+        .select('tag_notes, special_note_print')
+        .eq('id', vehicle.id)
+        .single()
+
+      if (vehicleData) {
+        setNotesData({
+          tag_notes: vehicleData.tag_notes || null,
+          special_note_print: vehicleData.special_note_print || null
+        })
+      }
 
     } catch (error) {
       console.error('Error fetching vehicle data:', error)
@@ -466,6 +483,27 @@ export default function VehicleDetailModal({ open, onClose, vehicle }: VehicleDe
                         <span className="text-sm">{option.option_name}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes Section */}
+              {(notesData.tag_notes || notesData.special_note_print) && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Notes</h3>
+                  <div className="space-y-4">
+                    {notesData.tag_notes && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Tag Notes</p>
+                        <p className="text-sm text-gray-900 bg-white p-3 rounded-lg border">{notesData.tag_notes}</p>
+                      </div>
+                    )}
+                    {notesData.special_note_print && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Special Notes for Print</p>
+                        <p className="text-sm text-gray-900 bg-white p-3 rounded-lg border">{notesData.special_note_print}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

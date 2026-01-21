@@ -14,11 +14,60 @@
 
 ---
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 16, 2026
 
 ---
 
-## 📢 LATEST UPDATE - January 1, 2026 (Performance & Data Sync)
+## 📢 LATEST UPDATE - January 16, 2026 (Print Documents Enhancement)
+
+### 🖨️ Print Acceptance & Price Tag Updates
+
+**Update: Enhanced print document templates with new field positions and layout!**
+
+#### Print Acceptance Document:
+- Added **Land Phone Number** field display (conditional - shows only if provided)
+- Fixed field positions for better alignment
+- Updated background image loading with absolute URLs
+- Field mapping: `land_phone_number` from seller details
+
+#### Price Tag Redesign:
+- **Two-column flex layout**: 
+  - Left column: Vehicle options list
+  - Right column: Year, Mileage, Engine Capacity details
+- Removed browser date/time from print output
+- Added CSS `@page { margin: 0; }` rules
+- Added `-webkit-print-color-adjust: exact` for background colors
+
+#### Modified Files:
+- `dashboard/src/components/inventory/PrintDocumentsModal.tsx` ✅
+- `dashboard/src/components/vehicle/Step7Success.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 14, 2026 (Vehicle Type & Ownership Fields)
+
+### 🚗 New Vehicle Classification Fields
+
+**Update: Added two new dropdown fields in Step 1 - Vehicle Details!**
+
+#### New Fields:
+- **Vehicle Type**: Dropdown to classify vehicle registration status
+  - Options: `Unregistered`, `Registered`
+- **Ownership**: Dropdown to specify ownership type
+  - Options: `Open Papers`, `Registered Owner`
+
+#### Modified Files:
+- `dashboard/src/types/vehicle-form.types.ts` ✅ - Added type definitions and constants
+- `dashboard/src/components/vehicle/Step1VehicleDetails.tsx` ✅ - Added UI dropdowns
+- `dashboard/src/app/(dashboard)/add-vehicle/page.tsx` ✅ - Updated save logic
+- `dashboard/src/lib/database.types.ts` ✅ - Updated Vehicle interface
+
+#### Database Migration:
+- `dashboard/migrations/2026_01_14_add_vehicle_type_and_ownership.sql`
+
+---
+
+## 📢 PREVIOUS UPDATE - January 1, 2026 (Performance & Data Sync)
 
 ### 🚀 Performance Optimizations & Data Consistency
 
@@ -181,11 +230,22 @@ The Add Vehicle flow is a comprehensive 6-step wizard that allows users to add n
 - **Brand** (Required)
   - Dropdown populated from `vehicle_brands` table
   - Triggers model fetch on selection
+  - **Add New Brand Feature**: Users can add a new brand directly from the dropdown
+    - Click "+ Add New Brand" at the bottom of the dropdown
+    - Enter brand name in the dialog
+    - New brand is saved to `vehicle_brands` table (visible in Settings > Available Vehicle Brands)
+    - Newly added brand is automatically selected
 
 - **Model** (Required)
   - Dropdown populated from `vehicle_models` table
   - Filtered by selected brand
   - Includes "Other" option for custom model numbers
+  - **Add New Model Feature**: Users can add a new model directly from the dropdown
+    - Click "+ Add New Model" at the bottom of the dropdown (requires brand to be selected first)
+    - Enter model name in the dialog
+    - New model is saved to `vehicle_models` table (linked to the selected brand)
+    - Newly added model is automatically selected
+    - Model will appear in Settings > Available Vehicle Brands > [Brand] Models
 
 - **Model Number Other** (Optional)
   - Free text field
@@ -197,6 +257,22 @@ The Add Vehicle flow is a comprehensive 6-step wizard that allows users to add n
 
 - **Registered Year** (Optional)
   - Dropdown: 1980 to current year
+
+- **Vehicle Type** (Optional)
+  - Dropdown select field
+  - Options: Unregistered, Registered
+  - Used to classify vehicle registration status
+
+- **Ownership** (Optional)
+  - Dropdown select field
+  - Options: Open Papers, Registered Owner
+  - Used to specify ownership documentation type
+
+- **Mileage** (Optional)
+  - Formatted number input
+  - Commas automatically added for readability
+  - Stored as decimal in database
+  - Displayed with "Km" unit suffix
 
 - **Country** (Required)
   - Dropdown from `countries` table
@@ -307,11 +383,6 @@ The Add Vehicle flow is a comprehensive 6-step wizard that allows users to add n
   - Commas automatically added
   - Stored as decimal in database
 
-- **Mileage** (Optional)
-  - Formatted number input
-  - Commas automatically added
-  - Stored as decimal in database
-
 - **Price Category** (Optional)
   - Dropdown from `price_categories` table
   - Used for pricing tiers
@@ -408,6 +479,8 @@ CREATE TABLE vehicles (
   engine_capacity VARCHAR(50),
   exterior_color VARCHAR(50),
   registered_year INTEGER,
+  vehicle_type VARCHAR(50),
+  ownership VARCHAR(50),
   selling_amount DECIMAL(12, 2) NOT NULL,
   mileage DECIMAL(10, 2),
   entry_type VARCHAR(50) NOT NULL,
@@ -426,6 +499,8 @@ CREATE TABLE vehicles (
 - `fuel_type`: CHECK (IN ('Petrol', 'Diesel', 'Petrol Hybrid', 'Diesel Hybrid', 'EV', 'Petrol + Hybrid', 'Diesel + Hybrid'))
 - `transmission`: CHECK (IN ('Auto', 'Manual'))
 - `status`: CHECK (IN ('In Sale', 'Out of Sale', 'Sold', 'Reserved'))
+- `vehicle_type`: Optional - CHECK (IN ('Unregistered', 'Registered'))
+- `ownership`: Optional - CHECK (IN ('Open Papers', 'Registered Owner'))
 
 **Insert Process**:
 1. Validate all required fields

@@ -24,6 +24,9 @@ export interface VehicleDetailsData {
   engineCapacity: string;
   exteriorColor: string;
   registeredYear: number | null;
+  vehicleType: string;
+  ownership: string;
+  mileage: string;
   vehicleImages: File[];
   vehicleImagePreviews: string[];
   image360Files: File[];
@@ -56,8 +59,7 @@ export interface VehicleOptionsData {
 
 export interface SellingDetailsData {
   sellingAmount: string;
-  mileage: string;
-  priceCategoryId: string;
+  salesCommissionId: string;
   entryType: string;
   entryDate: string;
   status: string;
@@ -93,16 +95,24 @@ export const TRANSMISSIONS = [
   'Manual',
 ] as const;
 
+export const VEHICLE_TYPES = [
+  'Unregistered',
+  'Registered',
+] as const;
+
+export const OWNERSHIP_TYPES = [
+  'Open Papers',
+  'Registered Owner',
+] as const;
+
 export const ENTRY_TYPES = [
-  'PVC Pvt Ltd.',
-  'PCN Import',
-  'Consignment',
+  'PCN',
+  'PCN Pvt Ltd.',
 ] as const;
 
 export const VEHICLE_STATUS = [
   'In Sale',
-  'Out of Sale',
-  'Reserved',
+  'Taken Out',
 ] as const;
 
 export const STANDARD_OPTIONS = [
@@ -184,6 +194,9 @@ export const initialVehicleDetails: VehicleDetailsData = {
   engineCapacity: '',
   exteriorColor: '',
   registeredYear: null,
+  vehicleType: '',
+  ownership: '',
+  mileage: '',
   vehicleImages: [],
   vehicleImagePreviews: [],
   image360Files: [],
@@ -212,8 +225,7 @@ export const initialVehicleOptions: VehicleOptionsData = {
 
 export const initialSellingDetails: SellingDetailsData = {
   sellingAmount: '',
-  mileage: '',
-  priceCategoryId: '',
+  salesCommissionId: '',
   entryType: 'PVC Pvt Ltd.',
   entryDate: new Date().toISOString().split('T')[0],
   status: 'In Sale',

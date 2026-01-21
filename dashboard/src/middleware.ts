@@ -26,7 +26,7 @@ const PROTECTED_ROUTES = [
   '/inventory',
   '/reports',
   '/sales-transactions',
-  '/sell-vehicle',
+  '/reserve-vehicle',
   '/settings',
   '/user-management'
 ]

@@ -15,6 +15,7 @@ import SoldOutVehicleModal from '@/components/sales-transactions/SoldOutVehicleM
 import ReturnToInventoryModal from '@/components/sales-transactions/ReturnToInventoryModal';
 import SoldOutConfirmModal from '@/components/sales-transactions/SoldOutConfirmModal';
 import PrintDocumentModal from '@/components/sales-transactions/PrintDocumentModal';
+import PaymentMethodModal from '@/components/sales-transactions/PaymentMethodModal';
 import { createClient } from '@/lib/supabase-client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -24,10 +25,11 @@ export default function SalesTransactionsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSoldOutModalOpen, setIsSoldOutModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string>('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSoldOutProcessing, setIsSoldOutProcessing] = useState(false);
-  const [currentTab, setCurrentTab] = useState<'pending' | 'sold'>('pending');
+  const [currentTab, setCurrentTab] = useState<'advance_paid' | 'sold'>('advance_paid');
 
   const handleViewDetail = (saleId: string) => {
     setSelectedSaleId(saleId);
@@ -35,7 +37,7 @@ export default function SalesTransactionsPage() {
   };
 
   const handleTabChange = (value: string) => {
-    setCurrentTab(value as 'pending' | 'sold');
+    setCurrentTab(value as 'advance_paid' | 'sold');
   };
 
   const handleSoldOut = (saleId: string) => {
@@ -328,6 +330,16 @@ export default function SalesTransactionsPage() {
     setIsPrintModalOpen(true);
   };
 
+  const handlePaymentMethod = (saleId: string) => {
+    setSelectedSaleId(saleId);
+    setIsPaymentMethodModalOpen(true);
+  };
+
+  const handlePaymentMethodSuccess = () => {
+    // Trigger refresh after payment method is updated
+    setRefreshKey(prev => prev + 1);
+  };
+
   const handleConfirmDelete = async () => {
     try {
       setIsDeleting(true);
@@ -393,18 +405,19 @@ export default function SalesTransactionsPage() {
 
       {/* Tabs using shadcn - same style as Settings page */}
       <div className="bg-slate-50 p-6 ">
-        <Tabs defaultValue="pending" className="w-full" onValueChange={handleTabChange}>
+        <Tabs defaultValue="advance_paid" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-[400px] grid-cols-2 max-w-md">
-            <TabsTrigger value="pending">Pending Vehicles</TabsTrigger>
-            <TabsTrigger value="sold">Sold out Vehicle</TabsTrigger>
+            <TabsTrigger value="advance_paid">Advance Paid</TabsTrigger>
+            <TabsTrigger value="sold">Sold Out</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending" className="mt-6">
+          <TabsContent value="advance_paid" className="mt-6">
             <PendingVehiclesTable
               onViewDetail={handleViewDetail}
               onSoldOut={handleSoldOut}
               onDelete={handleDelete}
               onPrintDocument={handlePrintDocument}
+              onPaymentMethod={handlePaymentMethod}
               refreshKey={refreshKey}
             />
           </TabsContent>
@@ -421,7 +434,7 @@ export default function SalesTransactionsPage() {
 
       {/* Pending Vehicle Modal - shows images */}
       <PendingVehicleModal
-        isOpen={isViewModalOpen && currentTab === 'pending'}
+        isOpen={isViewModalOpen && currentTab === 'advance_paid'}
         onClose={() => setIsViewModalOpen(false)}
         saleId={selectedSaleId}
       />
@@ -454,6 +467,14 @@ export default function SalesTransactionsPage() {
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
         saleId={selectedSaleId}
+      />
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={isPaymentMethodModalOpen}
+        onClose={() => setIsPaymentMethodModalOpen(false)}
+        saleId={selectedSaleId}
+        onSuccess={handlePaymentMethodSuccess}
       />
     </div>
   );

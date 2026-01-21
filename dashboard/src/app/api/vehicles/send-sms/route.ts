@@ -14,7 +14,7 @@ import { withAuth, AuthenticatedUser } from '@/lib/api-auth';
 import { checkRateLimit, rateLimiters } from '@/lib/rate-limit';
 
 interface SendSMSRequest {
-  type?: 'vehicle-acceptance' | 'sell-vehicle-confirmation';
+  type?: 'vehicle-acceptance' | 'sell-vehicle-confirmation' | 'reserve-vehicle-confirmation';
   seller: {
     title?: string;
     firstName: string;
@@ -330,20 +330,20 @@ export const POST = withAuth(async (request: NextRequest, user: AuthenticatedUse
     // Build SMS message based on type
     let message: string;
     
-    if (type === 'sell-vehicle-confirmation') {
+    if (type === 'sell-vehicle-confirmation' || type === 'reserve-vehicle-confirmation') {
       if (!sellingPrice || sellingPrice <= 0) {
-        console.error('❌ SMS API: Invalid selling price for sell-vehicle-confirmation');
+        console.error('❌ SMS API: Invalid selling price for reserve-vehicle-confirmation');
         return NextResponse.json(
           {
             success: false,
-            message: 'Selling price is required for sell-vehicle-confirmation',
+            message: 'Selling price is required for reserve-vehicle-confirmation',
             error: 'Invalid selling price'
           },
           { status: 400 }
         );
       }
       message = buildSellVehicleConfirmationSMSMessage(seller, vehicle, sellingPrice);
-      console.log('📝 SMS API: Building sell vehicle confirmation message');
+      console.log('📝 SMS API: Building reserve vehicle confirmation message');
     } else {
       message = buildVehicleAcceptanceSMSMessage(seller, vehicle);
       console.log('📝 SMS API: Building vehicle acceptance message');

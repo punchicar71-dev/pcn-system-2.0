@@ -1,8 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import PrintDocumentModal from '@/components/sales-transactions/PrintDocumentModal';
 
 interface ConfirmationProps {
   vehicleData: {
@@ -16,13 +14,12 @@ interface ConfirmationProps {
 
 export default function Confirmation({ vehicleData, saleId }: ConfirmationProps) {
   const router = useRouter();
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
-  const handlePrintDocument = () => {
-    setIsPrintModalOpen(true);
+  const handleReserveAgain = () => {
+    router.push('/reserve-vehicle');
   };
 
-  const handlePendingList = () => {
+  const handleAdvancePaid = () => {
     router.push('/sales-transactions');
   };
 
@@ -55,33 +52,26 @@ export default function Confirmation({ vehicleData, saleId }: ConfirmationProps)
             <span className="text-green-600">{vehicleData.vehicleNumber}</span>
           </h2>
           <p className="text-gray-600 text-lg">
-            Vehicle Selling conformation successful
+            Vehicle Reservation successful
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-4">
           <button
-            onClick={handlePrintDocument}
+            onClick={handleReserveAgain}
             className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
           >
-            Print Document
+            Reserve Vehicle Again
           </button>
           <button
-            onClick={handlePendingList}
+            onClick={handleAdvancePaid}
             className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
           >
-            Pending List
+            Go Advance Paid
           </button>
         </div>
       </div>
-
-      {/* Print Document Modal */}
-      <PrintDocumentModal
-        isOpen={isPrintModalOpen}
-        onClose={() => setIsPrintModalOpen(false)}
-        saleId={saleId}
-      />
     </div>
   );
 }

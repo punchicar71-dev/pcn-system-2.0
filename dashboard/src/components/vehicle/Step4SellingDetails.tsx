@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { SellingDetailsData, ENTRY_TYPES, VEHICLE_STATUS } from '@/types/vehicle-form.types';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { createClient } from '@/lib/supabase-client';
-import { PriceCategory } from '@/lib/database.types';
+import { SalesCommission } from '@/lib/database.types';
 
 interface Step4SellingDetailsProps {
   data: SellingDetailsData;
@@ -18,26 +18,29 @@ interface Step4SellingDetailsProps {
   onBack: () => void;
 }
 
+// Threshold for auto-selecting entry type (5,000,000)
+const ENTRY_TYPE_THRESHOLD = 5000000;
+
 export default function Step4SellingDetails({ data, onChange, onNext, onBack }: Step4SellingDetailsProps) {
-  const [priceCategories, setPriceCategories] = useState<PriceCategory[]>([]);
+  const [salesCommissions, setSalesCommissions] = useState<SalesCommission[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
-    fetchPriceCategories();
+    fetchSalesCommissions();
     
-    // Set up real-time subscription to price_categories table
+    // Set up real-time subscription to sales_commissions table
     const channel = supabase
-      .channel('price_categories_changes')
+      .channel('sales_commissions_changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'price_categories'
+          table: 'sales_commissions'
         },
         (payload) => {
-          console.log('Price category changed:', payload);
-          fetchPriceCategories();
+          console.log('Sales commission changed:', payload);
+          fetchSalesCommissions();
         }
       )
       .subscribe();
@@ -45,7 +48,7 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
     // Also refetch when component regains focus (in case user switched tabs)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        fetchPriceCategories();
+        fetchSalesCommissions();
       }
     };
     
@@ -57,26 +60,85 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
     };
   }, []);
 
-  const fetchPriceCategories = async () => {
+  const fetchSalesCommissions = async () => {
     try {
-      const { data: categoriesData } = await supabase
-        .from('price_categories')
+      const { data: commissionsData } = await supabase
+        .from('sales_commissions')
         .select('*')
         .eq('is_active', true)
         .order('min_price');
-      if (categoriesData) setPriceCategories(categoriesData);
+      if (commissionsData) setSalesCommissions(commissionsData);
     } catch (error) {
-      console.error('Error fetching price categories:', error);
+      console.error('Error fetching sales commissions:', error);
     }
   };
-  const formatCurrency = (value: string) => {
-    // Remove all non-digit characters
-    const numbers = value.replace(/\D/g, '');
-    // Format with thousand separators
-    return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  // Function to auto-select entry type based on selling amount
+  const getAutoEntryType = useCallback((amount: number): string => {
+    if (amount < ENTRY_TYPE_THRESHOLD) {
+      return 'PCN';
+    } else {
+      return 'PCN Pvt Ltd.';
+    }
+  }, []);
+
+  // Function to find matching sales commission based on selling amount - Improved matching
+  const findMatchingSalesCommission = useCallback((amount: number): string | undefined => {
+    if (!salesCommissions.length || amount <= 0) return undefined;
+    
+    // First, try to find exact match within a range
+    const exactMatch = salesCommissions.find(
+      commission => amount >= commission.min_price && amount <= commission.max_price
+    );
+    
+    if (exactMatch) {
+      return exactMatch.id;
+    }
+    
+    // If amount exceeds all ranges, select the highest category
+    const sortedByMaxPrice = [...salesCommissions].sort((a, b) => b.max_price - a.max_price);
+    const highestCategory = sortedByMaxPrice[0];
+    
+    if (highestCategory && amount > highestCategory.max_price) {
+      return highestCategory.id;
+    }
+    
+    // If amount is below all ranges, select the lowest category
+    const sortedByMinPrice = [...salesCommissions].sort((a, b) => a.min_price - b.min_price);
+    const lowestCategory = sortedByMinPrice[0];
+    
+    if (lowestCategory && amount < lowestCategory.min_price) {
+      return lowestCategory.id;
+    }
+    
+    return undefined;
+  }, [salesCommissions]);
+
+  // Handle selling amount change with auto-selection logic
+  const handleSellingAmountChange = (value: string) => {
+    const formattedValue = formatCurrency(value);
+    const numericAmount = parseFloat(value.replace(/,/g, '')) || 0;
+    
+    // Prepare the update object
+    const updates: Partial<SellingDetailsData> = {
+      sellingAmount: formattedValue
+    };
+    
+    // Auto-select entry type based on amount
+    if (numericAmount > 0) {
+      updates.entryType = getAutoEntryType(numericAmount);
+      
+      // Auto-select sales commission based on amount
+      const matchingCommissionId = findMatchingSalesCommission(numericAmount);
+      if (matchingCommissionId) {
+        updates.salesCommissionId = matchingCommissionId;
+      }
+    }
+    
+    onChange(updates);
   };
 
-  const formatMileage = (value: string) => {
+  const formatCurrency = (value: string) => {
     // Remove all non-digit characters
     const numbers = value.replace(/\D/g, '');
     // Format with thousand separators
@@ -102,13 +164,19 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
     onNext();
   };
 
+  // Get the current numeric selling amount
+  const currentAmount = parseFloat(data.sellingAmount?.replace(/,/g, '') || '0');
+  
+  // Get the matched commission for display
+  const matchedCommission = salesCommissions.find(c => c.id === data.salesCommissionId);
+
   return (
-    <div className="bg-slate-50 max-w-4xl p-6">
+    <div className="bg-slate-50 px-6 pt-6 pb-0">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Vehicle Selling Details</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Row 1: Amount & Mileage */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Row 1: Selling Amount */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
           <div>
             <Label htmlFor="sellingAmount">
               Selling Amount <span className="text-red-500">*</span>
@@ -118,40 +186,32 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
               <Input
                 id="sellingAmount"
                 value={data.sellingAmount}
-                onChange={(e) => onChange({ sellingAmount: formatCurrency(e.target.value) })}
+                onChange={(e) => handleSellingAmountChange(e.target.value)}
                 placeholder="2,900,000"
                 className="pl-10"
                 required
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {data.sellingAmount && `Rs. ${data.sellingAmount}`}
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="mileage">Milage</Label>
-            <div className="relative">
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Km.</span>
-              <Input
-                id="mileage"
-                value={data.mileage}
-                onChange={(e) => onChange({ mileage: formatMileage(e.target.value) })}
-                placeholder="2,900,000"
-                className="pr-12"
-              />
+            <div className="text-xs mt-1 space-y-0.5">
+              {data.sellingAmount && (
+                <p className="text-gray-500">Rs. {data.sellingAmount}</p>
+              )}
+              {currentAmount > 0 && (
+                <p className="text-blue-600">
+                  Auto: Entry Type → {getAutoEntryType(currentAmount)}
+                  {matchedCommission && ` | Commission → ${matchedCommission.name}`}
+                </p>
+              )}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {data.mileage && `Km. ${data.mileage}`}
-            </p>
           </div>
         </div>
 
-        {/* Row 2: Entry Type & Price Category */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Row 2: Entry Type & Sales Commission */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
           <div>
             <Label htmlFor="entryType">
-              Entry Type <span className="text-red-500">*</span>
+              Entry Type <span className="text-red-500">*</span> 
+              <span className="text-xs font-normal text-gray-500 ml-1">(Auto-selected based on amount)</span>
             </Label>
             <Select value={data.entryType} onValueChange={(value) => onChange({ entryType: value })}>
               <SelectTrigger>
@@ -165,27 +225,38 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              Below Rs. 5,000,000 → PCN | Above Rs. 5,000,000 → PCN Pvt Ltd.
+            </p>
           </div>
 
           <div>
-            <Label htmlFor="priceCategory">Price Category</Label>
-            <Select value={data.priceCategoryId} onValueChange={(value) => onChange({ priceCategoryId: value })}>
+            <Label htmlFor="salesCommission">
+              Sales Commission
+              <span className="text-xs font-normal text-gray-500 ml-1">(Auto-detected based on amount)</span>
+            </Label>
+            <Select value={data.salesCommissionId} onValueChange={(value) => onChange({ salesCommissionId: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Select price category" />
+                <SelectValue placeholder="Select sales commission" />
               </SelectTrigger>
               <SelectContent>
-                {priceCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+                {salesCommissions.map((commission) => (
+                  <SelectItem key={commission.id} value={commission.id}>
+                    {commission.name} (Rs. {commission.min_price.toLocaleString()} - Rs. {commission.max_price.toLocaleString()})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {matchedCommission && (
+              <p className="text-xs text-green-600 mt-1">
+                ✓ Matched: {matchedCommission.name} | Commission: Rs. {matchedCommission.commission_amount.toLocaleString()}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Row 3: Entry Date & Status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
           <div>
             <Label htmlFor="entryDate">
               Entry Date <span className="text-red-500">*</span>
@@ -216,20 +287,24 @@ export default function Step4SellingDetails({ data, onChange, onNext, onBack }: 
           </div>
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-start gap-4 pt-6">
-          <Button
-            type="button"
-            onClick={onBack}
-            variant="outline"
-          >
-            Back
-          </Button>
-          <Button
-            type="submit"
-          >
-            Next
-          </Button>
+        {/* Navigation Buttons - Sticky Bottom */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t py-4 px-6 -mx-6 mt-6">
+          <div className="flex justify-start gap-4">
+            <Button
+              type="button"
+              onClick={onBack}
+              variant="outline"
+              className='px-6 py-2'
+            >
+              Back
+            </Button>
+            <Button
+              type="submit"
+              className='px-6 py-2'
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </form>
     </div>

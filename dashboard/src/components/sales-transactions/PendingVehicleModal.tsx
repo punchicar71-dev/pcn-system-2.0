@@ -295,7 +295,7 @@ export default function PendingVehicleModal({ isOpen, onClose, saleId }: Pending
         ) : (
           <>
             <div className="flex items-center justify-between  pb-4">
-              <h2 className="text-xl font-bold text-gray-900">Pending Vehicle Details</h2>
+              <h2 className="text-xl font-bold text-gray-900">Advance Paid Vehicle Details</h2>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"

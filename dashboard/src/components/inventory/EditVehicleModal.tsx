@@ -515,11 +515,10 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="vehicle">Vehicle Details</TabsTrigger>
               <TabsTrigger value="seller">Seller Details</TabsTrigger>
               <TabsTrigger value="options">Options</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
             </TabsList>
 
             {/* Vehicle Details Tab */}
@@ -1031,30 +1030,6 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
               </div>
             </TabsContent>
 
-            {/* Notes Tab */}
-            <TabsContent value="notes" className="space-y-4 mt-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Tag Notes</label>
-                <textarea
-                  value={vehicleData.tag_notes || ''}
-                  onChange={(e) => setVehicleData({ ...vehicleData, tag_notes: e.target.value })}
-                  rows={4}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  placeholder="Internal notes (not visible to customers)"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Special Notes for Print</label>
-                <textarea
-                  value={vehicleData.special_note_print || ''}
-                  onChange={(e) => setVehicleData({ ...vehicleData, special_note_print: e.target.value })}
-                  rows={4}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  placeholder="Notes to be printed on vehicle documents"
-                />
-              </div>
-            </TabsContent>
           </Tabs>
         )}
 

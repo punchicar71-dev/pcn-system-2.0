@@ -8,16 +8,25 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+interface SalesCommission {
+  id: string;
+  name: string;
+  min_price: number;
+  max_price: number;
+  commission_amount: number;
+  is_active: boolean;
+}
+
 interface SellingInfoProps {
   formData: {
     searchVehicle: string;
     selectedVehicle: any | null;
     sellingAmount: string;
-    advanceAmount: string;
-    paymentType: string;
+    salesCommissionId: string;
     leasingCompany: string;
     inHouseSalesAgent: string;
     thirdPartySalesAgent: string;
+    tagNotes: string; // Internal notes - recalled from vehicle
   };
   onChange: (field: string, value: any) => void;
   onBack: () => void;
@@ -29,6 +38,7 @@ interface SellingInfoProps {
 export default function SellingInfo({ formData, onChange, onBack, onSubmit, disabled = false, isSubmitting = false }: SellingInfoProps) {
   const [salesAgents, setSalesAgents] = useState<any[]>([]);
   const [leasingCompanies, setLeasingCompanies] = useState<any[]>([]);
+  const [salesCommissions, setSalesCommissions] = useState<SalesCommission[]>([]);
   const [filteredVehicles, setFilteredVehicles] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -38,15 +48,15 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const searchRequestIdRef = useRef<number>(0);
 
-  // Fetch sales agents and leasing companies on mount (these are small lists)
+  // Fetch sales agents, leasing companies, and sales commissions on mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setIsInitialLoading(true);
         const supabase = createClient();
         
-        // Fetch sales agents and leasing companies in parallel
-        const [agentsResult, companiesResult] = await Promise.all([
+        // Fetch sales agents, leasing companies, and sales commissions in parallel
+        const [agentsResult, companiesResult, commissionsResult] = await Promise.all([
           supabase
             .from('sales_agents')
             .select('*')
@@ -56,7 +66,12 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
             .from('leasing_companies')
             .select('*')
             .eq('is_active', true)
-            .order('name', { ascending: true })
+            .order('name', { ascending: true }),
+          supabase
+            .from('sales_commissions')
+            .select('*')
+            .eq('is_active', true)
+            .order('min_price', { ascending: true })
         ]);
 
         if (agentsResult.error) {
@@ -70,6 +85,12 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
         } else {
           setLeasingCompanies(companiesResult.data || []);
         }
+
+        if (commissionsResult.error) {
+          console.error('Error fetching sales commissions:', commissionsResult.error);
+        } else {
+          setSalesCommissions(commissionsResult.data || []);
+        }
       } catch (error) {
         console.error('Error fetching initial data:', error);
       } finally {
@@ -80,7 +101,60 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
     fetchInitialData();
   }, []);
 
-  // Debounced server-side vehicle search
+  // Auto-select sales commission based on selling amount - Real-time detection
+  const findMatchingSalesCommission = useCallback((amount: number): string | undefined => {
+    if (!salesCommissions.length || amount <= 0) return undefined;
+    
+    // First, try to find exact match within a range
+    const exactMatch = salesCommissions.find(
+      commission => amount >= commission.min_price && amount <= commission.max_price
+    );
+    
+    if (exactMatch) {
+      return exactMatch.id;
+    }
+    
+    // If amount exceeds all ranges, select the highest category
+    const sortedByMaxPrice = [...salesCommissions].sort((a, b) => b.max_price - a.max_price);
+    const highestCategory = sortedByMaxPrice[0];
+    
+    if (highestCategory && amount > highestCategory.max_price) {
+      return highestCategory.id;
+    }
+    
+    // If amount is below all ranges, select the lowest category
+    const sortedByMinPrice = [...salesCommissions].sort((a, b) => a.min_price - b.min_price);
+    const lowestCategory = sortedByMinPrice[0];
+    
+    if (lowestCategory && amount < lowestCategory.min_price) {
+      return lowestCategory.id;
+    }
+    
+    return undefined;
+  }, [salesCommissions]);
+
+  // Handle selling amount change with auto-selection logic
+  const handleSellingAmountChange = (value: string) => {
+    const numericAmount = parseFloat(value) || 0;
+    
+    onChange('sellingAmount', value);
+    
+    // Auto-select sales commission based on amount - Real-time update
+    if (numericAmount > 0) {
+      const matchingCommissionId = findMatchingSalesCommission(numericAmount);
+      if (matchingCommissionId) {
+        onChange('salesCommissionId', matchingCommissionId);
+      }
+    } else {
+      // Clear selection if amount is 0 or empty
+      onChange('salesCommissionId', '');
+    }
+  };
+
+  // Get the matched commission for display
+  const matchedCommission = salesCommissions.find(c => c.id === formData.salesCommissionId);
+
+  // Debounced server-side vehicle search - Multi-field search
   const searchVehicles = useCallback(async (searchTerm: string, requestId: number) => {
     if (!searchTerm || searchTerm.length < 2) {
       setFilteredVehicles([]);
@@ -93,14 +167,23 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
       setIsSearching(true);
       const supabase = createClient();
       
-      // Server-side search with ILIKE for case-insensitive matching
+      // Server-side search with OR conditions for multiple fields:
+      // - Vehicle Number
+      // - Seller Name
+      // - Seller Mobile (Phone Number)
+      // - Seller NIC (ID Number)
+      // - Brand Name
+      // - Model Name
+      // Using Supabase OR filter for case-insensitive matching
+      const searchPattern = `%${searchTerm}%`;
+      
       const { data, error } = await supabase
         .from('vehicle_inventory_view')
-        .select('id, vehicle_number, brand_name, model_name, manufacture_year, selling_amount, status')
+        .select('id, vehicle_number, brand_name, model_name, manufacture_year, selling_amount, status, body_type, engine_capacity, exterior_color, fuel_type, transmission, mileage, entry_type, seller_name, seller_mobile, seller_nic')
         .eq('status', 'In Sale')
-        .ilike('vehicle_number', `%${searchTerm}%`)
+        .or(`vehicle_number.ilike.${searchPattern},seller_name.ilike.${searchPattern},seller_mobile.ilike.${searchPattern},seller_nic.ilike.${searchPattern},brand_name.ilike.${searchPattern},model_name.ilike.${searchPattern}`)
         .order('vehicle_number', { ascending: true })
-        .limit(10); // Limit results for performance
+        .limit(15); // Limit results for performance
 
       // Check if this is still the latest request (prevent race conditions)
       if (requestId !== searchRequestIdRef.current) {
@@ -177,8 +260,8 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
       
       const supabase = createClient();
       
-      // Fetch vehicle images and seller details in parallel for faster loading
-      const [imagesResult, sellerResult] = await Promise.all([
+      // Fetch vehicle images, seller details, and tag notes in parallel for faster loading
+      const [imagesResult, sellerResult, vehicleResult] = await Promise.all([
         supabase
           .from('vehicle_images')
           .select('*')
@@ -189,7 +272,12 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
           .from('sellers')
           .select('*')
           .eq('vehicle_id', vehicle.id)
-          .maybeSingle() // Use maybeSingle to avoid error when no seller exists
+          .maybeSingle(), // Use maybeSingle to avoid error when no seller exists
+        supabase
+          .from('vehicles')
+          .select('tag_notes, country_id, countries:country_id(name), registered_year')
+          .eq('id', vehicle.id)
+          .single()
       ]);
 
       if (imagesResult.error) {
@@ -202,6 +290,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
 
       const images = imagesResult.data;
       const seller = sellerResult.data;
+      const vehicleDetails = vehicleResult.data;
 
       // Combine all data
       const completeVehicleData = {
@@ -211,10 +300,15 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
         seller_mobile: seller?.mobile_number || 'N/A',
         seller_address: seller?.address || '',
         seller_city: seller?.city || '',
+        tag_notes: vehicleDetails?.tag_notes || '',
+        country_name: (vehicleDetails?.countries as any)?.name || '',
+        registered_year: vehicleDetails?.registered_year || vehicle.registered_year || null,
       };
 
       onChange('selectedVehicle', completeVehicleData);
       onChange('searchVehicle', vehicle.vehicle_number);
+      // Recall tag notes from vehicle to the form
+      onChange('tagNotes', vehicleDetails?.tag_notes || '');
     } catch (error) {
       console.error('Error selecting vehicle:', error);
     } finally {
@@ -255,7 +349,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                     }
                   }}
                   className="pl-10 pr-10"
-                  placeholder="Search by Vehicle Number (min 2 chars)"
+                  placeholder="Search by Vehicle No, Seller, Phone, Brand or Model"
                   required
                   disabled={disabled || isSelectingVehicle}
                 />
@@ -268,17 +362,27 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
               
               {/* Dropdown for vehicle search results */}
               {showDropdown && !isSelectingVehicle && filteredVehicles.length > 0 && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-72 overflow-y-auto">
                   {filteredVehicles.map((vehicle) => (
                     <div
                       key={vehicle.id}
                       onClick={() => handleVehicleSelect(vehicle)}
                       className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-b-0 transition-colors"
                     >
-                      <div className="font-medium text-gray-900">{vehicle.vehicle_number}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="flex justify-between items-start">
+                        <div className="font-medium text-gray-900">{vehicle.vehicle_number}</div>
+                        {vehicle.seller_mobile && (
+                          <span className="text-xs text-gray-400">{vehicle.seller_mobile}</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">
                         {vehicle.brand_name} {vehicle.model_name} - {vehicle.manufacture_year}
                       </div>
+                      {vehicle.seller_name && vehicle.seller_name !== 'N/A' && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Seller: {vehicle.seller_name}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -310,88 +414,41 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
               <Input
                 type="number"
                 value={formData.sellingAmount}
-                onChange={(e) => onChange('sellingAmount', e.target.value)}
+                onChange={(e) => handleSellingAmountChange(e.target.value)}
                 placeholder="Rs"
                 required
                 disabled={disabled}
               />
             </div>
 
-            {/* Advance Amount */}
+            {/* Sales Commission */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Advance Amount
+                Sales Commission
+                <span className="text-xs font-normal text-gray-500 ml-1">(Auto-detected based on amount)</span>
               </label>
-              <Input
-                type="number"
-                value={formData.advanceAmount}
-                onChange={(e) => onChange('advanceAmount', e.target.value)}
-                placeholder="Rs"
-                disabled={disabled}
-              />
-            </div>
-
-            {/* To Pay Amount - Calculated */}
-            {formData.sellingAmount && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <label className="block text-sm font-medium text-blue-700 mb-1">
-                  To Pay Amount
-                </label>
-                <div className="text-[18px] font-bold text-blue-700">
-                  Rs. {(
-                    parseFloat(formData.sellingAmount || '0') - 
-                    parseFloat(formData.advanceAmount || '0')
-                  ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-            )}
-
-            {/* Payment Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Method <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formData.paymentType}
-                onValueChange={(value) => onChange('paymentType', value)}
-                required
+              <Select 
+                value={formData.salesCommissionId} 
+                onValueChange={(value) => onChange('salesCommissionId', value)}
                 disabled={disabled}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select option..." />
+                  <SelectValue placeholder="Select sales commission" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="Leasing">Leasing</SelectItem>
+                  {salesCommissions.map((commission) => (
+                    <SelectItem key={commission.id} value={commission.id}>
+                      {commission.name} (Rs. {commission.min_price.toLocaleString()} - Rs. {commission.max_price.toLocaleString()})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {matchedCommission && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Matched: {matchedCommission.name} | Commission: Rs. {matchedCommission.commission_amount.toLocaleString()}
+                </p>
+              )}
             </div>
-
-            {/* Leasing Company - Only show when Payment Type is Leasing */}
-            {formData.paymentType === 'Leasing' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Leasing Company <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  value={formData.leasingCompany}
-                  onValueChange={(value) => onChange('leasingCompany', value)}
-                  required
-                  disabled={disabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select leasing company..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leasingCompanies.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Office Sales Agent */}
             <div>
@@ -437,6 +494,27 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Tag Notes - Internal Notes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Internal Notes (Tag Notes)
+                {formData.selectedVehicle?.tag_notes && (
+                  <span className="text-xs text-blue-500 ml-2">(Recalled from vehicle)</span>
+                )}
+              </label>
+              <textarea
+                value={formData.tagNotes}
+                onChange={(e) => onChange('tagNotes', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                rows={3}
+                placeholder="Add internal notes about this sale..."
+                disabled={disabled}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.tagNotes.length} characters • These notes will be saved with the vehicle
+              </p>
             </div>
           </div>
 
@@ -545,7 +623,7 @@ export default function SellingInfo({ formData, onChange, onBack, onSubmit, disa
                 Processing...
               </>
             ) : (
-              'Sell Vehicle'
+              'Reserve Vehicle'
             )}
           </Button>
         </div>

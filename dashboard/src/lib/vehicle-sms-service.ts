@@ -25,11 +25,14 @@ export interface VehicleAcceptanceSMSParams {
   vehicle: VehicleInfo;
 }
 
-export interface SellVehicleConfirmationSMSParams {
+export interface ReserveVehicleConfirmationSMSParams {
   seller: SellerInfo;
   vehicle: VehicleInfo;
   sellingPrice: number;
 }
+
+// Backward compatibility alias
+export type SellVehicleConfirmationSMSParams = ReserveVehicleConfirmationSMSParams;
 
 export interface SMSNotificationResult {
   success: boolean;
@@ -54,7 +57,7 @@ export function buildVehicleAcceptanceSMSMessage(seller: SellerInfo, vehicle: Ve
  * @deprecated Message building moved to server-side for security
  * Kept for backward compatibility but not used in client calls
  */
-export function buildSellVehicleConfirmationSMSMessage(
+export function buildReserveVehicleConfirmationSMSMessage(
   seller: SellerInfo,
   vehicle: VehicleInfo,
   sellingPrice: number
@@ -63,8 +66,11 @@ export function buildSellVehicleConfirmationSMSMessage(
   const greeting = `Dear ${titlePart}${seller.firstName},`;
   const priceFormatted = sellingPrice.toLocaleString('en-LK');
 
-  return `${greeting}\n\nWe are pleased to inform you that your vehicle deal has been confirmed as discussed.\n\nVehicle Details:\n• Vehicle: ${vehicle.brand}, ${vehicle.model}, ${vehicle.year}\n• Chassis/Registration No: ${vehicle.vehicleNumber}\n• Confirmed Offer: Rs. ${priceFormatted}\n\nThank you for choosing Punchi Car Niwasa.\n\nFor any queries, please contact us at:\n0112 413 865 | 0117 275 275`;
+  return `${greeting}\n\nWe are pleased to inform you that your vehicle reservation has been confirmed as discussed.\n\nVehicle Details:\n• Vehicle: ${vehicle.brand}, ${vehicle.model}, ${vehicle.year}\n• Chassis/Registration No: ${vehicle.vehicleNumber}\n• Confirmed Offer: Rs. ${priceFormatted}\n\nThank you for choosing Punchi Car Niwasa.\n\nFor any queries, please contact us at:\n0112 413 865 | 0117 275 275`;
 }
+
+// Backward compatibility alias
+export const buildSellVehicleConfirmationSMSMessage = buildReserveVehicleConfirmationSMSMessage;
 
 export async function sendVehicleAcceptanceSMS(
   params: VehicleAcceptanceSMSParams
@@ -150,8 +156,8 @@ export async function sendVehicleAcceptanceSMS(
   }
 }
 
-export async function sendSellVehicleConfirmationSMS(
-  params: SellVehicleConfirmationSMSParams
+export async function sendReserveVehicleConfirmationSMS(
+  params: ReserveVehicleConfirmationSMSParams
 ): Promise<SMSNotificationResult> {
   try {
     const { seller, vehicle, sellingPrice } = params;
@@ -199,14 +205,14 @@ export async function sendSellVehicleConfirmationSMS(
     // NOTE: Message is now built SERVER-SIDE for security
     // We only send structured data to the backend
 
-    console.log('📱 Calling SMS API endpoint for sell vehicle confirmation...');
+    console.log('📱 Calling SMS API endpoint for reserve vehicle confirmation...');
     const response = await fetch('/api/vehicles/send-sms', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'sell-vehicle-confirmation',
+        type: 'reserve-vehicle-confirmation',
         seller,
         vehicle,
         sellingPrice,
@@ -227,7 +233,7 @@ export async function sendSellVehicleConfirmationSMS(
       };
     }
 
-    console.log('✅ Sell vehicle confirmation SMS sent successfully to:', seller.mobileNumber);
+    console.log('✅ Reserve vehicle confirmation SMS sent successfully to:', seller.mobileNumber);
     return {
       success: true,
       message: 'SMS sent successfully',
@@ -244,6 +250,9 @@ export async function sendSellVehicleConfirmationSMS(
     };
   }
 }
+
+// Backward compatibility alias
+export const sendSellVehicleConfirmationSMS = sendReserveVehicleConfirmationSMS;
 
 export async function sendVehicleAcceptanceSMSWithErrorHandling(
   params: VehicleAcceptanceSMSParams,

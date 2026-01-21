@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import VehicleBrandsTab from '@/components/settings/VehicleBrandsTab'
-import PriceCategoryTab from '@/components/settings/PriceCategoryTab'
+import SalesCommissionTab from '@/components/settings/SalesCommissionTab'
 import SalesAgentTab from '@/components/settings/SalesAgentTab'
 import CountriesTab from '@/components/settings/CountriesTab'
 
@@ -12,7 +12,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="brands" className="w-full">
         <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="brands">Vehicle Brands</TabsTrigger>
-          <TabsTrigger value="price">Price Category</TabsTrigger>
+          <TabsTrigger value="commission">Sales Commission</TabsTrigger>
           <TabsTrigger value="agents">Sales Agent</TabsTrigger>
           <TabsTrigger value="countries">Countries</TabsTrigger>
         </TabsList>
@@ -21,8 +21,8 @@ export default function SettingsPage() {
           <VehicleBrandsTab />
         </TabsContent>
 
-        <TabsContent value="price" className="mt-6">
-          <PriceCategoryTab />
+        <TabsContent value="commission" className="mt-6">
+          <SalesCommissionTab />
         </TabsContent>
 
         <TabsContent value="agents" className="mt-6">

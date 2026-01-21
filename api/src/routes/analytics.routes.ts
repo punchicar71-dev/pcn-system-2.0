@@ -48,10 +48,9 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 
     const vehicleCounts = {
       total: vehicles?.length || 0,
-      available: vehicles?.filter(v => v.status === 'available').length || 0,
-      sold: vehicles?.filter(v => v.status === 'sold').length || 0,
-      pending: vehicles?.filter(v => v.status === 'pending').length || 0,
-      reserved: vehicles?.filter(v => v.status === 'reserved').length || 0,
+      available: vehicles?.filter(v => v.status === 'available' || v.status === 'In Sale').length || 0,
+      sold: vehicles?.filter(v => v.status === 'sold' || v.status === 'Sold').length || 0,
+      reserved: vehicles?.filter(v => v.status === 'reserved' || v.status === 'Reserved').length || 0,
     };
 
     // Get sales summary
@@ -65,7 +64,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 
     const salesSummary = {
       totalSales: sales?.filter(s => s.status === 'completed').length || 0,
-      pendingSales: sales?.filter(s => s.status === 'pending').length || 0,
+      advancePaidSales: sales?.filter(s => s.status === 'advance_paid').length || 0,
       totalRevenue: sales?.filter(s => s.status === 'completed').reduce((sum, s) => sum + (s.selling_price || 0), 0) || 0,
     };
 

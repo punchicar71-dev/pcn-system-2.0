@@ -6,7 +6,7 @@ The Reports & Analytics module provides comprehensive reporting capabilities for
 
 **Access Level**: Admin Only (Role-Based Access Control)
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 20, 2026
 
 > **⚠️ AUTHENTICATION STATUS**: The system uses cookie-based session authentication. Role verification is performed client-side via `useRoleAccess` hook. Full server-side role validation will be added with Better Auth integration.
 
@@ -14,7 +14,88 @@ The Reports & Analytics module provides comprehensive reporting capabilities for
 
 ---
 
-## 📢 LATEST UPDATE - January 1, 2026 (Data Synchronization Fix)
+## 📢 LATEST UPDATE - January 20, 2026 (Advance Paid Tab Enhanced Reporting)
+
+### 📊 Enhanced Sales Data Fields
+
+**Added: Additional vehicle snapshot fields for comprehensive reporting!**
+
+#### New Data Available in Reports:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `registered_year` | INTEGER | Vehicle registration year |
+| `mileage` | DECIMAL(10,2) | Vehicle mileage in km |
+| `country_name` | VARCHAR(100) | Manufacturing country |
+| `transmission` | VARCHAR(20) | Transmission type (Auto/Manual) |
+| `image_url` | TEXT | Primary vehicle image URL |
+
+#### Status Value Change:
+- Old status: `'pending'` → New status: `'advance_paid'`
+- Reports queries updated to use new status value
+
+---
+
+## 📢 PREVIOUS UPDATE - January 20, 2026 (Sales Commissions Integration)
+
+### 💰 New Feature: Sales Commissions in Reports
+
+**Added: Commission tracking integration for sales agent reports!**
+
+#### New Capabilities:
+- Sales commission data now available for reporting
+- Agent commission calculations based on `sales_commissions` table
+- Commission amount included in Sales Agents Report
+
+#### Database Changes:
+- New `sales_commissions` table for commission tiers by price range
+- New `sales_commission_id` column in `pending_vehicle_sales`
+- Automatic commission assignment based on sale price
+
+#### Commission Tiers:
+| Tier | Price Range | Commission |
+|------|-------------|------------|
+| Budget | Rs. 0 - 2M | Rs. 25,000 |
+| Economy | Rs. 2M - 5M | Rs. 50,000 |
+| Mid-Range | Rs. 5M - 10M | Rs. 75,000 |
+| Premium | Rs. 10M - 20M | Rs. 100,000 |
+| Luxury | Rs. 20M+ | Rs. 150,000 |
+
+#### Integration Example:
+```typescript
+// Get commission for a sale
+const getCommission = (sale) => {
+  if (sale.sales_commission_id && sale.sales_commissions) {
+    return sale.sales_commissions.commission_amount
+  }
+  return 0
+}
+```
+
+---
+
+## 📢 PREVIOUS UPDATE - January 16, 2026 (System Status)
+
+### ✅ Current System Status
+
+**Status: Reports & Analytics module fully operational!**
+
+#### Recent System Enhancements:
+- Inventory page now has advanced filtering (Price Range, Transmission, Ownership, Vehicle Type, Country)
+- Vehicle Type and Ownership fields available for analysis
+- Print documents updated with new layouts
+
+#### Data Fields Available for Reporting:
+| Field | Description | Values |
+|-------|-------------|--------|
+| vehicle_type | Registration status | Registered, Unregistered |
+| ownership | Ownership type | Open Papers, Registered Owner |
+| transmission | Vehicle transmission | Auto, Manual |
+| country | Manufacturing country | Dynamic from countries table |
+
+---
+
+## 📢 PREVIOUS UPDATE - January 1, 2026 (Data Synchronization Fix)
 
 ### 🔄 Reports & Analytics Data Consistency Fix
 
@@ -42,7 +123,7 @@ The Reports & Analytics module provides comprehensive reporting capabilities for
 | Source | Field Name | Usage |
 |--------|------------|-------|
 | Database Schema | `selling_price` | Standard column name |
-| Sell Vehicle Page | `sale_price` | Used during sale creation |
+| Reserve Vehicle Page | `sale_price` | Used during reservation creation |
 | Legacy Code | `selling_amount` | Old field name |
 
 #### Universal Price Handling Pattern:
@@ -145,7 +226,7 @@ const filteredNavigation = useMemo(() => {
 | `model_name` | VARCHAR(100) | Model name (snapshot) |
 | `manufacture_year` | INTEGER | Year of manufacture (snapshot) |
 | `selling_price` | DECIMAL(12,2) | Sale price (database column) |
-| `sale_price` | DECIMAL(12,2) | Sale price (alternate field from sell-vehicle page) |
+| `sale_price` | DECIMAL(12,2) | Sale price (alternate field from reserve-vehicle page) |
 | `selling_amount` | DECIMAL(12,2) | Sale price (legacy field name) |
 | `advance_amount` | DECIMAL(12,2) | Down payment |
 | `payment_type` | VARCHAR(50) | Cash, Leasing, Bank Transfer, Check |
@@ -415,7 +496,7 @@ const { data: priceCategories } = await supabase
 const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
 ```
 
-> **📝 Note**: The query uses `select(*)` to capture all field variations. The processing logic handles `sale_price` (from sell-vehicle page), `selling_price` (database schema), and `selling_amount` (legacy) for complete backwards compatibility.Fetch price categories for PCN advance calculation
+> **📝 Note**: The query uses `select(*)` to capture all field variations. The processing logic handles `sale_price` (from reserve-vehicle page), `selling_price` (database schema), and `selling_amount` (legacy) for complete backwards compatibility.Fetch price categories for PCN advance calculation
 const { data: priceCategories } = await supabase
   .from('price_categories')
   .select('*')

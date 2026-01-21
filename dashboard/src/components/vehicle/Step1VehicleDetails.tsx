@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { VehicleDetailsData, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, getYearRange } from '@/types/vehicle-form.types';
+import { VehicleDetailsData, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, VEHICLE_TYPES, OWNERSHIP_TYPES, getYearRange } from '@/types/vehicle-form.types';
 import { Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
+import { AddableCombobox } from '@/components/ui/addable-combobox';
 import { createClient } from '@/lib/supabase-client';
 
 interface Step1VehicleDetailsProps {
@@ -17,9 +18,12 @@ interface Step1VehicleDetailsProps {
   brands: Array<{ id: string; name: string }>;
   models: Array<{ id: string; name: string }>;
   countries: Array<{ id: string; name: string }>;
+  // Callbacks for adding new brands/models
+  onAddBrand?: (name: string) => Promise<{ id: string; name: string } | null>;
+  onAddModel?: (name: string, brandId: string) => Promise<{ id: string; name: string } | null>;
 }
 
-export default function Step1VehicleDetails({ data, onChange, onNext, onBack, brands, models, countries }: Step1VehicleDetailsProps) {
+export default function Step1VehicleDetails({ data, onChange, onNext, onBack, brands, models, countries, onAddBrand, onAddModel }: Step1VehicleDetailsProps) {
   const years = getYearRange(1980);
   
   // State for duplicate vehicle number check
@@ -27,6 +31,12 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [hasCheckedVehicle, setHasCheckedVehicle] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Wrapper function for adding new model (includes brandId)
+  const handleAddModel = async (name: string): Promise<{ id: string; name: string } | null> => {
+    if (!data.brandId || !onAddModel) return null;
+    return onAddModel(name, data.brandId);
+  };
 
   // Function to check if vehicle number exists in database
   // Only checks: 1) Inventory (vehicles not sold), 2) Pending sales (not sold-out)
@@ -58,7 +68,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         return true;
       }
 
-      // Check 2: Pending vehicle sales - only vehicles with 'pending' status (not 'sold')
+      // Check 2: Advance paid vehicle sales - only vehicles with 'advance_paid' status (not 'sold')
       const { data: pendingSales, error: pendingError } = await supabase
         .from('pending_vehicle_sales')
         .select(`
@@ -68,7 +78,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             vehicle_number
           )
         `)
-        .eq('status', 'pending');
+        .eq('status', 'advance_paid');
 
       if (pendingError) {
         console.error('Error checking vehicle number in pending sales:', pendingError);
@@ -302,12 +312,12 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
   };
 
   return (
-    <div className="bg-slate-50 p-6">
+    <div className="bg-slate-50 px-6 pt-6 pb-0">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Vehicle Details</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl">
           <div>
             <Label htmlFor="vehicleNumber">
               Vehicle Number <span className="text-red-500">*</span>
@@ -361,13 +371,20 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             <Label htmlFor="brandId">
               Vehicle Brand <span className="text-red-500">*</span>
             </Label>
-            <Combobox
+            <AddableCombobox
               options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
               value={data.brandId}
               onValueChange={(value) => onChange({ brandId: value, modelId: '' })}
               placeholder="Select brand"
               searchPlaceholder="Search brands..."
               emptyText="No brand found."
+              allowAdd={!!onAddBrand}
+              addButtonText="+ Add New Brand"
+              addDialogTitle="Add New Vehicle Brand"
+              addDialogDescription="Enter the brand name. This will be saved to the Available Vehicle Brands in Settings."
+              addInputLabel="Brand Name"
+              addInputPlaceholder="e.g., Toyota, Honda, BMW..."
+              onAddNew={onAddBrand}
             />
           </div>
 
@@ -375,7 +392,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             <Label htmlFor="modelId">
               Model Name <span className="text-red-500">*</span>
             </Label>
-            <Combobox
+            <AddableCombobox
               options={models.map((model) => ({ value: model.id, label: model.name }))}
               value={data.modelId}
               onValueChange={(value) => onChange({ modelId: value })}
@@ -383,12 +400,19 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
               searchPlaceholder="Search models..."
               emptyText="No model found."
               disabled={!data.brandId}
+              allowAdd={!!onAddModel && !!data.brandId}
+              addButtonText="+ Add New Model"
+              addDialogTitle="Add New Vehicle Model"
+              addDialogDescription={`Enter the model name for ${brands.find(b => b.id === data.brandId)?.name || 'selected brand'}. This will be saved to the Available Vehicle Brands in Settings.`}
+              addInputLabel="Model Name"
+              addInputPlaceholder="e.g., Corolla, Civic, X5..."
+              onAddNew={handleAddModel}
             />
           </div>
         </div>
 
         {/* Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl">
           <div>
             <Label htmlFor="modelNumberOther">Model Number (Other Name)</Label>
             <Input
@@ -403,44 +427,33 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
             <Label htmlFor="manufactureYear">
               Manufacture Year <span className="text-red-500">*</span>
             </Label>
-            <Select
+            <Combobox
+              options={years.map((year) => ({ value: year.toString(), label: year.toString() }))}
               value={data.manufactureYear?.toString() || ''}
               onValueChange={(value) => onChange({ manufactureYear: parseInt(value) })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select year"
+              searchPlaceholder="Search years..."
+              emptyText="No year found."
+            />
           </div>
 
           <div>
             <Label htmlFor="countryId">
               Country <span className="text-red-500">*</span>
             </Label>
-            <Select value={data.countryId} onValueChange={(value) => onChange({ countryId: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.id} value={country.id}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={countries.map((country) => ({ value: country.id, label: country.name }))}
+              value={data.countryId}
+              onValueChange={(value) => onChange({ countryId: value })}
+              placeholder="Select country"
+              searchPlaceholder="Search countries..."
+              emptyText="No country found."
+            />
           </div>
         </div>
 
         {/* Row 3 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl">
           <div>
             <Label htmlFor="bodyType">
               Body Type <span className="text-red-500">*</span>
@@ -497,7 +510,7 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
         </div>
 
         {/* Row 4 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl">
           <div>
             <Label htmlFor="engineCapacity">Engine Capacity</Label>
             <Input
@@ -520,18 +533,76 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
 
           <div>
             <Label htmlFor="registeredYear">Registered Year</Label>
-            <Input
-              id="registeredYear"
-              type="number"
-              value={data.registeredYear || ''}
-              onChange={(e) => onChange({ registeredYear: parseInt(e.target.value) || null })}
-              placeholder="Ex: 2024"
+            <Combobox
+              options={years.map((year) => ({ value: year.toString(), label: year.toString() }))}
+              value={data.registeredYear?.toString() || ''}
+              onValueChange={(value) => onChange({ registeredYear: value ? parseInt(value) : null })}
+              placeholder="Select year"
+              searchPlaceholder="Search years..."
+              emptyText="No year found."
             />
           </div>
         </div>
 
+        {/* Row 5 - Vehicle Type, Ownership & Mileage */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl">
+          <div>
+            <Label htmlFor="vehicleType">Vehicle Type</Label>
+            <Select value={data.vehicleType} onValueChange={(value) => onChange({ vehicleType: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {VEHICLE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="ownership">Ownership</Label>
+            <Select value={data.ownership} onValueChange={(value) => onChange({ ownership: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {OWNERSHIP_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="mileage">Mileage</Label>
+            <div className="relative">
+              <Input
+                id="mileage"
+                value={data.mileage}
+                onChange={(e) => {
+                  // Remove all non-digit characters and format with thousand separators
+                  const numbers = e.target.value.replace(/\D/g, '');
+                  const formatted = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                  onChange({ mileage: formatted });
+                }}
+                placeholder="e.g., 45,000"
+                className="pr-12"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Km</span>
+            </div>
+            {data.mileage && (
+              <p className="text-xs text-gray-500 mt-1">Km. {data.mileage}</p>
+            )}
+          </div>
+        </div>
+
         {/* Image Uploads */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl">
           {/* Vehicle Images */}
           <div>
             <Label>Upload Vehicle Images</Label>
@@ -680,33 +751,35 @@ export default function Step1VehicleDetails({ data, onChange, onNext, onBack, br
           </div>
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-start gap-4 pt-6">
-          <button
-            type="button"
-            onClick={onBack}
-            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Back
-          </button>
-          <button
-            type="submit"
-            disabled={!!duplicateError || isCheckingDuplicate}
-            className={`px-6 py-2 rounded-lg transition-colors ${
-              duplicateError || isCheckingDuplicate
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-black text-white hover:bg-gray-800'
-            }`}
-          >
-            {isCheckingDuplicate ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Checking...
-              </span>
-            ) : (
-              'Next'
-            )}
-          </button>
+        {/* Navigation Buttons - Sticky Bottom */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t py-4 px-6 -mx-6 mt-6">
+          <div className="flex justify-start gap-4">
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={!!duplicateError || isCheckingDuplicate}
+              className={`px-6 py-2 rounded-lg transition-colors ${
+                duplicateError || isCheckingDuplicate
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}
+            >
+              {isCheckingDuplicate ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Checking...
+                </span>
+              ) : (
+                'Next'
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </div>

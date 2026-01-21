@@ -20,6 +20,7 @@ interface PrintDocumentsModalProps {
     engineCapacity: string;
     exteriorColor: string;
     sellingAmount: number;
+    specialNotePrint?: string; // Special notes for price tag
   };
   sellerDetails: {
     title: string;
@@ -29,6 +30,7 @@ interface PrintDocumentsModalProps {
     city: string;
     nic_number: string;
     mobile_number: string;
+    land_phone_number?: string;
   } | null;
   vehicleOptions: Array<{ option_name: string }>;
 }
@@ -59,6 +61,9 @@ export default function PrintDocumentsModal({
       year: 'numeric'
     });
 
+    // Get the base URL for absolute paths
+    const baseUrl = window.location.origin;
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -75,28 +80,33 @@ export default function PrintDocumentsModal({
               size: A4;
               margin: 0;
             }
-            body {
-              font-family: 'FMMalithi', Arial, sans-serif;
+            html, body {
+              font-family: Arial, sans-serif;
               text-transform: capitalize;
               width: 210mm;
               height: 297mm;
               margin: 0;
               padding: 0;
               position: relative;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
             }
             .template-container {
               position: relative;
-              width: 100%;
-              height: 100%;
+              width: 210mm;
+              height: 297mm;
             }
             .template-image {
               position: absolute;
               top: 0;
               left: 0;
-              width: 100%;
-              height: 100%;
+              width: 210mm;
+              height: 297mm;
               object-fit: contain;
               z-index: 1;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             .content-overlay {
               position: absolute;
@@ -109,51 +119,70 @@ export default function PrintDocumentsModal({
             .field {
               position: absolute;
               font-size: 14px;
-              font-weight: 500;
+              font-weight: 600;
               color: #000;
               line-height: 1.2;
             }
+            /* Name & Address - top area */
+            .name-address {
+              top: 240px;
+              left: 240px;
+              font-size: 14px;
+              max-width: 400px;
+            }
+            
+            }
+            /* Date field */
             .date {
-              top: 304px;
-              right: 180px;
-              font-size: 16px;
+              top: 95px;
+              left: 87px;
+              font-size: 11px;
             }
-            .address-city {
-              top: 384px;
-              left: 195px;
-              font-size: 16px;
-              max-width: 500px;
-            }
-            .seller-name {
-              top: 416px;
-              left: 305px;
-              font-size: 16px;
-            }
+          
+            /* Vehicle Number - right side */
             .vehicle-number {
-              top: 450px;
-              left: 510px;
-              font-size: 16px;
+              top: 295px;
+              left: 100px;
+              font-size: 14px;
               font-weight: 600;
             }
+            /* Brand and Model - left side */
             .brand-model {
-              top: 484px;
-              left: 200px;
-              font-size: 16px;
-            }
-            .id-number {
-              top: 884px;
-              left: 590px;
+              top: 295px;
+              left: 280px;
               font-size: 14px;
             }
+            /* Mobile Number - bottom left */
             .mobile-number {
-              top: 920px;
-              left: 590px;
+              top: 600px;
+              left: 150px;
               font-size: 14px;
             }
+            /* Land Phone Number - below mobile */
+            .land-phone {
+              top: 600px;
+              left: 350px;
+              font-size: 14px;
+            }
+            /* ID Number (NIC) */
+            .id-number {
+              top: 275px;
+              left: 250px;
+              font-size: 14px;
+            }
+            
+            
             @media print {
-              body {
+              html, body {
                 width: 210mm;
                 height: 297mm;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .template-image {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
               .no-print {
                 display: none;
@@ -163,16 +192,28 @@ export default function PrintDocumentsModal({
         </head>
         <body>
           <div class="template-container">
-            <img src="/documents/BARAGANIIMA.png" alt="Acceptance Template" class="template-image" />
+            <!-- Background Template Image -->
+            <img src="${baseUrl}/documents/BARAGANIIMA.jpg" alt="Acceptance Template" class="template-image" />
             
             <div class="content-overlay">
-              <div class="field date">${currentDate}</div>
-              <div class="field address-city">${sellerDetails.address}, ${sellerDetails.city}</div>
-              <div class="field seller-name">${sellerDetails.title} ${sellerDetails.first_name} ${sellerDetails.last_name}</div>
+              <!-- Name & Address - (Name & Adress) field -->
+              <div class="field name-address">${sellerDetails.title} ${sellerDetails.first_name} ${sellerDetails.last_name}, ${sellerDetails.address}, ${sellerDetails.city}</div>
+
+              <!-- Vehicle Number in section 2 -->
               <div class="field vehicle-number">${vehicleData.vehicleNumber}</div>
-              <div class="field brand-model">${vehicleData.brandName}, ${vehicleData.modelName}</div>
-              <div class="field id-number">${sellerDetails.nic_number}</div>
-              <div class="field mobile-number">${sellerDetails.mobile_number}</div>
+              
+              <!-- Brand and Model in section 3 -->
+              <div class="field brand-model">${vehicleData.brandName} ${vehicleData.modelName}</div>
+              
+             
+              <!-- Mobile Number in section 9 -->
+              <div class="field mobile-number"> ${sellerDetails.mobile_number}</div>
+              
+              <!-- Land Phone Number -->
+              ${sellerDetails.land_phone_number ? `<div class="field land-phone"> ${sellerDetails.land_phone_number}</div>` : ''}
+              
+              <!-- ID Number (NIC) -->
+              <div class="field id-number"> ${sellerDetails.nic_number}</div>
             </div>
           </div>
           
@@ -210,68 +251,6 @@ export default function PrintDocumentsModal({
       return price.toLocaleString('en-US');
     };
 
-    // Split options into chunks for multiple pages if needed
-    const optionsPerPage = 15;
-    const optionPages: string[][] = [];
-    for (let i = 0; i < allOptions.length; i += optionsPerPage) {
-      optionPages.push(allOptions.slice(i, i + optionsPerPage));
-    }
-
-    if (optionPages.length === 0) {
-      optionPages.push([]);
-    }
-
-    const generatePage = (pageOptions: string[], isFirstPage: boolean) => `
-      <div class="page">
-        ${isFirstPage ? `
-        <div class="header">
-          <h1 class="brand">${vehicleData.brandName.toUpperCase()}</h1>
-          <h2 class="model">${vehicleData.modelName.toUpperCase()}</h2>
-          <div class="color">${vehicleData.exteriorColor.toUpperCase()}</div>
-        </div>
-        
-        <div class="divider"></div>
-        
-        <div class="price-section">
-          <div class="price-label">Price :</div>
-          <div class="price-value">${formatPrice(vehicleData.sellingAmount)}</div>
-        </div>
-        
-        <div class="divider"></div>
-        
-        <div class="details-grid">
-          <div class="detail-row">
-            <div class="detail-label">Mfg. Year</div>
-            <div class="detail-label">Reg. Year</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-value">${vehicleData.year}</div>
-            <div class="detail-value">${vehicleData.registeredYear}</div>
-          </div>
-        </div>
-        
-        <div class="divider"></div>
-        
-        <div class="engine-section">
-          <div class="engine-label">Eng. Cap.</div>
-          <div class="engine-value">${vehicleData.engineCapacity}</div>
-        </div>
-        
-        <div class="divider"></div>
-        ` : ''}
-        
-        <div class="options-section">
-          ${pageOptions.map(option => `
-            <div class="option-item">* ${option}</div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-
-    const allPagesHtml = optionPages.map((pageOptions, index) => 
-      generatePage(pageOptions, index === 0)
-    ).join('');
-
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -287,133 +266,171 @@ export default function PrintDocumentsModal({
             
             @page {
               size: A4;
-              margin: 20mm;
+              margin: 10mm;
             }
             
             body {
               font-family: Arial, sans-serif;
               text-transform: uppercase;
+              padding: 20px;
             }
             
-            .page {
-              page-break-after: always;
-              padding: 40px;
-              min-height: 100vh;
-            }
-            
-            .page:last-child {
-              page-break-after: auto;
+            /* Hide browser default headers and footers */
+            @media print {
+              @page {
+                margin-top: 0;
+                margin-bottom: 0;
+              }
+              body {
+                padding-top: 20px;
+                padding-bottom: 20px;
+              }
             }
             
             .header {
               text-align: center;
-              margin-bottom: 30px;
+              margin-bottom: 10px;
             }
             
             .brand {
-              font-size: 72px;
+              font-size: 48px;
               font-weight: bold;
-              margin-bottom: 10px;
-              letter-spacing: 2px;
-            }
-            
-            .model {
-              font-size: 56px;
-              font-weight: bold;
-              margin-bottom: 15px;
+              margin-bottom: 0;
               letter-spacing: 1px;
             }
             
-            .color {
-              font-size: 48px;
-              font-weight: normal;
+            .model {
+              font-size: 42px;
+              font-weight: bold;
+              margin-bottom: 5px;
             }
             
-            .divider {
-              border-bottom: 3px solid #000;
-              margin: 30px 0;
+            .color {
+              font-size: 28px;
+              font-weight: normal;
+              text-decoration: underline;
+              margin-bottom: 10px;
             }
             
             .price-section {
               text-align: center;
-              margin: 40px 0;
+              margin: 15px 0;
+              padding-bottom: 10px;
+              border-bottom: 2px solid #000;
             }
             
-            .price-label {
-              font-size: 42px;
-              margin-bottom: 10px;
-            }
-            
-            .price-value {
-              font-size: 64px;
+            .price-text {
+              font-size: 32px;
               font-weight: bold;
-              letter-spacing: 2px;
+              text-decoration: underline;
             }
             
-            .details-grid {
-              margin: 40px 0;
-            }
-            
-            .detail-row {
+            .content-wrapper {
               display: flex;
-              justify-content: space-around;
-              margin-bottom: 15px;
+              margin-top: 20px;
             }
             
-            .detail-label {
-              font-size: 36px;
+            .options-column {
               flex: 1;
-              text-align: center;
+              padding-right: 20px;
             }
             
-            .detail-value {
-              font-size: 48px;
-              font-weight: bold;
-              flex: 1;
-              text-align: center;
-            }
-            
-            .engine-section {
-              text-align: center;
-              margin: 40px 0;
-            }
-            
-            .engine-label {
-              font-size: 36px;
-              margin-bottom: 10px;
-            }
-            
-            .engine-value {
-              font-size: 52px;
-              font-weight: bold;
-            }
-            
-            .options-section {
-              margin-top: 40px;
+            .details-column {
+              width: 200px;
+              text-align: left;
             }
             
             .option-item {
-              font-size: 32px;
-              margin-bottom: 20px;
-              padding-left: 20px;
-              line-height: 1.4;
+              font-size: 22px;
+              font-style: italic;
+              margin-bottom: 12px;
               font-weight: 500;
+            }
+            
+            .detail-label {
+              font-size: 20px;
+              font-style: italic;
+              margin-bottom: 5px;
+            }
+            
+            .detail-value {
+              font-size: 26px;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            
+            .detail-underline {
+              border-bottom: 1px solid #000;
+              margin-bottom: 15px;
+              width: 100%;
+            }
+            
+            .special-notes-section {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #000;
+            }
+            
+            .special-notes-title {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              text-decoration: underline;
+            }
+            
+            .special-notes-content {
+              font-size: 20px;
+              font-style: italic;
+              line-height: 1.5;
             }
             
             @media print {
               body {
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
-              }
-              
-              .page {
-                padding: 20px;
+                padding: 10px;
               }
             }
           </style>
         </head>
         <body>
-          ${allPagesHtml}
+          <div class="header">
+            <div class="brand">${vehicleData.brandName.toUpperCase()}</div>
+            <div class="model">${vehicleData.modelName.toUpperCase()}</div>
+            <div class="color">${vehicleData.exteriorColor.toUpperCase()}</div>
+          </div>
+          
+          <div class="price-section">
+            <div class="price-text">Price : ${formatPrice(vehicleData.sellingAmount)}</div>
+          </div>
+          
+          <div class="content-wrapper">
+            <div class="options-column">
+              ${allOptions.map(option => `
+                <div class="option-item">* ${option}</div>
+              `).join('')}
+            </div>
+            
+            <div class="details-column">
+              <div class="detail-label">Mfg. Year</div>
+              <div class="detail-value">${vehicleData.year}</div>
+              <div class="detail-underline"></div>
+              
+              <div class="detail-label">Reg. Year</div>
+              <div class="detail-value">${vehicleData.registeredYear}</div>
+              <div style="height: 30px;"></div>
+              
+              <div class="detail-label">Eng. Cap.</div>
+              <div class="detail-value">${vehicleData.engineCapacity}</div>
+            </div>
+          </div>
+          
+          ${vehicleData.specialNotePrint ? `
+          <div class="special-notes-section">
+            <div class="special-notes-title">Special Notes</div>
+            <div class="special-notes-content">${vehicleData.specialNotePrint.toUpperCase()}</div>
+          </div>
+          ` : ''}
           
           <script>
             window.onload = function() {

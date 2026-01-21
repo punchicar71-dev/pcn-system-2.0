@@ -7,7 +7,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause, ImageIcon, Printer } from 'lucide-react'
+import { Package, Search, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Download, Play, Pause, ImageIcon, Printer, Filter, RotateCcw, StickyNote, ArrowLeftRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -24,10 +24,22 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel'
+import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import EditVehicleModal from '@/components/inventory/EditVehicleModal'
 import VehicleImageUploadModal from '@/components/inventory/VehicleImageUploadModal'
+import VehicleNotesModal from '@/components/inventory/VehicleNotesModal'
+import TakenOutModal from '@/components/inventory/TakenOutModal'
 import VehicleImageViewer from '@/components/vehicle/VehicleImageViewer'
 import VehicleDetailModal from '@/components/inventory/VehicleDetailModal'
 import PrintDocumentsModal from '@/components/inventory/PrintDocumentsModal'
@@ -55,6 +67,18 @@ interface Vehicle {
   seller_name?: string
   seller_mobile?: string
   seller_email?: string
+  seller_nic?: string
+  primary_image_url?: string
+  vehicle_type?: string
+  ownership?: string
+  taken_out_person_name?: string
+  taken_out_person_nic?: string
+  taken_out_at?: string
+}
+
+interface Country {
+  id: string
+  name: string
 }
 
 interface VehicleImage {
@@ -75,6 +99,15 @@ export default function InventoryPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // Filter States
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
+  const [transmissionFilter, setTransmissionFilter] = useState('all')
+  const [ownershipFilter, setOwnershipFilter] = useState('all')
+  const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all')
+  const [countryFilter, setCountryFilter] = useState('all')
+  const [countries, setCountries] = useState<Country[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(5)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -113,6 +146,26 @@ export default function InventoryPage() {
   const [printSellerDetails, setPrintSellerDetails] = useState<any>(null)
   const [printVehicleOptions, setPrintVehicleOptions] = useState<Array<{ option_name: string }>>([])
 
+  // Notes Modal States
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false)
+  const [notesVehicleId, setNotesVehicleId] = useState<string | null>(null)
+  const [notesVehicleInfo, setNotesVehicleInfo] = useState<{
+    brand: string
+    model: string
+    year: number
+    vehicleNumber: string
+  } | null>(null)
+
+  // Taken Out Modal States
+  const [isTakenOutModalOpen, setIsTakenOutModalOpen] = useState(false)
+  const [takenOutVehicleId, setTakenOutVehicleId] = useState<string | null>(null)
+  const [takenOutVehicleInfo, setTakenOutVehicleInfo] = useState<{
+    brand: string
+    model: string
+    year: number
+    vehicleNumber: string
+  } | null>(null)
+
   // Success Popup State
   const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false)
   const [successVehicleInfo, setSuccessVehicleInfo] = useState({ brand: '', model: '', year: '', vehicleNumber: '' })
@@ -121,10 +174,30 @@ export default function InventoryPage() {
   const [isDeleteSuccessPopupOpen, setIsDeleteSuccessPopupOpen] = useState(false)
   const [deleteSuccessMessage, setDeleteSuccessMessage] = useState('')
 
+  // Active Tab State
+  const [activeTab, setActiveTab] = useState('all')
+
   // Fetch vehicles from database
   useEffect(() => {
     fetchVehicles()
+    fetchCountries()
   }, [])
+
+  const fetchCountries = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('countries')
+        .select('id, name')
+        .order('name', { ascending: true })
+      
+      if (!error && data) {
+        setCountries(data)
+      }
+    } catch (error) {
+      console.error('Error fetching countries:', error)
+    }
+  }
 
   const fetchVehicles = async () => {
     try {
@@ -134,7 +207,7 @@ export default function InventoryPage() {
       const { data, error } = await supabase
         .from('vehicle_inventory_view')
         .select('*')
-        .eq('status', 'In Sale')  // Only show available vehicles (valid DB status)
+        .in('status', ['In Sale', 'Taken Out'])  // Fetch both In Sale and Taken Out vehicles
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -143,7 +216,54 @@ export default function InventoryPage() {
         return
       }
 
-      setVehicles(data || [])
+      // Fetch primary images for all vehicles
+      if (data && data.length > 0) {
+        const vehicleIds = data.map(v => v.id)
+        
+        // Fetch images
+        const { data: imagesData } = await supabase
+          .from('vehicle_images')
+          .select('vehicle_id, image_url, is_primary, display_order, image_type')
+          .in('vehicle_id', vehicleIds)
+          .eq('image_type', 'gallery')
+          .order('display_order', { ascending: true })
+
+        // Fetch vehicle_type and ownership from vehicles table
+        const { data: vehicleDetailsData } = await supabase
+          .from('vehicles')
+          .select('id, vehicle_type, ownership')
+          .in('id', vehicleIds)
+
+        // Create maps
+        const imageMap: { [key: string]: string } = {}
+        if (imagesData) {
+          imagesData.forEach(img => {
+            // Use first image or primary image for each vehicle
+            if (!imageMap[img.vehicle_id] || img.is_primary) {
+              imageMap[img.vehicle_id] = img.image_url
+            }
+          })
+        }
+
+        const detailsMap: { [key: string]: { vehicle_type?: string, ownership?: string } } = {}
+        if (vehicleDetailsData) {
+          vehicleDetailsData.forEach(v => {
+            detailsMap[v.id] = { vehicle_type: v.vehicle_type, ownership: v.ownership }
+          })
+        }
+
+        // Attach primary image and details to each vehicle
+        const vehiclesWithImages = data.map(vehicle => ({
+          ...vehicle,
+          primary_image_url: imageMap[vehicle.id] || null,
+          vehicle_type: detailsMap[vehicle.id]?.vehicle_type || null,
+          ownership: detailsMap[vehicle.id]?.ownership || null
+        }))
+
+        setVehicles(vehiclesWithImages)
+      } else {
+        setVehicles(data || [])
+      }
     } catch (error) {
       console.error('Error fetching vehicles:', error)
       alert('An error occurred while loading vehicles.')
@@ -441,6 +561,7 @@ export default function InventoryPage() {
         engineCapacity: vehicleData.engine_capacity || 'N/A',
         exteriorColor: vehicleData.exterior_color || 'N/A',
         sellingAmount: vehicleFromList.selling_amount,
+        specialNotePrint: vehicleData.special_note_print || '', // Special notes for price tag
       })
       setPrintSellerDetails(sellerData)
       setPrintVehicleOptions(optionNames)
@@ -451,22 +572,92 @@ export default function InventoryPage() {
     }
   }
 
-  // Real-time search filter - Search by Vehicle Number, Brand, and Model
+  // Real-time search and filter
   const filteredVehicles = useMemo(() => {
-    if (!searchQuery.trim()) return vehicles
-
-    const query = searchQuery.toLowerCase().trim()
     return vehicles.filter(vehicle => {
-      const vehicleNumber = vehicle.vehicle_number?.toLowerCase() || ''
-      const brandName = vehicle.brand_name?.toLowerCase() || ''
-      const modelName = vehicle.model_name?.toLowerCase() || ''
-      
-      // Search in vehicle number, brand name, or model name
-      return vehicleNumber.includes(query) ||
-             brandName.includes(query) ||
-             modelName.includes(query)
+      // Tab-based status filter
+      if (activeTab === 'in-sale' && vehicle.status !== 'In Sale') {
+        return false
+      }
+      if (activeTab === 'taken-out' && vehicle.status !== 'Taken Out') {
+        return false
+      }
+      // 'all' tab shows all vehicles (In Sale + Taken Out)
+
+      // Text search filter - Search by Vehicle Number, Brand, Model, Seller name, Mobile number, Seller ID (NIC), Country
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim()
+        const vehicleNumber = vehicle.vehicle_number?.toLowerCase() || ''
+        const brandName = vehicle.brand_name?.toLowerCase() || ''
+        const modelName = vehicle.model_name?.toLowerCase() || ''
+        const sellerName = vehicle.seller_name?.toLowerCase() || ''
+        const sellerMobile = vehicle.seller_mobile?.toLowerCase() || ''
+        const sellerNic = vehicle.seller_nic?.toLowerCase() || ''
+        const countryName = vehicle.country_name?.toLowerCase() || ''
+        
+        const matchesSearch = vehicleNumber.includes(query) ||
+               brandName.includes(query) ||
+               modelName.includes(query) ||
+               sellerName.includes(query) ||
+               sellerMobile.includes(query) ||
+               sellerNic.includes(query) ||
+               countryName.includes(query)
+        
+        if (!matchesSearch) return false
+      }
+
+      // Price range filter
+      if (priceMin && vehicle.selling_amount < parseFloat(priceMin)) {
+        return false
+      }
+      if (priceMax && vehicle.selling_amount > parseFloat(priceMax)) {
+        return false
+      }
+
+      // Transmission filter
+      if (transmissionFilter !== 'all' && vehicle.transmission !== transmissionFilter) {
+        return false
+      }
+
+      // Ownership filter (Open Papers / Registered Owner)
+      if (ownershipFilter !== 'all' && vehicle.ownership !== ownershipFilter) {
+        return false
+      }
+
+      // Vehicle type filter (Registered / Unregistered)
+      if (vehicleTypeFilter !== 'all' && vehicle.vehicle_type !== vehicleTypeFilter) {
+        return false
+      }
+
+      // Country filter
+      if (countryFilter !== 'all' && vehicle.country_name !== countryFilter) {
+        return false
+      }
+
+      return true
     })
-  }, [vehicles, searchQuery])
+  }, [vehicles, searchQuery, priceMin, priceMax, transmissionFilter, ownershipFilter, vehicleTypeFilter, countryFilter, activeTab])
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('')
+    setPriceMin('')
+    setPriceMax('')
+    setTransmissionFilter('all')
+    setOwnershipFilter('all')
+    setVehicleTypeFilter('all')
+    setCountryFilter('all')
+  }
+
+  // Check if any filter is active
+  const hasActiveFilters = searchQuery || priceMin || priceMax || 
+    transmissionFilter !== 'all' || ownershipFilter !== 'all' || 
+    vehicleTypeFilter !== 'all' || countryFilter !== 'all'
+
+  // Vehicle counts for tabs
+  const allVehiclesCount = vehicles.length
+  const inSaleVehiclesCount = vehicles.filter(v => v.status === 'In Sale').length
+  const takenOutVehiclesCount = vehicles.filter(v => v.status === 'Taken Out').length
 
   // Pagination
   const totalPages = Math.ceil(filteredVehicles.length / rowsPerPage)
@@ -476,10 +667,10 @@ export default function InventoryPage() {
     return filteredVehicles.slice(startIndex, endIndex)
   }, [filteredVehicles, currentPage, rowsPerPage])
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, rowsPerPage])
+  }, [searchQuery, rowsPerPage, priceMin, priceMax, transmissionFilter, ownershipFilter, vehicleTypeFilter, countryFilter, activeTab])
 
   // Handle delete - show confirmation dialog
   const handleDeleteClick = (id: string) => {
@@ -704,6 +895,35 @@ export default function InventoryPage() {
     }
   }
 
+  // Move vehicle back to In Sale status
+  const handleMoveToInSale = async (vehicleId: string) => {
+    try {
+      const supabase = createClient()
+      
+      const { error } = await supabase
+        .from('vehicles')
+        .update({
+          status: 'In Sale',
+          taken_out_person_name: null,
+          taken_out_person_nic: null,
+          taken_out_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', vehicleId)
+
+      if (error) {
+        console.error('Error updating vehicle:', error)
+        alert('Failed to update vehicle status. Please try again.')
+        return
+      }
+
+      fetchVehicles() // Refresh the vehicle list
+    } catch (error) {
+      console.error('Error updating vehicle:', error)
+      alert('An error occurred while updating vehicle status.')
+    }
+  }
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-LK', {
@@ -740,10 +960,8 @@ export default function InventoryPage() {
         <div className="flex items-center gap-3">
         
           <div className=''>
-            <h1 className="text-[20px] font-bold text-gray-900 pb-2">Available Vehicle</h1>
-            <p className="text-gray-600 text-sm">
-              {loading ? 'Loading...' : `${filteredVehicles.length} vehicle${filteredVehicles.length !== 1 ? 's' : ''} found`}
-            </p>
+            <h1 className="text-[20px] font-bold text-gray-900 pb-2">Vehicle Inventory</h1>
+            
           </div>
         </div>
         
@@ -757,29 +975,157 @@ export default function InventoryPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="bg-white w-[500px]">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by Vehicle Number, Brand, or Model..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-lg grid-cols-3 mb-4 h-12">
+          <TabsTrigger value="all" className="flex items-center gap-2 h-10 text-sm">
+            All Vehicles
+            <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
+              {allVehiclesCount}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="in-sale" className="flex items-center gap-2 h-10 text-sm">
+            In Sale
+            <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-green-600 text-green-100">
+              {inSaleVehiclesCount}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="taken-out" className="flex items-center gap-2 h-10 text-sm">
+            Taken Out
+            <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-orange-600 text-orange-100">
+              {takenOutVehiclesCount}
+            </span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Shared content for all tabs */}
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="bg-slate-100 p-4 rounded-lg border border-slate-300 shadow-sm">
+        {/* Search Bar */}
+        <div className="flex items-center gap-4 mb-4 ">
+          <div className="relative flex-1 max-w-lg">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search Vehicle No, Brand, Model, Seller, Mobile, NIC, Country..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+          
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              className="flex items-center gap-2"
             >
-              <X className="w-5 h-5" />
-            </button>
+              <RotateCcw className="w-4 h-4" />
+              Clear Filters
+            </Button>
           )}
         </div>
-        {searchQuery && (
-          <p className="mt-2 text-sm text-gray-600">
-            Found {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? 's' : ''} matching "{searchQuery}"
+
+        {/* Filter Row */}
+        <div className="flex flex-wrap items-center gap-3 max-w-7xl">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-600">Filters:</span>
+          </div>
+
+          {/* Price Range */}
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder="Min Price"
+              value={priceMin}
+              onChange={(e) => setPriceMin(e.target.value)}
+              className="w-28 h-9 text-sm"
+            />
+            <span className="text-gray-400">-</span>
+            <Input
+              type="number"
+              placeholder="Max Price"
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
+              className="w-28 h-9 text-sm"
+            />
+          </div>
+
+          <Separator orientation="vertical" className='h-8 mx-1' />
+
+          {/* Transmission Filter */}
+          <Select value={transmissionFilter} onValueChange={setTransmissionFilter} >
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue placeholder="Transmission" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Transmission</SelectItem>
+              <SelectItem value="Auto">Auto</SelectItem>
+              <SelectItem value="Manual">Manual</SelectItem>
+            </SelectContent>
+          </Select>
+
+           <Separator orientation="vertical" className='h-8 mx-1'  />
+
+          {/* Ownership Filter (Open Papers / Registered Owner) */}
+          <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
+            <SelectTrigger className="w-[160px] h-9">
+              <SelectValue placeholder="Ownership" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Ownership</SelectItem>
+              <SelectItem value="Open Papers">Open Papers</SelectItem>
+              <SelectItem value="Registered Owner">Registered Owner</SelectItem>
+            </SelectContent>
+          </Select>
+
+           <Separator orientation="vertical" className='h-8 mx-1'  />
+
+          {/* Vehicle Type Filter (Registered / Unregistered) */}
+          <Select value={vehicleTypeFilter} onValueChange={setVehicleTypeFilter}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Registration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Registered">Registered</SelectItem>
+              <SelectItem value="Unregistered">Unregistered</SelectItem>
+            </SelectContent>
+          </Select>
+
+           <Separator orientation="vertical" className='h-8 mx-1' />
+
+          {/* Country Filter */}
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="Country" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Countries</SelectItem>
+              {countries.map((country) => (
+                <SelectItem key={country.id} value={country.name}>
+                  {country.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Active filters info */}
+        {hasActiveFilters && (
+          <p className="mt-3 text-sm text-gray-600">
+            Found {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? 's' : ''} matching your filters
           </p>
         )}
       </div>
@@ -790,6 +1136,9 @@ export default function InventoryPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Image
+                </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Vehicle No
                 </th>
@@ -799,8 +1148,14 @@ export default function InventoryPage() {
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Model
                 </th>
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  M Year
+                </th>
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Reg Year
+                </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Year
+                  Color
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
@@ -817,6 +1172,11 @@ export default function InventoryPage() {
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fuel Type
                 </th>
+                {activeTab === 'all' && (
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                )}
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Action
                 </th>
@@ -825,7 +1185,7 @@ export default function InventoryPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={activeTab === 'all' ? 14 : 13} className="px-6 py-8 text-center text-gray-500">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                       Loading vehicles...
@@ -834,13 +1194,34 @@ export default function InventoryPage() {
                 </tr>
               ) : paginatedVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
-                    {searchQuery ? 'No vehicles found matching your search.' : 'No vehicles in inventory. Add your first vehicle!'}
+                  <td colSpan={activeTab === 'all' ? 14 : 13} className="px-6 py-8 text-center text-gray-500">
+                    {searchQuery ? 'No vehicles found matching your search.' : 
+                      activeTab === 'in-sale' ? 'No vehicles currently in sale.' :
+                      activeTab === 'taken-out' ? 'No taken out vehicles.' :
+                      'No vehicles in inventory. Add your first vehicle!'}
                   </td>
                 </tr>
               ) : (
                 paginatedVehicles.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
+                    <td className="px-2 py-2">
+                      <div className="w-[80px] h-[50px] rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {vehicle.primary_image_url ? (
+                          <Image
+                            src={vehicle.primary_image_url}
+                            alt={`${vehicle.brand_name} ${vehicle.model_name}`}
+                            width={80}
+                            height={50}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-gray-400">
+                            <ImageIcon className="w-5 h-5" />
+                            <span className="text-[8px] mt-0.5">No Image</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-3 text-sm text-gray-900 font-medium">
                       {vehicle.vehicle_number}
                     </td>
@@ -850,8 +1231,14 @@ export default function InventoryPage() {
                     <td className="px-3 py-3 text-sm text-gray-900">
                       {vehicle.model_name}
                     </td>
-                    <td className="px-3 py-3 text-sm text-gray-900">
+                    <td className="px-2 py-3 text-sm text-gray-900">
                       {vehicle.manufacture_year}
+                    </td>
+                    <td className="px-2 py-3 text-sm text-gray-900">
+                      {vehicle.registered_year || '-'}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-gray-900">
+                      {vehicle.exterior_color || '-'}
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-900 font-semibold">
                       {formatCurrency(vehicle.selling_amount)}
@@ -870,6 +1257,17 @@ export default function InventoryPage() {
                         {vehicle.fuel_type}
                       </span>
                     </td>
+                    {activeTab === 'all' && (
+                      <td className="px-3 py-3 text-sm">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          vehicle.status === 'In Sale' 
+                            ? 'bg-white border border-green-300 text-green-700' 
+                            : 'bg-white border border-orange-300 text-orange-600'
+                        }`}>
+                          {vehicle.status}
+                        </span>
+                      </td>
+                    )}
                     <td className="px-3 py-3 text-sm">
                       <div className="flex items-center gap-2">
                         <button
@@ -904,6 +1302,22 @@ export default function InventoryPage() {
                         </button>
                         <button
                           onClick={() => {
+                            setNotesVehicleId(vehicle.id)
+                            setNotesVehicleInfo({
+                              brand: vehicle.brand_name,
+                              model: vehicle.model_name,
+                              year: vehicle.manufacture_year,
+                              vehicleNumber: vehicle.vehicle_number,
+                            })
+                            setIsNotesModalOpen(true)
+                          }}
+                          className="p-1 text-amber-600 hover:bg-amber-50 rounded"
+                          title="Vehicle Notes"
+                        >
+                          <StickyNote className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
                             setEditVehicleId(vehicle.id)
                             setIsEditModalOpen(true)
                           }}
@@ -919,6 +1333,35 @@ export default function InventoryPage() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                        
+                        {/* Status Toggle Button - Only show on In Sale and Taken Out tabs */}
+                        {activeTab === 'in-sale' && (
+                          <button
+                            onClick={() => {
+                              setTakenOutVehicleId(vehicle.id)
+                              setTakenOutVehicleInfo({
+                                brand: vehicle.brand_name,
+                                model: vehicle.model_name,
+                                year: vehicle.manufacture_year,
+                                vehicleNumber: vehicle.vehicle_number,
+                              })
+                              setIsTakenOutModalOpen(true)
+                            }}
+                            className="px-3 py-2 text-xs font-medium text-red-600  bg-white border border-red-300 hover:bg-red-600 hover:text-white rounded-md transition-colors"
+                            title="Move to Taken Out"
+                          >
+                            Taken Out
+                          </button>
+                        )}
+                        {activeTab === 'taken-out' && (
+                          <button
+                            onClick={() => handleMoveToInSale(vehicle.id)}
+                            className="px-3 py-2 text-xs font-medium text-green-700 bg-white border border-green-500 hover:bg-green-700 hover:text-white rounded-md transition-colors"
+                            title="Move to In Sale"
+                          >
+                           Move In Sale
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -1013,6 +1456,9 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
+        </div>
+        {/* End of shared content */}
+      </Tabs>
 
       {/* Vehicle Details Modal */}
       <Dialog open={isModalOpen} onOpenChange={closeModal}>
@@ -1315,6 +1761,36 @@ export default function InventoryPage() {
           vehicleOptions={printVehicleOptions}
         />
       )}
+
+      {/* Vehicle Notes Modal */}
+      <VehicleNotesModal
+        vehicleId={notesVehicleId}
+        vehicleInfo={notesVehicleInfo}
+        isOpen={isNotesModalOpen}
+        onClose={() => {
+          setIsNotesModalOpen(false)
+          setNotesVehicleId(null)
+          setNotesVehicleInfo(null)
+        }}
+        onSuccess={() => {
+          fetchVehicles() // Refresh the vehicle list
+        }}
+      />
+
+      {/* Taken Out Modal */}
+      <TakenOutModal
+        vehicleId={takenOutVehicleId}
+        vehicleInfo={takenOutVehicleInfo}
+        isOpen={isTakenOutModalOpen}
+        onClose={() => {
+          setIsTakenOutModalOpen(false)
+          setTakenOutVehicleId(null)
+          setTakenOutVehicleInfo(null)
+        }}
+        onSuccess={() => {
+          fetchVehicles() // Refresh the vehicle list
+        }}
+      />
 
       {/* Success Popup */}
       <SuccessPopup

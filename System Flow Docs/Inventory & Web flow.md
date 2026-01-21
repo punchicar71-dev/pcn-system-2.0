@@ -4,11 +4,49 @@ This document provides a comprehensive overview of how inventory data flows from
 
 > **Note**: The web application is public-facing and does not require authentication. The dashboard inventory management uses cookie-based session authentication.
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 16, 2026
 
 ---
 
-## 📢 LATEST UPDATE - December 31, 2025 (Web Cache Fix)
+## 📢 LATEST UPDATE - January 16, 2026 (Dashboard Inventory Enhancements)
+
+### 📊 Dashboard Inventory Table & Filter Updates
+
+**Update: Dashboard inventory management significantly enhanced with new features!**
+
+#### New Dashboard Inventory Table Columns:
+
+| Column | Description | Source |
+|--------|-------------|--------|
+| Image | 80x50px primary vehicle image | `vehicle_images` table (is_primary=true) |
+| M Year | Manufacture Year | `vehicles.manufacture_year` |
+| Reg Year | Registered Year | `vehicles.registered_year` |
+| Color | Exterior Color | `vehicles.exterior_color` |
+
+#### Real-Time Filtering System:
+
+**New Filter Options:**
+- **Price Range**: Min/Max numeric inputs
+- **Transmission**: Auto / Manual dropdown
+- **Ownership**: Open Papers / Registered Owner dropdown
+- **Vehicle Type**: Registered / Unregistered dropdown
+- **Country**: Dynamic country list from database
+
+**UI Features:**
+- Clear Filters button (appears when filters active)
+- Real-time result count display
+- shadcn/ui Select components for consistency
+
+#### Database Fields:
+- `vehicle_type`: 'Registered' | 'Unregistered'
+- `ownership`: 'Open Papers' | 'Registered Owner'
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/inventory/page.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - December 31, 2025 (Web Cache Fix)
 
 ### 🔄 Web App Real-time Data Sync Fix
 

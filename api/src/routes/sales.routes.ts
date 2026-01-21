@@ -8,7 +8,7 @@ const router = Router();
 const salesQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   offset: z.coerce.number().min(0).default(0),
-  status: z.enum(['pending', 'completed', 'cancelled', 'returned']).optional(),
+  status: z.enum(['advance_paid', 'completed', 'cancelled', 'returned']).optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   sales_agent_id: z.string().uuid().optional(),
@@ -29,7 +29,7 @@ const saleCreateSchema = z.object({
 });
 
 const saleUpdateSchema = saleCreateSchema.partial().extend({
-  status: z.enum(['pending', 'completed', 'cancelled', 'returned']).optional(),
+  status: z.enum(['advance_paid', 'completed', 'cancelled', 'returned']).optional(),
 });
 
 /**
@@ -55,7 +55,7 @@ const saleUpdateSchema = saleCreateSchema.partial().extend({
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, completed, cancelled, returned]
+ *           enum: [advance_paid, completed, cancelled, returned]
  *       - in: query
  *         name: start_date
  *         schema:
@@ -263,7 +263,7 @@ router.post('/', async (req: Request, res: Response) => {
       .from('pending_vehicle_sales')
       .insert({
         ...saleData,
-        status: 'pending',
+        status: 'advance_paid',
         vehicle_snapshot: vehicleSnapshot,
       })
       .select()
@@ -274,8 +274,8 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to create sale', details: error.message });
     }
 
-    // Update vehicle status to pending
-    await supabase.from('vehicles').update({ status: 'pending' }).eq('id', saleData.vehicle_id);
+    // Update vehicle status to Reserved (advance payment received)
+    await supabase.from('vehicles').update({ status: 'Reserved' }).eq('id', saleData.vehicle_id);
 
     res.status(201).json(data);
   } catch (err) {
@@ -414,17 +414,17 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/sales/pending:
+ * /api/sales/advance-paid:
  *   get:
- *     summary: Get all pending sales
+ *     summary: Get all advance paid sales
  *     tags: [Sales]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of pending sales
+ *         description: List of advance paid sales
  */
-router.get('/status/pending', async (req: Request, res: Response) => {
+router.get('/status/advance-paid', async (req: Request, res: Response) => {
   try {
     if (!isSupabaseConfigured()) {
       return res.status(503).json({ error: 'Database not configured' });
@@ -433,11 +433,11 @@ router.get('/status/pending', async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('pending_vehicle_sales')
       .select(`*, vehicles:vehicle_id (id, vehicle_name)`)
-      .eq('status', 'pending')
+      .eq('status', 'advance_paid')
       .order('created_at', { ascending: false });
 
     if (error) {
-      return res.status(500).json({ error: 'Failed to fetch pending sales' });
+      return res.status(500).json({ error: 'Failed to fetch advance paid sales' });
     }
 
     res.json(data || []);

@@ -37,8 +37,7 @@ interface FinancialReportData {
   model_name: string
   seller_price: number
   sales_price: number
-  down_payment: number
-  pcn_advance: number
+  commission_amount: number
   payment_type: string
   sold_out_date: string
 }
@@ -97,14 +96,14 @@ export default function FinancialReportsTab() {
 
       if (error) throw error
 
-      // Fetch all price categories
-      const { data: priceCategories, error: categoriesError } = await supabase
-        .from('price_categories')
+      // Fetch all sales commissions
+      const { data: salesCommissions, error: commissionsError } = await supabase
+        .from('sales_commissions')
         .select('*')
         .eq('is_active', true)
         .order('min_price')
 
-      if (categoriesError) throw categoriesError
+      if (commissionsError) throw commissionsError
 
       // Process the data
       // Use stored snapshot first, fallback to joined vehicle data for backwards compatibility
@@ -114,16 +113,36 @@ export default function FinancialReportsTab() {
         // Support both field names: sale_price (from sell-vehicle page) and selling_price (DB schema)
         const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amount ?? 0
         
-        // Find matching price category to get PCN advance
-        let pcnAdvance = 0
-        if (priceCategories && priceCategories.length > 0) {
-          const matchingCategory = priceCategories.find(
-            (cat: any) => 
-              sellingAmount >= cat.min_price && 
-              sellingAmount <= cat.max_price
+        // Find matching sales commission to get commission amount - Improved matching logic
+        let commissionAmount = 0
+        if (salesCommissions && salesCommissions.length > 0) {
+          // First, try exact match within range
+          let matchingCommission = salesCommissions.find(
+            (comm: any) => 
+              sellingAmount >= comm.min_price && 
+              sellingAmount <= comm.max_price
           )
-          if (matchingCategory) {
-            pcnAdvance = matchingCategory.pcn_advance_amount || 0
+          
+          // If no exact match, check if amount exceeds all ranges (use highest)
+          if (!matchingCommission) {
+            const sortedByMaxPrice = [...salesCommissions].sort((a: any, b: any) => b.max_price - a.max_price)
+            const highestCategory = sortedByMaxPrice[0]
+            if (highestCategory && sellingAmount > highestCategory.max_price) {
+              matchingCommission = highestCategory
+            }
+          }
+          
+          // If amount is below all ranges (use lowest)
+          if (!matchingCommission) {
+            const sortedByMinPrice = [...salesCommissions].sort((a: any, b: any) => a.min_price - b.min_price)
+            const lowestCategory = sortedByMinPrice[0]
+            if (lowestCategory && sellingAmount < lowestCategory.min_price) {
+              matchingCommission = lowestCategory
+            }
+          }
+          
+          if (matchingCommission) {
+            commissionAmount = matchingCommission.commission_amount || 0
           }
         }
 
@@ -135,8 +154,7 @@ export default function FinancialReportsTab() {
           model_name: sale.model_name || vehicle?.vehicle_models?.name || 'N/A',
           seller_price: vehicle?.selling_amount || 0,
           sales_price: sellingAmount,
-          down_payment: sale.advance_amount || 0,
-          pcn_advance: pcnAdvance,
+          commission_amount: commissionAmount,
           payment_type: sale.payment_type || 'N/A',
           sold_out_date: sale.updated_at || '',
         }
@@ -153,7 +171,7 @@ export default function FinancialReportsTab() {
   // Calculate summary statistics
   const totalVehiclesSold = reportData.length
   const totalSalesAmount = reportData.reduce((sum, item) => sum + item.sales_price, 0)
-  const totalPcnAdvance = reportData.reduce((sum, item) => sum + item.pcn_advance, 0)
+  const totalCommission = reportData.reduce((sum, item) => sum + item.commission_amount, 0)
 
   // Pagination
   const totalPages = Math.ceil(reportData.length / rowsPerPage)
@@ -171,8 +189,7 @@ export default function FinancialReportsTab() {
       'Model',
       'Seller Price',
       'Sales Price',
-      'Down Payment',
-      'PCN Advance',
+      'Commission Amount',
       'Payment Type',
       'Sold Out Date',
     ]
@@ -185,8 +202,7 @@ export default function FinancialReportsTab() {
         row.model_name,
         row.seller_price,
         row.sales_price,
-        row.down_payment,
-        row.pcn_advance,
+        row.commission_amount,
         row.payment_type,
         format(new Date(row.sold_out_date), 'yyyy-MM-dd'),
       ].join(','))
@@ -301,12 +317,12 @@ export default function FinancialReportsTab() {
 
        
 
-        {/* PCN Profit Card */}
+        {/* Commission Card */}
         <div className="bg-gray-50 w-[380px] h-16 border flex items-center shadow-sm rounded-md ">
               <div className='flex justify-between w-full px-4'>
-                <p className="text-sm font-semibold text-gray-600">PCN Profit</p>
+                <p className="text-sm font-semibold text-gray-600">Total Commission</p>
                 <p className="text-[12px] font-semibold px-4 py-1 rounded-full text-blue-600   bg-blue-100">
-                  {formatCurrency(totalPcnAdvance)}
+                  {formatCurrency(totalCommission)}
                 </p>
               </div>
             </div>
@@ -325,8 +341,7 @@ export default function FinancialReportsTab() {
               <TableHead className="font-semibold">Model</TableHead>
               <TableHead className="font-semibold">Seller Price</TableHead>
               <TableHead className="font-semibold">Sales Price</TableHead>
-              <TableHead className="font-semibold">Down Payment</TableHead>
-              <TableHead className="font-semibold">PCN Advance</TableHead>
+              <TableHead className="font-semibold">Commission</TableHead>
               <TableHead className="font-semibold">Payment Type</TableHead>
               <TableHead className="font-semibold">Sold Out Date</TableHead>
             </TableRow>
@@ -334,13 +349,13 @@ export default function FinancialReportsTab() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : currentData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   No data available for the selected date range
                 </TableCell>
               </TableRow>
@@ -352,8 +367,7 @@ export default function FinancialReportsTab() {
                   <TableCell>{row.model_name}</TableCell>
                   <TableCell>{formatCurrency(row.seller_price)}</TableCell>
                   <TableCell>{formatCurrency(row.sales_price)}</TableCell>
-                  <TableCell>{formatCurrency(row.down_payment)}</TableCell>
-                  <TableCell>{formatCurrency(row.pcn_advance)}</TableCell>
+                  <TableCell>{formatCurrency(row.commission_amount)}</TableCell>
                   <TableCell>
                     <span className={cn(
                       "px-3 py-1 rounded-full text-xs font-medium",

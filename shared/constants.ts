@@ -31,7 +31,7 @@ export const USER_ROLES = ['admin', 'editor', 'viewer'] as const;
 
 export const USER_STATUS = ['active', 'inactive'] as const;
 
-export const VEHICLE_STATUS = ['available', 'pending', 'sold'] as const;
+export const VEHICLE_STATUS = ['available', 'advance_paid', 'reserved', 'sold'] as const;
 
 export const COUNTRIES = [
   'Japan',

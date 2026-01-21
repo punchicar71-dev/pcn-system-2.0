@@ -8,7 +8,7 @@ const router = Router();
 const vehicleQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   offset: z.coerce.number().min(0).default(0),
-  status: z.enum(['available', 'sold', 'reserved', 'pending']).optional(),
+  status: z.enum(['available', 'sold', 'reserved', 'In Sale', 'Reserved', 'Sold']).optional(),
   brand_id: z.string().uuid().optional(),
   fuel_type: z.enum(['petrol', 'diesel', 'hybrid', 'electric']).optional(),
   transmission: z.enum(['auto', 'manual']).optional(),
@@ -33,7 +33,7 @@ const vehicleCreateSchema = z.object({
   manufacture_year: z.number().optional(),
   register_year: z.number().optional(),
   condition: z.enum(['brand_new', 'unregistered', 'used']).optional(),
-  status: z.enum(['available', 'sold', 'reserved', 'pending']).default('available'),
+  status: z.enum(['available', 'sold', 'reserved', 'In Sale', 'Reserved', 'Sold']).default('available'),
 });
 
 const vehicleUpdateSchema = vehicleCreateSchema.partial();

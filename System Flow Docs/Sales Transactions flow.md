@@ -2,15 +2,217 @@
 
 ## Overview
 
-The Sales Transactions module manages the complete lifecycle of vehicle sales from pending status to sold completion. It consists of two main tabs: **Pending Sales** and **Sold Out** (completed sales), with comprehensive database tracking, UI components, and document generation.
+The Sales Transactions module manages the complete lifecycle of vehicle sales from advance payment received to sold completion. It consists of two main tabs: **Advance Paid** (advance payment received, awaiting full payment) and **Sold Out** (completed sales), with comprehensive database tracking, UI components, and document generation.
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 20, 2026
 
 > **Note**: This module requires authentication. Users must be logged in with a valid session cookie to access sales transactions.
 
 ---
 
-## 📢 LATEST UPDATE - January 1, 2026 (Field Name Consistency Fix)
+## 📢 LATEST UPDATE - January 20, 2026 (Tag Notes View/Update in Advance Paid Tab)
+
+### 📝 Tag Notes Modal in Actions Column
+
+**Added: Tag Notes view & update functionality in Advance Paid table!**
+
+#### New Action Button:
+| Icon | Action | Description |
+|------|--------|-------------|
+| 📝 `StickyNote` | Tag Notes | Opens modal to view/edit internal notes |
+
+#### Feature Overview:
+- **Note Icon** added to Actions column (blue color)
+- Click opens **Tag Notes Modal** with vehicle info header
+- Notes are fetched from `vehicles.tag_notes` column
+- User can view, edit, and save notes
+- Notes sync with vehicle database record
+
+#### Modal Features:
+- Vehicle info display (Brand, Model, Number)
+- Textarea for notes editing
+- Character count display
+- Loading state while fetching
+- Save confirmation
+
+#### Database Integration:
+- **Table**: `vehicles`
+- **Column**: `tag_notes` (TEXT)
+- **Update**: Also updates `updated_at` timestamp
+
+#### Modified Files:
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx` ✅
+
+#### Code Implementation:
+```tsx
+// Tag Notes Modal Functions
+const openTagNotesModal = async (sale: any) => {
+  // Fetch tag_notes from vehicles table
+  const { data } = await supabase
+    .from('vehicles')
+    .select('tag_notes')
+    .eq('id', sale.vehicle_id)
+    .single();
+  setTagNotesValue(data?.tag_notes || '');
+};
+
+const saveTagNotes = async () => {
+  await supabase
+    .from('vehicles')
+    .update({ 
+      tag_notes: tagNotesValue,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', selectedSaleForNotes.vehicle_id);
+};
+```
+
+---
+
+## 📢 PREVIOUS UPDATE - January 20, 2026 (System-Wide Pending to Advance Paid Rename)
+
+### 🔄 Complete "Pending" to "Advance Paid" Rename
+
+**Update: Renamed all "Pending Vehicle" references to "Advance Paid" throughout the system!**
+
+#### Changes Made:
+
+| Component | Old | New |
+|-----------|-----|-----|
+| Dashboard Card | Pending Selling Vehicles | **Advance Paid Vehicles** |
+| Sales Tab | Pending Vehicles | **Advance Paid** |
+| Modal Title | Pending Vehicle Details | **Advance Paid Vehicle Details** |
+| State Variable | `pendingVehicles` | `advancePaidVehicles` |
+| Status Value | `'pending'` | `'advance_paid'` |
+
+#### API Schema Updates:
+- Removed `'pending'` from status enum
+- Only valid status values: `'advance_paid'`, `'completed'`, `'cancelled'`, `'returned'`
+
+#### Shared Types Updates:
+- `DashboardStats.pendingVehicles` → `DashboardStats.advancePaidVehicles`
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/dashboard/page.tsx` ✅
+- `dashboard/src/components/sales-transactions/PendingVehicleModal.tsx` ✅
+- `api/src/routes/sales.routes.ts` ✅
+- `shared/types.ts` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 20, 2026 (Advance Paid Tab Table Enhancement)
+
+### 📊 Enhanced Table Columns & Vehicle Image
+
+**Added: Vehicle image and additional detail columns to Advance Paid tab!**
+
+#### New Table Layout:
+
+| Column | Size | Description |
+|--------|------|-------------|
+| **Image** | 80x50px | Primary vehicle thumbnail |
+| **Vehicle No.** | Auto | Registration number |
+| **Brand** | Auto | Brand name |
+| **Model** | Auto | Model name |
+| **M.Year** | Auto | Manufacture year |
+| **Reg.Year** | Auto | Registration year |
+| **Mileage** | Auto | Mileage in km |
+| **Country** | Auto | Manufacturing country |
+| **Trans.** | Auto | Transmission type |
+| **Selling Price** | Auto | Sale price (Rs.) |
+| **Payment** | Auto | Payment type badge |
+| **Actions** | Auto | Action buttons |
+
+#### New Database Snapshot Fields:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `registered_year` | INTEGER | Vehicle registration year |
+| `mileage` | DECIMAL(10,2) | Vehicle mileage |
+| `country_name` | VARCHAR(100) | Manufacturing country |
+| `transmission` | VARCHAR(20) | Auto/Manual |
+| `image_url` | TEXT | Primary vehicle image URL |
+
+#### Migration File:
+- `dashboard/migrations/2026_01_20_add_vehicle_details_snapshot.sql` ✅
+
+#### Modified Files:
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx` ✅
+- `dashboard/src/app/(dashboard)/reserve-vehicle/page.tsx` ✅
+- `dashboard/src/lib/database.types.ts` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 20, 2026 (Tab Rename: Pending → Advance Paid)
+
+### 🔄 Tab & Status Rename
+
+**Changed: "Pending Vehicles" tab renamed to "Advance Paid"!**
+
+#### What's Changed:
+
+| Old Name | New Name | Description |
+|----------|----------|-------------|
+| Pending Vehicles Tab | **Advance Paid** Tab | Vehicles with advance payment received |
+| `status: 'pending'` | `status: 'advance_paid'` | Database status value |
+
+#### Why the Change:
+- Better reflects the actual business workflow
+- "Advance Paid" clearly indicates payment has been received
+- Distinguishes from general "pending" status
+
+#### Migration File:
+- `dashboard/migrations/2026_01_20_rename_pending_to_advance_paid.sql` ✅
+
+#### Modified Files:
+- `dashboard/src/app/(dashboard)/sales-transactions/page.tsx` ✅
+- `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx` ✅
+- `dashboard/src/app/(dashboard)/reserve-vehicle/page.tsx` ✅
+- `dashboard/src/app/(dashboard)/dashboard/page.tsx` ✅
+- `api/src/routes/sales.routes.ts` ✅
+- `api/src/routes/analytics.routes.ts` ✅
+- `shared/types.ts` ✅
+- `shared/constants.ts` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 20, 2026 (Sales Commissions Integration)
+
+### 💰 New Feature: Sales Commissions
+
+**Added: Sales commission tracking for vehicle sales!**
+
+#### New Database Table: `sales_commissions`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `name` | VARCHAR(100) | Commission tier name |
+| `min_price` | DECIMAL(12,2) | Minimum price threshold |
+| `max_price` | DECIMAL(12,2) | Maximum price threshold |
+| `commission_amount` | DECIMAL(12,2) | Commission amount for this tier |
+| `is_active` | BOOLEAN | Commission tier availability |
+
+#### Integration with Sales:
+- New `sales_commission_id` column added to `pending_vehicle_sales` table
+- Commission automatically determined based on sale price during reservation
+- Used in Sales Agents Report for commission calculations
+
+#### Default Commission Tiers:
+| Tier | Price Range | Commission |
+|------|-------------|------------|
+| Budget | Rs. 0 - 2M | Rs. 25,000 |
+| Economy | Rs. 2M - 5M | Rs. 50,000 |
+| Mid-Range | Rs. 5M - 10M | Rs. 75,000 |
+| Premium | Rs. 10M - 20M | Rs. 100,000 |
+| Luxury | Rs. 20M+ | Rs. 150,000 |
+
+#### Modified Files:
+- `dashboard/migrations/2026_01_20_create_sales_commissions_table.sql` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 1, 2026 (Field Name Consistency Fix)
 
 ### 🔄 Price Field Mapping & Data Consistency
 
@@ -35,7 +237,7 @@ const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amou
 
 | Field | Source | Description |
 |-------|--------|-------------|
-| `sale_price` | Sell Vehicle Page | Primary field used in new sales |
+| `sale_price` | Reserve Vehicle Page | Primary field used in new reservations |
 | `selling_price` | Database Schema | Standard column name |
 | `selling_amount` | Legacy Code | Old field name for compatibility |
 
@@ -52,7 +254,7 @@ const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amou
 ## Table of Contents
 
 1. [Database Schema & Connections](#1-database-schema--connections)
-2. [Pending Tab Functions & Flow](#2-pending-tab-functions--flow)
+2. [Advance Paid Tab Functions & Flow](#2-advance-paid-tab-functions--flow)
 3. [Sold Out Tab Functions & Flow](#3-sold-out-tab-functions--flow)
 4. [UI Design & Components](#4-ui-design--components)
 5. [API Routes & Endpoints](#5-api-routes--endpoints)
@@ -93,6 +295,7 @@ const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amou
 > **📝 Note**: The table has multiple price fields (`sale_price`, `selling_price`, `selling_amount`) due to historical schema evolution. Reports and queries must handle all three variations for data consistency.
 | `leasing_company_id` | UUID | FK to `leasing_companies` (when Leasing) | - |
 | `sales_agent_id` | UUID | FK to `sales_agents` (Office Sales Agent) | - |
+| `sales_commission_id` | UUID | FK to `sales_commissions` (commission tier) | - |
 | `third_party_agent` | TEXT | Vehicle Showroom Agent name | - |
 | `status` | VARCHAR(20) | 'pending' or 'sold' | ✓ |
 | `created_at` | TIMESTAMPTZ | Created timestamp | ✓ |
@@ -175,7 +378,26 @@ const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amou
 
 ---
 
-### 1.6 Database Relationships
+### 1.7 Supporting Table: `sales_commissions`
+
+**Purpose**: Stores sales commission rates by price range for agent commission calculations
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `name` | VARCHAR(100) | Commission tier name (Budget, Economy, etc.) |
+| `min_price` | DECIMAL(12,2) | Minimum price threshold |
+| `max_price` | DECIMAL(12,2) | Maximum price threshold |
+| `commission_amount` | DECIMAL(12,2) | Commission amount for this price range |
+| `is_active` | BOOLEAN | Commission tier availability |
+| `created_at` | TIMESTAMPTZ | Created timestamp |
+| `updated_at` | TIMESTAMPTZ | Updated timestamp |
+
+**Migration**: `dashboard/migrations/2026_01_20_create_sales_commissions_table.sql`
+
+---
+
+### 1.8 Database Relationships
 
 ```
 ┌─────────────────────┐     ┌──────────────────┐
@@ -185,8 +407,11 @@ const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amou
 │  vehicle_id ────────┼────►┌──────────────────┐
 │  sales_agent_id ────┼────►│  sales_agents    │
 │  leasing_company_id─┼────►└──────────────────┘
-│  created_by ────────┼────►┌──────────────────┐
-└─────────────────────┘    │ leasing_companies │
+│  sales_commission_id┼────►┌──────────────────┐
+│  created_by ────────┼────►│ leasing_companies │
+└─────────────────────┘    └──────────────────┘
+                           ┌──────────────────┐
+                           │sales_commissions │
                            └──────────────────┘
                            ┌──────────────────┐
                            │     users        │
@@ -199,24 +424,41 @@ const sellingAmount = sale.sale_price ?? sale.selling_price ?? sale.selling_amou
 
 ---
 
-## 2. Pending Tab Functions & Flow
+## 2. Advance Paid Tab Functions & Flow
 
 ### 2.1 Main Page Component
 
 **File**: `dashboard/src/app/(dashboard)/sales-transactions/page.tsx`
 
-### 2.2 Pending Sales Table Component
+### 2.2 Advance Paid Sales Table Component
 
-**File**: `dashboard/src/components/sales-transactions/PendingSalesTable.tsx`
+**File**: `dashboard/src/components/sales-transactions/PendingVehiclesTable.tsx`
 
-### 2.3 Key Functions
+### 2.3 Table Columns (Updated January 20, 2026)
 
-#### Fetching Pending Sales
+| Column | Width | Description |
+|--------|-------|-------------|
+| **Image** | 80x50px | Primary vehicle image thumbnail |
+| **Vehicle No.** | Auto | Vehicle registration number |
+| **Brand** | Auto | Vehicle brand name |
+| **Model** | Auto | Vehicle model name |
+| **M.Year** | Auto | Manufacture year |
+| **Reg.Year** | Auto | Registration year |
+| **Mileage** | Auto | Vehicle mileage in km |
+| **Country** | Auto | Manufacturing country |
+| **Trans.** | Auto | Transmission (Auto/Manual) |
+| **Selling Price** | Auto | Sale price with Rs. prefix |
+| **Payment** | Auto | Payment type badge |
+| **Actions** | Auto | View, Sold, Payment, Print, Return |
+
+### 2.4 Key Functions
+
+#### Fetching Advance Paid Sales
 
 ```typescript
-// Location: PendingSalesTable.tsx → fetchPendingSales()
+// Location: PendingVehiclesTable.tsx → fetchPendingSales()
 
-const { data: pendingSales } = await supabase
+const { data: advancePaidSales } = await supabase
   .from('pending_vehicle_sales')
   .select(`
     *,
@@ -226,13 +468,19 @@ const { data: pendingSales } = await supabase
       brand_id, 
       model_id, 
       manufacture_year,
+      registered_year,
+      mileage,
+      transmission,
+      country_id,
       vehicle_brands:brand_id (id, name),
-      vehicle_models:model_id (id, name)
+      vehicle_models:model_id (id, name),
+      countries:country_id (id, name),
+      vehicle_images (id, image_url, is_primary, display_order)
     ),
     sales_agents:sales_agent_id (id, name),
     leasing_companies:leasing_company_id (id, name)
   `)
-  .eq('status', 'pending')
+  .eq('status', 'advance_paid')
   .order('created_at', { ascending: false });
 ```
 
@@ -346,7 +594,7 @@ const handlePrintDocument = (sale: PendingSale) => {
 };
 ```
 
-### 2.4 Pending Tab Features
+### 2.4 Advance Paid Tab Features
 
 | Feature | Description |
 |---------|-------------|
@@ -860,7 +1108,7 @@ interface MarkAsSoldModalProps {
 ### 7.1 Vehicle Status Flow
 
 ```
-┌──────────────┐     Sell Vehicle     ┌──────────────┐     Mark as Sold     ┌──────────────┐
+┌──────────────┐     Reserve Vehicle   ┌──────────────┐     Mark as Sold     ┌──────────────┐
 │   In Sale    │ ───────────────────► │ Pending Sale │ ───────────────────► │     Sold     │
 │   (Yellow)   │                      │   (Orange)   │                      │    (Green)   │
 └──────────────┘                      └──────────────┘                      └──────────────┘
@@ -897,7 +1145,7 @@ interface MarkAsSoldModalProps {
 ### 7.3 Complete Sale Transaction Flow
 
 ```
-1. User clicks "Sell Vehicle" on vehicle in inventory
+1. User clicks "Reserve Vehicle" on vehicle in inventory
                     │
                     ▼
 2. Vehicle lock acquired (prevents concurrent edits)

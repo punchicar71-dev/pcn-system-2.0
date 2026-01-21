@@ -53,7 +53,7 @@ const navigation: Array<{
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Add Vehicle', href: '/add-vehicle', icon: PlusCircle },
   { name: 'Inventory', href: '/inventory', icon: Package },
-  { name: 'Sell Vehicle', href: '/sell-vehicle', icon: DollarSign },
+  { name: 'Reserve Vehicle', href: '/reserve-vehicle', icon: DollarSign },
   { name: 'Sales Transactions', href: '/sales-transactions', icon: FileText },
   { name: 'Reports & Analytics', href: '/reports', icon: BarChart3, allowedRoles: ['admin'] },
   { name: 'User Management', href: '/user-management', icon: Users, allowedRoles: ['admin'] },

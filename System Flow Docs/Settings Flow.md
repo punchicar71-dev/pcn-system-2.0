@@ -2,17 +2,81 @@
 
 ## Overview
 
-The Settings module provides centralized configuration management for the PCN Vehicle Selling System. It allows administrators to manage vehicle brands, price categories, leasing companies, sales agents, and countries. All settings are used throughout the application for vehicle inventory, sales transactions, and reporting.
+The Settings module provides centralized configuration management for the PCN Vehicle Selling System. It allows administrators to manage vehicle brands, price categories, leasing companies, sales agents, sales commissions, and countries. All settings are used throughout the application for vehicle inventory, sales transactions, and reporting.
 
 **Access Level**: All authenticated users can view; Admin users can modify.
 
-**Last Updated**: January 3, 2026
+**Last Updated**: January 20, 2026
 
 > **Note**: Authentication is handled via cookie-based sessions. Users must be logged in to access settings.
 
 ---
 
-## 📢 LATEST UPDATE - January 1, 2026 (Sales Agent Tab Cleanup)
+## 📢 LATEST UPDATE - January 20, 2026 (Sales Commissions)
+
+### ✅ New Feature: Sales Commissions Tab
+
+**Added: Sales Commissions management for commission rates by price range!**
+
+#### New Database Table: `sales_commissions`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `name` | VARCHAR(100) | Commission tier name |
+| `min_price` | DECIMAL(12,2) | Minimum price threshold |
+| `max_price` | DECIMAL(12,2) | Maximum price threshold |
+| `commission_amount` | DECIMAL(12,2) | Commission amount for this tier |
+| `is_active` | BOOLEAN | Commission tier availability |
+| `created_at` | TIMESTAMP | Creation timestamp |
+| `updated_at` | TIMESTAMP | Last update timestamp |
+
+#### Default Commission Tiers:
+
+| Name | Price Range | Commission Amount |
+|------|-------------|-------------------|
+| Budget | Rs. 0 - 2,000,000 | Rs. 25,000 |
+| Economy | Rs. 2,000,001 - 5,000,000 | Rs. 50,000 |
+| Mid-Range | Rs. 5,000,001 - 10,000,000 | Rs. 75,000 |
+| Premium | Rs. 10,000,001 - 20,000,000 | Rs. 100,000 |
+| Luxury | Rs. 20,000,001+ | Rs. 150,000 |
+
+#### Integration with Sales:
+- New `sales_commission_id` column added to `pending_vehicle_sales` table
+- Commission automatically determined based on sale price
+- Used in sales agent reports for commission calculations
+
+#### Modified Files:
+- `dashboard/migrations/2026_01_20_create_sales_commissions_table.sql` ✅
+- `dashboard/src/components/settings/SalesCommissionsTab.tsx` (new) ✅
+- `dashboard/src/app/(dashboard)/settings/page.tsx` ✅
+
+---
+
+## 📢 PREVIOUS UPDATE - January 16, 2026 (System Status)
+
+### ✅ Current System Status
+
+**Status: Settings module fully operational!**
+
+#### Countries Tab Integration:
+- Countries data now used in inventory filtering
+- Real-time country dropdown in inventory page
+- Fetched dynamically from `countries` table
+
+#### Settings Usage Across System:
+| Setting | Used In |
+|---------|---------|
+| Vehicle Brands | Add Vehicle, Inventory, Web |
+| Price Categories | Add Vehicle, Financial Reports |
+| Leasing Companies | Reserve Vehicle |
+| Sales Agents | Reserve Vehicle, Reports |
+| Sales Commissions | Reserve Vehicle, Sales Agents Report |
+| Countries | Add Vehicle, Inventory Filters, Web |
+
+---
+
+## 📢 PREVIOUS UPDATE - January 1, 2026 (Sales Agent Tab Cleanup)
 
 ### ⚙️ Sales Agent Tab Database Alignment
 
@@ -50,9 +114,10 @@ The Settings module provides centralized configuration management for the PCN Ve
 4. [Price Category Tab](#4-price-category-tab)
 5. [Leasing Company Tab](#5-leasing-company-tab)
 6. [Sales Agent Tab](#6-sales-agent-tab)
-7. [Countries Tab](#7-countries-tab)
-8. [Types & Interfaces](#8-types--interfaces)
-9. [File Structure Summary](#9-file-structure-summary)
+7. [Sales Commissions Tab](#7-sales-commissions-tab)
+8. [Countries Tab](#8-countries-tab)
+9. [Types & Interfaces](#9-types--interfaces)
+10. [File Structure Summary](#10-file-structure-summary)
 
 ---
 
@@ -62,11 +127,12 @@ The Settings module provides centralized configuration management for the PCN Ve
 
 | Table | Purpose | Used In |
 |-------|---------|---------|
+| `sales_commissions` | Sales commission rates by price range | Reserve Vehicle, Reports |
 | `vehicle_brands` | Vehicle manufacturer names | Add Vehicle, Inventory |
 | `vehicle_models` | Vehicle model names per brand | Add Vehicle, Inventory |
 | `price_categories` | Price ranges with PCN advance | Add Vehicle, Financial Reports |
-| `leasing_companies` | Finance company partners | Sell Vehicle |
-| `sales_agents` | In-house sales staff | Sell Vehicle, Reports |
+| `leasing_companies` | Finance company partners | Reserve Vehicle |
+| `sales_agents` | In-house sales staff | Reserve Vehicle, Reports |
 | `countries` | Vehicle manufacturing countries | Add Vehicle |
 
 ### 1.2 Supabase Connection
@@ -87,13 +153,13 @@ import { supabase } from '@/lib/supabase-client'
 
 **Layout**:
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ [Vehicle Brands] [Price Category] [Leasing Company] [Sales Agent] [Countries] │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│                    Tab Content Area                             │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ [Vehicle Brands] [Price Category] [Leasing Company] [Sales Agent] [Commissions] [Countries] │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│                              Tab Content Area                                    │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Implementation**:
@@ -102,11 +168,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 bg-slate-50 p-6">
       <Tabs defaultValue="brands" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
+        <TabsList className="grid w-full grid-cols-6 max-w-4xl">
           <TabsTrigger value="brands">Vehicle Brands</TabsTrigger>
           <TabsTrigger value="price">Price Category</TabsTrigger>
           <TabsTrigger value="leasing">Leasing Company</TabsTrigger>
           <TabsTrigger value="agents">Sales Agent</TabsTrigger>
+          <TabsTrigger value="commissions">Commissions</TabsTrigger>
           <TabsTrigger value="countries">Countries</TabsTrigger>
         </TabsList>
 
@@ -114,6 +181,7 @@ export default function SettingsPage() {
         <TabsContent value="price"><PriceCategoryTab /></TabsContent>
         <TabsContent value="leasing"><LeasingCompanyTab /></TabsContent>
         <TabsContent value="agents"><SalesAgentTab /></TabsContent>
+        <TabsContent value="commissions"><SalesCommissionsTab /></TabsContent>
         <TabsContent value="countries"><CountriesTab /></TabsContent>
       </Tabs>
     </div>
@@ -447,7 +515,7 @@ const formatPrice = (price: number) => {
 
 - **Add Vehicle**: Price category selection determines PCN advance
 - **Financial Reports**: PCN advance used for profit calculations
-- **Sell Vehicle**: Auto-calculates PCN advance based on selling amount
+- **Reserve Vehicle**: Auto-calculates PCN advance based on selling amount
 
 ---
 
@@ -722,13 +790,196 @@ const confirmDelete = async () => {
 
 ### 6.7 Integration Points
 
-- **Sell Vehicle**: Select sales agent for transactions
+- **Reserve Vehicle**: Select sales agent for transactions
 - **Sales Reports**: Track agent performance
 - **Financial Reports**: Agent-based sales breakdown
 
 ---
 
-## 7. Countries Tab
+## 7. Sales Commissions Tab
+
+### 7.1 Database Table: `sales_commissions`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| name | VARCHAR(100) | Commission tier name (e.g., "Budget", "Premium") |
+| min_price | DECIMAL(12,2) | Minimum price threshold |
+| max_price | DECIMAL(12,2) | Maximum price threshold |
+| commission_amount | DECIMAL(12,2) | Commission amount for this price range |
+| is_active | BOOLEAN | Commission tier availability status |
+| created_at | TIMESTAMP | Creation timestamp |
+| updated_at | TIMESTAMP | Last update timestamp |
+
+**Migration**: `dashboard/migrations/2026_01_20_create_sales_commissions_table.sql`
+
+### 7.2 Component File
+
+**File**: `dashboard/src/components/settings/SalesCommissionsTab.tsx`
+
+### 7.3 State Management
+
+```typescript
+const [commissions, setCommissions] = useState<SalesCommission[]>([])
+const [loading, setLoading] = useState(true)
+const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+const [editingCommission, setEditingCommission] = useState<SalesCommission | null>(null)
+const [formData, setFormData] = useState({
+  name: '',
+  min_price: '',
+  max_price: '',
+  commission_amount: '',
+})
+```
+
+### 7.4 Functions
+
+#### Fetch Commissions
+
+```typescript
+const fetchCommissions = async () => {
+  const { data, error } = await supabase
+    .from('sales_commissions')
+    .select('*')
+    .order('min_price')
+
+  if (error) throw error
+  setCommissions(data || [])
+}
+```
+
+#### Add Commission
+
+```typescript
+const handleAddCommission = async () => {
+  if (!formData.name.trim() || !formData.min_price || !formData.max_price || !formData.commission_amount) return
+
+  const { error } = await supabase
+    .from('sales_commissions')
+    .insert([{
+      name: formData.name,
+      min_price: parseFloat(formData.min_price),
+      max_price: parseFloat(formData.max_price),
+      commission_amount: parseFloat(formData.commission_amount),
+      is_active: true,
+    }])
+
+  setFormData({ name: '', min_price: '', max_price: '', commission_amount: '' })
+  setIsAddDialogOpen(false)
+  fetchCommissions()
+}
+```
+
+#### Edit Commission
+
+```typescript
+const handleEditCommission = async () => {
+  const { error } = await supabase
+    .from('sales_commissions')
+    .update({
+      name: formData.name,
+      min_price: parseFloat(formData.min_price),
+      max_price: parseFloat(formData.max_price),
+      commission_amount: parseFloat(formData.commission_amount),
+    })
+    .eq('id', editingCommission.id)
+
+  fetchCommissions()
+}
+```
+
+#### Toggle Active Status
+
+```typescript
+const handleToggleActive = async (id: string, currentStatus: boolean) => {
+  const { error } = await supabase
+    .from('sales_commissions')
+    .update({ is_active: !currentStatus })
+    .eq('id', id)
+
+  fetchCommissions()
+}
+```
+
+#### Delete Commission
+
+```typescript
+const confirmDelete = async () => {
+  const { error } = await supabase
+    .from('sales_commissions')
+    .delete()
+    .eq('id', commissionToDelete)
+
+  fetchCommissions()
+}
+```
+
+#### Get Commission by Price
+
+```typescript
+// Utility function to get applicable commission for a sale price
+const getCommissionForPrice = async (salePrice: number) => {
+  const { data, error } = await supabase
+    .from('sales_commissions')
+    .select('*')
+    .eq('is_active', true)
+    .lte('min_price', salePrice)
+    .gte('max_price', salePrice)
+    .single()
+
+  return data
+}
+```
+
+### 7.5 UI Layout
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Sales Commissions                        [+ Add Commission] │
+│ Manage commission rates by vehicle price range              │
+├─────────────────────────────────────────────────────────────┤
+│ Tier Name   │ Price Range        │ Commission │ Status │ ⚙ │
+├─────────────┼────────────────────┼────────────┼────────┼───┤
+│ Budget      │ Rs. 0 - 2M         │ Rs. 25,000 │ [ON]   │ ✏️🗑│
+│ Economy     │ Rs. 2M - 5M        │ Rs. 50,000 │ [ON]   │ ✏️🗑│
+│ Mid-Range   │ Rs. 5M - 10M       │ Rs. 75,000 │ [ON]   │ ✏️🗑│
+│ Premium     │ Rs. 10M - 20M      │ Rs.100,000 │ [ON]   │ ✏️🗑│
+│ Luxury      │ Rs. 20M+           │ Rs.150,000 │ [OFF]  │ ✏️🗑│
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 7.6 Integration Points
+
+- **Reserve Vehicle**: Auto-assign commission based on sale price
+- **Sales Transactions**: Commission reference stored with each sale
+- **Sales Agents Report**: Calculate agent commissions for reporting
+- **Financial Reports**: Total commission payouts analysis
+
+### 7.7 Commission Calculation Logic
+
+When a vehicle is reserved/sold:
+
+1. **Get Sale Price**: From `sellingAmount` field in reserve form
+2. **Find Matching Tier**: Query `sales_commissions` where `min_price <= salePrice <= max_price`
+3. **Store Reference**: Save `sales_commission_id` in `pending_vehicle_sales` table
+4. **Display in Reports**: Use commission amount for sales agent reports
+
+```typescript
+// Example: Auto-assign commission on vehicle reservation
+const assignCommission = async (salePrice: number) => {
+  const commission = await getCommissionForPrice(salePrice)
+  if (commission) {
+    return commission.id // Store this in pending_vehicle_sales.sales_commission_id
+  }
+  return null
+}
+```
+
+---
+
+## 8. Countries Tab
 
 ### 7.1 Database Table: `countries`
 
