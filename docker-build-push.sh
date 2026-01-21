@@ -67,6 +67,13 @@ build_image() {
             -t "$image_name:$VERSION" \
             -t "$image_name:latest" \
             ./$service
+    elif [ "$service" = "api" ]; then
+        # API needs root context to access both api/ and shared/ folders
+        docker build \
+            -f ./$service/Dockerfile \
+            -t "$image_name:$VERSION" \
+            -t "$image_name:latest" \
+            .
     else
         docker build \
             -t "$image_name:$VERSION" \

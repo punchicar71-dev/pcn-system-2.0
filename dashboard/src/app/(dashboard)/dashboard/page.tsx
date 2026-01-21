@@ -37,9 +37,9 @@ interface ActiveUser {
 }
 
 export default function DashboardPage() {
-  const [availableVehicles, setAvailableVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
+  const [inSaleVehicles, setInSaleVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
   const [advancePaidVehicles, setAdvancePaidVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
-  const [soldVehicles, setSoldVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
+  const [takenOutVehicles, setTakenOutVehicles] = useState<VehicleStats>({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
   const [chartData, setChartData] = useState<SalesData[]>([])
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -121,15 +121,26 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch Available Vehicles (status: 'In Sale')
-      const { data: availableData, error: availableError } = await supabase
+      // Fetch In Sale Vehicles (status: 'In Sale')
+      const { data: inSaleData, error: inSaleError } = await supabase
         .from('vehicles')
         .select('body_type')
         .eq('status', 'In Sale')
 
-      if (!availableError && availableData) {
-        const stats = calculateBodyTypeStats(availableData)
-        setAvailableVehicles(stats)
+      if (!inSaleError && inSaleData) {
+        const stats = calculateBodyTypeStats(inSaleData)
+        setInSaleVehicles(stats)
+      }
+
+      // Fetch Taken Out Vehicles (status: 'Taken Out')
+      const { data: takenOutData, error: takenOutError } = await supabase
+        .from('vehicles')
+        .select('body_type')
+        .eq('status', 'Taken Out')
+
+      if (!takenOutError && takenOutData) {
+        const stats = calculateBodyTypeStats(takenOutData)
+        setTakenOutVehicles(stats)
       }
 
       // Fetch Advance Paid Vehicles from pending_vehicle_sales table (status: 'advance_paid')
@@ -153,32 +164,8 @@ export default function DashboardPage() {
         setAdvancePaidVehicles(stats)
       }
 
-      // Fetch Sold-Out Vehicles from pending_vehicle_sales (status: 'sold') - ALL TIME
-      // OPTIMIZED: Use body_type snapshot column directly (no join needed)
-      // This works even when vehicle_id is NULL (vehicle re-added after sale)
-      const { data: soldSalesData, error: soldError } = await supabase
-        .from('pending_vehicle_sales')
-        .select('id, body_type, updated_at')
-        .eq('status', 'sold')
-
-      console.log('All Sold Sales Data:', soldSalesData)
-      console.log('Sold Sales Count:', soldSalesData?.length)
-      console.log('Sold Sales Error:', soldError)
-
-      if (!soldError && soldSalesData) {
-        // Use body_type directly from snapshot column
-        const vehiclesData = soldSalesData
-          .filter(sale => sale.body_type)
-          .map(sale => ({ body_type: sale.body_type }))
-        console.log('Sold Vehicles Data:', vehiclesData)
-        const stats = calculateBodyTypeStats(vehiclesData)
-        console.log('Sold Vehicle Stats:', stats)
-        setSoldVehicles(stats)
-      } else if (soldError) {
-        console.error('Error fetching sold vehicles:', soldError)
-        // Set to zero if error
-        setSoldVehicles({ total: 0, sedan: 0, hatchback: 0, suv: 0, wagon: 0, coupe: 0 })
-      }
+      // NOTE: Sold-Out stats card has been replaced with Taken Out Vehicles
+      // The chart still uses pending_vehicle_sales for sold data
 
       // Fetch Sales Chart Data based on date range
       await fetchChartData()
@@ -415,34 +402,34 @@ export default function DashboardPage() {
         <div className="space-y-6">
           {/* Stats Cards - 3 Cards in a Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Available Vehicles Card */}
+            {/* In Sale Vehicles Card */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Available Vehicles</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">In Sale Vehicles</h3>
               {loading ? (
                 <p className="text-4xl font-bold text-gray-900">...</p>
               ) : (
                 <>
-                  <p className="text-5xl font-bold text-gray-900 mb-4">{availableVehicles.total}</p>
+                  <p className="text-5xl font-bold text-gray-900 mb-4">{inSaleVehicles.total}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Sedan:</span>
-                      <span className="font-semibold text-gray-900">{availableVehicles.sedan}</span>
+                      <span className="font-semibold text-gray-900">{inSaleVehicles.sedan}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Hatchback:</span>
-                      <span className="font-semibold text-gray-900">{availableVehicles.hatchback}</span>
+                      <span className="font-semibold text-gray-900">{inSaleVehicles.hatchback}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">SUV:</span>
-                      <span className="font-semibold text-gray-900">{availableVehicles.suv}</span>
+                      <span className="font-semibold text-gray-900">{inSaleVehicles.suv}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Wagon:</span>
-                      <span className="font-semibold text-gray-900">{availableVehicles.wagon}</span>
+                      <span className="font-semibold text-gray-900">{inSaleVehicles.wagon}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Coupe:</span>
-                      <span className="font-semibold text-gray-900">{availableVehicles.coupe}</span>
+                      <span className="font-semibold text-gray-900">{inSaleVehicles.coupe}</span>
                     </div>
                   </div>
                 </>
@@ -483,34 +470,34 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Sold-Out Vehicles Today Card */}
+            {/* Taken Out Vehicles Card */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Sold-Out Vehicles (Total)</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Taken Out Vehicles</h3>
               {loading ? (
                 <p className="text-4xl font-bold text-gray-900">...</p>
               ) : (
                 <>
-                  <p className="text-5xl font-bold text-gray-900 mb-4">{soldVehicles.total}</p>
+                  <p className="text-5xl font-bold text-gray-900 mb-4">{takenOutVehicles.total}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Sedan:</span>
-                      <span className="font-semibold text-gray-900">{soldVehicles.sedan}</span>
+                      <span className="font-semibold text-gray-900">{takenOutVehicles.sedan}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Hatchback:</span>
-                      <span className="font-semibold text-gray-900">{soldVehicles.hatchback}</span>
+                      <span className="font-semibold text-gray-900">{takenOutVehicles.hatchback}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">SUV:</span>
-                      <span className="font-semibold text-gray-900">{soldVehicles.suv}</span>
+                      <span className="font-semibold text-gray-900">{takenOutVehicles.suv}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Wagon:</span>
-                      <span className="font-semibold text-gray-900">{soldVehicles.wagon}</span>
+                      <span className="font-semibold text-gray-900">{takenOutVehicles.wagon}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Coupe:</span>
-                      <span className="font-semibold text-gray-900">{soldVehicles.coupe}</span>
+                      <span className="font-semibold text-gray-900">{takenOutVehicles.coupe}</span>
                     </div>
                   </div>
                 </>
