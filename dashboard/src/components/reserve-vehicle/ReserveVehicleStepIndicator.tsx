@@ -22,7 +22,7 @@ export default function ReserveVehicleStepIndicator({
   };
 
   return (
-    <div className="w-full bg-white sticky top-[50px] z-20">
+    <div className="w-full bg-white sticky top-[50px] z-30">
       <div className="flex items-center justify-start gap-2 px-6 border-b py-4">
         {/* Step Circles */}
         {steps.map((step, index) => {

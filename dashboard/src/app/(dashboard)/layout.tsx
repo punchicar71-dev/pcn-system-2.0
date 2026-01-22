@@ -348,7 +348,7 @@ export default function DashboardLayout({
         isSidebarCollapsed ? 'ml-[80px]' : 'ml-[260px]'
       }`}>
         {/* Header - 50px height */}
-        <header className="bg-white border-b h-[50px] z-30 flex items-center justify-between px-6 sticky top-0 ">
+        <header className="bg-white border-b h-[50px] z-40 flex items-center justify-between px-6 sticky top-0 ">
           {/* Header Left Side - Greeting */}
           <div className="flex items-center gap-2">
             <span className="text-gray-600 text-[16px]">{greeting}!</span>

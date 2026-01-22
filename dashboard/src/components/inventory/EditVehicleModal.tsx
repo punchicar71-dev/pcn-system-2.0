@@ -504,7 +504,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[70%] max-h-[90vh] z-[1008] overflow-y-auto">
+      <DialogContent className="max-w-[70%] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Edit Vehicle</DialogTitle>
         </DialogHeader>
@@ -785,7 +785,7 @@ export default function EditVehicleModal({ vehicleId, isOpen, onClose, onSuccess
                       
                       {/* Dropdown Menu */}
                       {isTitleDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]">
+                        <div className="absolute top-full left-0 mt-1 w-[80px] bg-white border border-gray-300 rounded-lg shadow-lg z-[150]">
                           {titles.map((title) => (
                             <button
                               key={title}

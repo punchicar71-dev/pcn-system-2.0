@@ -150,7 +150,7 @@ export default function VehicleNotesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-xl z-[1008] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Vehicle Notes</DialogTitle>
           {vehicleInfo && (

@@ -110,7 +110,7 @@ export default function TakenOutModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md z-[1008]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Move to Taken Out</DialogTitle>
           {vehicleInfo && (
