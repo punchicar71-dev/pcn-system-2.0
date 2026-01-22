@@ -279,7 +279,7 @@ export default function DashboardLayout({
             {/* Toggle Button */}
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className={`absolute ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2 ml-10' : 'right-2'}  z top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-100 hover:bg-gray-300 rounded-md flex items-center justify-center transition-all duration-300 z-30`}
+              className={`absolute ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2 ml-7 z-40' : 'right-2'}  z top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-100 hover:bg-gray-300 rounded-md flex items-center justify-center transition-all duration-300 z-30`}
             >
               {isSidebarCollapsed ? (
                 <ChevronRight className="w-4 h-4 text-gray-600" />
