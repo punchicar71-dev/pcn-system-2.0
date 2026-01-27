@@ -38,10 +38,12 @@ export default function TakenOutModal({
   const [personName, setPersonName] = useState('')
   const [personNic, setPersonNic] = useState('')
   const [currentDateTime, setCurrentDateTime] = useState('')
+  const [existingTagNotes, setExistingTagNotes] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // Update current date/time when modal opens
+  // Update current date/time and fetch existing tag notes when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && vehicleId) {
       const now = new Date()
       setCurrentDateTime(now.toLocaleString('en-GB', {
         year: 'numeric',
@@ -54,8 +56,37 @@ export default function TakenOutModal({
       // Reset form
       setPersonName('')
       setPersonNic('')
+      
+      // Fetch existing tag notes
+      fetchExistingTagNotes()
     }
-  }, [isOpen])
+  }, [isOpen, vehicleId])
+
+  const fetchExistingTagNotes = async () => {
+    if (!vehicleId) return
+    
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('tag_notes')
+        .eq('id', vehicleId)
+        .single()
+      
+      if (error) {
+        console.error('Error fetching tag notes:', error)
+        setExistingTagNotes('')
+        return
+      }
+      
+      setExistingTagNotes(data?.tag_notes || '')
+    } catch (error) {
+      console.error('Error fetching tag notes:', error)
+      setExistingTagNotes('')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!vehicleId) return
@@ -73,14 +104,36 @@ export default function TakenOutModal({
     try {
       setSaving(true)
 
+      // Format the taken out information text
+      const now = new Date()
+      const formattedDateTime = now.toLocaleString('en-GB', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+      
+      const takenOutInfo = `--- TAKEN OUT ---\nPerson Name: ${personName.trim()}\nNIC Number: ${personNic.trim()}\nDate & Time: ${formattedDateTime}\n-----------------`
+      
+      // Append to existing tag notes
+      let updatedTagNotes = existingTagNotes
+      if (existingTagNotes) {
+        updatedTagNotes = `${existingTagNotes}\n\n${takenOutInfo}`
+      } else {
+        updatedTagNotes = takenOutInfo
+      }
+
       const { error } = await supabase
         .from('vehicles')
         .update({
           status: 'Taken Out',
           taken_out_person_name: personName.trim(),
           taken_out_person_nic: personNic.trim(),
-          taken_out_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          taken_out_at: now.toISOString(),
+          tag_notes: updatedTagNotes,
+          updated_at: now.toISOString()
         })
         .eq('id', vehicleId)
 
@@ -103,6 +156,7 @@ export default function TakenOutModal({
   const handleClose = () => {
     setPersonName('')
     setPersonNic('')
+    setExistingTagNotes('')
     onClose()
   }
 

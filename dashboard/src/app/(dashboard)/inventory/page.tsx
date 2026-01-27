@@ -900,6 +900,40 @@ export default function InventoryPage() {
     try {
       const supabase = createClient()
       
+      // First, fetch the current tag notes and taken out info to preserve in notes
+      const { data: vehicleData, error: fetchError } = await supabase
+        .from('vehicles')
+        .select('tag_notes, taken_out_person_name, taken_out_person_nic, taken_out_at')
+        .eq('id', vehicleId)
+        .single()
+      
+      if (fetchError) {
+        console.error('Error fetching vehicle:', fetchError)
+        alert('Failed to fetch vehicle details. Please try again.')
+        return
+      }
+      
+      // Format the returned information text
+      const now = new Date()
+      const formattedDateTime = now.toLocaleString('en-GB', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+      
+      const returnedInfo = `--- RETURNED TO IN SALE ---\nReturned Date & Time: ${formattedDateTime}\n---------------------------`
+      
+      // Append return info to existing tag notes (preserving taken out history)
+      let updatedTagNotes = vehicleData?.tag_notes || ''
+      if (updatedTagNotes) {
+        updatedTagNotes = `${updatedTagNotes}\n\n${returnedInfo}`
+      } else {
+        updatedTagNotes = returnedInfo
+      }
+      
       const { error } = await supabase
         .from('vehicles')
         .update({
@@ -907,7 +941,8 @@ export default function InventoryPage() {
           taken_out_person_name: null,
           taken_out_person_nic: null,
           taken_out_at: null,
-          updated_at: new Date().toISOString()
+          tag_notes: updatedTagNotes,
+          updated_at: now.toISOString()
         })
         .eq('id', vehicleId)
 
